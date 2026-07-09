@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { CashToCloseAdvisor } from '../module';
+import { BrandMark } from '../site/BrandMark';
 import { californiaMortgageConfig, ADVISOR_ROUTE } from '../site/californiaMortgage';
 
 /**
@@ -14,9 +15,7 @@ export function CashToClosePage() {
   return (
     <div className="cm-page">
       <header className="cm-nav">
-        <Link to="/" className="cm-brand">
-          California<span>Mortgage</span>
-        </Link>
+        <BrandMark />
         <nav className="cm-links">
           <a href="/#purchase">Purchase</a>
           <a href="/#refinance">Refinance</a>
@@ -25,7 +24,7 @@ export function CashToClosePage() {
             Cash to Close
           </Link>
           <a href="tel:3106865053" className="cm-nav-cta">
-            (310) 686-5053
+            Get Pre-Approved
           </a>
         </nav>
       </header>
@@ -33,8 +32,10 @@ export function CashToClosePage() {
       <CashToCloseAdvisor config={californiaMortgageConfig} />
 
       <footer className="cm-footer">
-        <div>California Mortgage</div>
-        <div>Broker 01385024 · NMLS ID 2775380 · (310) 686-5053</div>
+        <div className="cm-footer-inner">
+          <div>California Mortgage</div>
+          <div>Broker 01385024 · NMLS ID 2775380 · (310) 686-5053</div>
+        </div>
       </footer>
     </div>
   );

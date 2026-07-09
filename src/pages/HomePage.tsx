@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { CashToCloseWidget } from '../module';
+import { BrandMark } from '../site/BrandMark';
 import {
   californiaMortgageConfig,
   HOMEPAGE_WIDGET_HEADLINE,
@@ -19,9 +20,7 @@ export function HomePage() {
     <div className="cm-page">
       {/* --- site nav (with the new "Cash to Close" link) --- */}
       <header className="cm-nav">
-        <Link to="/" className="cm-brand">
-          California<span>Mortgage</span>
-        </Link>
+        <BrandMark />
         <nav className="cm-links">
           <a href="#purchase">Purchase</a>
           <a href="#refinance">Refinance</a>
@@ -30,7 +29,7 @@ export function HomePage() {
             Cash to Close
           </Link>
           <a href="tel:3106865053" className="cm-nav-cta">
-            (310) 686-5053
+            Get Pre-Approved
           </a>
         </nav>
       </header>
@@ -38,11 +37,13 @@ export function HomePage() {
       {/* --- hero --- */}
       <section className="cm-hero">
         <div className="cm-hero-inner">
-          <span className="cm-eyebrow">California Mortgage · Purchase & Refinance</span>
-          <h1>Serious mortgage strategy for California buyers.</h1>
+          <span className="cm-eyebrow">California Mortgage Concierge</span>
+          <h1>
+            Mortgage guidance <span className="accent">starts here.</span>
+          </h1>
           <p>
-            Jumbo, Non-QM, and high-balance financing — structured around your
-            real numbers, not a generic quote. Know exactly what it takes to
+            Purchase, refinance, jumbo, and Non-QM financing — structured around
+            your real numbers, not a generic quote. Know exactly what it takes to
             close before you write an offer.
           </p>
           <div className="cm-hero-cta">
@@ -92,8 +93,10 @@ export function HomePage() {
       </section>
 
       <footer className="cm-footer">
-        <div>California Mortgage</div>
-        <div>Broker 01385024 · NMLS ID 2775380 · (310) 686-5053</div>
+        <div className="cm-footer-inner">
+          <div>California Mortgage</div>
+          <div>Broker 01385024 · NMLS ID 2775380 · (310) 686-5053</div>
+        </div>
       </footer>
     </div>
   );

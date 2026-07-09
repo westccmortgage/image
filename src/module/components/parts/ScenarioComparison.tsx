@@ -47,7 +47,7 @@ export function ScenarioComparison({
               >
                 <td>
                   {s.label}
-                  <div style={{ fontSize: 11, color: '#94a3b8' }}>
+                  <div style={{ fontSize: 11, color: 'var(--ctc-slate-400)' }}>
                     {s.profileLabel}
                   </div>
                 </td>

@@ -28,6 +28,16 @@
   --ctc-red-soft: #fef3f2;
   --ctc-amber-soft: #fffaeb;
 
+  /* Themeable secondary tokens (defaults keep the neutral navy look; host
+     sites can override these — see the California Mortgage theme in index.css). */
+  --ctc-navy-700: #1b3f74; /* lighter stop in dark gradients */
+  --ctc-surface-alt: #fafbfe; /* table striping */
+  --ctc-panel: #f1f4f9; /* disclaimer panel */
+  --ctc-ai-bg-1: #fbfcfe;
+  --ctc-ai-bg-2: #f4f8ff;
+  --ctc-on-dark-soft: #d6e2f4; /* subtext on dark surfaces */
+  --ctc-on-dark-faint: #a9bcd8; /* fine print on dark surfaces */
+
   --ctc-radius: 16px;
   --ctc-radius-sm: 10px;
   --ctc-shadow: 0 1px 2px rgba(16, 24, 40, 0.04),
@@ -124,7 +134,7 @@
 
 /* ---- Hero result card --------------------------------------------------- */
 .ctc-hero {
-  background: linear-gradient(135deg, var(--ctc-navy) 0%, var(--ctc-navy-800) 55%, #1b3f74 100%);
+  background: linear-gradient(135deg, var(--ctc-navy) 0%, var(--ctc-navy-800) 55%, var(--ctc-navy-700) 100%);
   color: #fff;
   border-radius: var(--ctc-radius);
   padding: 28px;
@@ -392,7 +402,7 @@
 
 /* ---- AI summary panel --------------------------------------------------- */
 .ctc-ai {
-  background: linear-gradient(180deg, #fbfcfe 0%, #f4f8ff 100%);
+  background: linear-gradient(180deg, var(--ctc-ai-bg-1) 0%, var(--ctc-ai-bg-2) 100%);
   border: 1px solid var(--ctc-blue-border);
   border-radius: var(--ctc-radius);
   padding: 24px;
@@ -507,10 +517,10 @@
   color: #fff;
 }
 .ctc-table tbody tr:nth-child(even) td {
-  background: #fafbfe;
+  background: var(--ctc-surface-alt);
 }
 .ctc-table tbody tr:nth-child(even) td:first-child {
-  background: #fafbfe;
+  background: var(--ctc-surface-alt);
 }
 .ctc-table td.num {
   font-variant-numeric: tabular-nums;
@@ -632,7 +642,7 @@
 .ctc-disclaimer {
   margin-top: 26px;
   padding: 16px 18px;
-  background: #f1f4f9;
+  background: var(--ctc-panel);
   border: 1px solid var(--ctc-line);
   border-radius: var(--ctc-radius-sm);
   font-size: 12.5px;
@@ -672,7 +682,7 @@
    Embedded widget mode — compact band suitable for a homepage section.
    ========================================================================== */
 .ctc-widget {
-  background: linear-gradient(135deg, var(--ctc-navy) 0%, #16386a 100%);
+  background: linear-gradient(135deg, var(--ctc-navy) 0%, var(--ctc-navy-700) 100%);
   border-radius: var(--ctc-radius);
   padding: clamp(22px, 4vw, 40px);
   color: #fff;
@@ -719,7 +729,7 @@
 }
 .ctc-widget-p {
   font-size: 15px;
-  color: #d6e2f4;
+  color: var(--ctc-on-dark-soft);
   margin: 0 0 20px;
   max-width: 46ch;
 }
@@ -768,7 +778,7 @@
 }
 .ctc-widget-note {
   font-size: 11px;
-  color: #a9bcd8;
+  color: var(--ctc-on-dark-faint);
   margin-top: 14px;
   position: relative;
   z-index: 1;

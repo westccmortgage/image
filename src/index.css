@@ -1,22 +1,38 @@
 /* California Mortgage host-site chrome (californiamtg.com).
-   The advisor module ships its own scoped styles (advisor.css) and does not
-   depend on anything here. Palette matches the module: white/light background,
-   navy / slate / soft blue, subtle gold accent. */
+   Warm editorial luxury palette taken from the live site: cream / ivory
+   background, antique bronze-gold accents, near-black serif display headings,
+   solid bronze buttons. The advisor module ships its own scoped styles and is
+   re-themed here purely by overriding its CSS variables (see .cm-page .ctc-root
+   at the bottom) — the module source stays brand-neutral. */
 :root {
-  --cm-navy: #0f2444;
-  --cm-navy-800: #14315c;
-  --cm-slate: #475467;
-  --cm-blue: #2f6fed;
-  --cm-blue-soft: #eaf1fd;
-  --cm-gold: #c8a24a;
-  --cm-line: #e5ebf3;
-  --cm-bg: #f7f9fc;
+  --cm-cream: #f4ecdd;
+  --cm-cream-2: #efe5d2;
+  --cm-ivory: #faf4e8;
+  --cm-surface: #fffdf7;
+  --cm-espresso: #241c11;
+  --cm-espresso-2: #33281a;
+  --cm-ink: #2a2216;
+  --cm-ink-soft: #5c5140;
+  --cm-bronze: #9a7b3f;
+  --cm-bronze-deep: #806528;
+  --cm-bronze-soft: #f0e6cf;
+  --cm-line: #e4d8bd;
 
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     Helvetica, Arial, sans-serif;
-  color: #101828;
-  background: var(--cm-bg);
+  color: var(--cm-ink);
+  background: var(--cm-cream);
 }
+
+/* Elegant serif for display headings / brand, matching the live site. */
+.cm-serif,
+.cm-brand-text,
+.cm-hero h1,
+.cm-assistant-grid h2 {
+  font-family: 'Playfair Display', 'Cormorant Garamond', Georgia,
+    'Times New Roman', serif;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -29,6 +45,7 @@ a {
 
 .cm-page {
   min-height: 100vh;
+  background: var(--cm-cream);
 }
 
 /* ---- nav ---- */
@@ -38,7 +55,8 @@ a {
   align-items: center;
   gap: 16px;
   padding: 16px 24px;
-  background: #fff;
+  background: rgba(250, 244, 232, 0.9);
+  backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--cm-line);
   position: sticky;
   top: 0;
@@ -46,14 +64,30 @@ a {
   flex-wrap: wrap;
 }
 .cm-brand {
-  font-weight: 800;
-  font-size: 1.15rem;
-  color: var(--cm-navy);
-  letter-spacing: -0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
   text-decoration: none;
+  color: var(--cm-espresso);
 }
-.cm-brand span {
-  color: var(--cm-gold);
+.cm-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1.5px solid var(--cm-bronze);
+  color: var(--cm-bronze);
+  background: var(--cm-ivory);
+  flex: 0 0 auto;
+}
+.cm-brand-text {
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  color: var(--cm-espresso);
 }
 .cm-links {
   display: flex;
@@ -65,13 +99,13 @@ a {
 }
 .cm-links a {
   text-decoration: none;
-  color: var(--cm-slate);
+  color: var(--cm-ink-soft);
 }
 .cm-links a:hover {
-  color: var(--cm-blue);
+  color: var(--cm-bronze-deep);
 }
 .cm-link-accent {
-  color: var(--cm-navy) !important;
+  color: var(--cm-espresso) !important;
   font-weight: 700 !important;
   position: relative;
 }
@@ -82,49 +116,56 @@ a {
   right: 0;
   bottom: -4px;
   height: 2px;
-  background: var(--cm-gold);
+  background: var(--cm-bronze);
   border-radius: 2px;
 }
 .cm-nav-cta {
   font-weight: 700 !important;
-  color: var(--cm-navy) !important;
-  background: var(--cm-blue-soft);
-  padding: 8px 14px;
-  border-radius: 8px;
+  color: #fff !important;
+  background: var(--cm-bronze);
+  padding: 9px 16px;
+  border-radius: 10px;
+}
+.cm-nav-cta:hover {
+  background: var(--cm-bronze-deep);
 }
 
 /* ---- hero ---- */
 .cm-hero {
-  background: linear-gradient(180deg, #ffffff 0%, var(--cm-bg) 100%);
+  background: linear-gradient(180deg, var(--cm-ivory) 0%, var(--cm-cream) 100%);
   border-bottom: 1px solid var(--cm-line);
 }
 .cm-hero-inner {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 64px 24px 40px;
+  padding: 64px 24px 44px;
 }
 .cm-eyebrow {
   display: inline-block;
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--cm-gold);
-  margin-bottom: 12px;
+  color: var(--cm-bronze);
+  margin-bottom: 14px;
 }
 .cm-hero h1 {
-  font-size: clamp(2rem, 5.5vw, 3.2rem);
-  color: var(--cm-navy);
-  letter-spacing: -0.025em;
-  line-height: 1.08;
-  margin: 0 0 16px;
-  max-width: 18ch;
+  font-size: clamp(2.4rem, 6vw, 3.8rem);
+  color: var(--cm-espresso);
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+  font-weight: 600;
+  margin: 0 0 18px;
+  max-width: 16ch;
+}
+.cm-hero h1 .accent {
+  color: var(--cm-bronze);
 }
 .cm-hero p {
   font-size: clamp(1.05rem, 2.2vw, 1.2rem);
-  color: var(--cm-slate);
+  color: var(--cm-ink-soft);
   max-width: 60ch;
-  margin: 0 0 24px;
+  margin: 0 0 26px;
 }
 .cm-hero-cta {
   display: flex;
@@ -136,31 +177,31 @@ a {
 .cm-btn {
   display: inline-flex;
   align-items: center;
-  border-radius: 10px;
-  padding: 12px 20px;
+  border-radius: 12px;
+  padding: 13px 22px;
   font-size: 15px;
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 .cm-btn-primary {
-  background: var(--cm-navy);
+  background: var(--cm-bronze);
   color: #fff;
-  box-shadow: 0 8px 18px -8px rgba(15, 36, 68, 0.6);
+  box-shadow: 0 10px 22px -12px rgba(128, 101, 40, 0.8);
 }
 .cm-btn-primary:hover {
-  background: var(--cm-navy-800);
+  background: var(--cm-bronze-deep);
 }
 .cm-btn-ghost {
-  background: #fff;
-  color: var(--cm-navy);
+  background: var(--cm-surface);
+  color: var(--cm-espresso);
   border-color: var(--cm-line);
 }
 .cm-btn-ghost:hover {
-  border-color: var(--cm-blue);
-  background: var(--cm-blue-soft);
+  border-color: var(--cm-bronze);
+  color: var(--cm-bronze-deep);
 }
 
 /* ---- generic section wrapper ---- */
@@ -180,10 +221,11 @@ a {
   grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
   gap: 32px;
   align-items: center;
-  background: #fff;
+  background: var(--cm-surface);
   border: 1px solid var(--cm-line);
-  border-radius: 16px;
-  padding: 32px;
+  border-radius: 18px;
+  padding: 34px;
+  box-shadow: 0 20px 44px -30px rgba(53, 40, 18, 0.4);
 }
 @media (max-width: 760px) {
   .cm-assistant-grid {
@@ -191,14 +233,15 @@ a {
   }
 }
 .cm-assistant-grid h2 {
-  font-size: clamp(1.4rem, 3vw, 1.9rem);
-  color: var(--cm-navy);
-  letter-spacing: -0.02em;
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  color: var(--cm-espresso);
+  letter-spacing: -0.01em;
+  font-weight: 600;
   margin: 0 0 12px;
 }
 .cm-assistant-grid p {
-  color: var(--cm-slate);
-  margin: 0 0 20px;
+  color: var(--cm-ink-soft);
+  margin: 0 0 22px;
 }
 .cm-assistant-list {
   list-style: none;
@@ -208,8 +251,8 @@ a {
   gap: 10px;
 }
 .cm-assistant-list li {
-  background: var(--cm-blue-soft);
-  color: var(--cm-navy);
+  background: var(--cm-bronze-soft);
+  color: var(--cm-espresso);
   font-weight: 600;
   font-size: 14px;
   padding: 12px 16px;
@@ -221,23 +264,65 @@ a {
   content: '✓';
   position: absolute;
   left: 14px;
-  color: var(--cm-gold);
+  color: var(--cm-bronze);
   font-weight: 800;
 }
 
 /* ---- footer ---- */
 .cm-footer {
   border-top: 1px solid var(--cm-line);
-  background: #fff;
+  background: var(--cm-ivory);
   padding: 28px 24px 48px;
+  color: var(--cm-ink-soft);
+  font-size: 13px;
+}
+.cm-footer-inner {
   max-width: 1120px;
   margin: 0 auto;
-  color: #94a3b8;
-  font-size: 13px;
   display: grid;
   gap: 4px;
 }
-.cm-footer div:first-child {
-  color: var(--cm-navy);
+.cm-footer-inner div:first-child {
+  color: var(--cm-espresso);
   font-weight: 700;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 15px;
+}
+
+/* =========================================================================
+   California Mortgage theme for the embedded advisor module.
+   We only remap the module's CSS variables — no module source is touched.
+   ========================================================================= */
+.cm-page .ctc-root {
+  /* brand */
+  --ctc-navy: #2a2114; /* dark espresso for dominant cards / headers */
+  --ctc-navy-800: #382b1a;
+  --ctc-navy-700: #4a3a20; /* warm gradient stop (replaces the blue) */
+  --ctc-gold: #9a7b3f; /* antique bronze accent */
+  --ctc-gold-soft: #f2e8d2;
+
+  /* slate / ink → warm neutrals */
+  --ctc-slate: #5c5140;
+  --ctc-slate-500: #6f6249;
+  --ctc-slate-400: #9a8c6f;
+  --ctc-ink: #2a2216;
+  --ctc-ink-soft: #5c5140;
+
+  /* "blue" accent role → bronze so nothing reads as soft blue */
+  --ctc-blue: #8f7132;
+  --ctc-blue-soft: #f2e8d2;
+  --ctc-blue-border: #e2d3ad;
+
+  /* surfaces */
+  --ctc-bg: #f4ecdd;
+  --ctc-surface: #fffdf7;
+  --ctc-surface-alt: #f9f2e3;
+  --ctc-line: #e4d8bd;
+  --ctc-panel: #efe5d0;
+  --ctc-ai-bg-1: #fffdf7;
+  --ctc-ai-bg-2: #f6eeda;
+
+  /* text on dark espresso surfaces */
+  --ctc-on-dark-soft: #e6d9bf;
+  --ctc-on-dark-faint: #b8a883;
 }

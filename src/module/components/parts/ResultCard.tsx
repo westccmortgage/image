@@ -46,7 +46,7 @@ export function ResultCard({ result }: { result: CashToCloseResult }) {
         }}
       >
         <RiskBadge risk={result.risk} />
-        <span style={{ fontSize: 13, color: '#cdd9ec' }}>
+        <span style={{ fontSize: 13, color: 'var(--ctc-on-dark-soft)' }}>
           LTV {formatPercent(result.ltv)} · {formatPercent(result.downPaymentPercent)} down
         </span>
       </div>
