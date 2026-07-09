@@ -1,59 +1,99 @@
 import { Link } from 'react-router-dom';
 import { CashToCloseWidget } from '../module';
-import type { BrandConfig } from '../module';
-
-const wccmConfig: Partial<BrandConfig> = {
-  brandName: 'West Coast Capital Mortgage',
-  stateFocus: 'California',
-  primaryCTA: { label: 'See My Real Cash to Close', href: '/tools/cash-to-close' },
-  contactCTA: { label: 'Talk to a Broker', href: 'tel:3106865053' },
-};
+import {
+  californiaMortgageConfig,
+  HOMEPAGE_WIDGET_HEADLINE,
+  HOMEPAGE_WIDGET_SUBTEXT,
+  ADVISOR_ROUTE,
+} from '../site/californiaMortgage';
 
 /**
- * Demo homepage showing the EMBEDDED WIDGET MODE dropped into an existing page.
- * Everything outside the widget represents the host site's own content.
+ * California Mortgage (californiamtg.com) homepage — the host site.
+ *
+ * The only module code here is the <CashToCloseWidget/> embedded band below the
+ * hero, next to the mortgage assistant section. Everything else is host-site
+ * chrome and represents the existing site.
  */
 export function HomePage() {
   return (
-    <div className="demo-page">
-      {/* --- host site's own nav (placeholder) --- */}
-      <header className="demo-nav">
-        <div className="demo-brand">West Coast Capital Mortgage</div>
-        <nav className="demo-links">
-          <a href="#loans">Loans</a>
-          <a href="#about">About</a>
-          <Link to="/tools/cash-to-close">Cash-to-Close Advisor</Link>
+    <div className="cm-page">
+      {/* --- site nav (with the new "Cash to Close" link) --- */}
+      <header className="cm-nav">
+        <Link to="/" className="cm-brand">
+          California<span>Mortgage</span>
+        </Link>
+        <nav className="cm-links">
+          <a href="#purchase">Purchase</a>
+          <a href="#refinance">Refinance</a>
+          <a href="#assistant">Mortgage Assistant</a>
+          <Link to={ADVISOR_ROUTE} className="cm-link-accent">
+            Cash to Close
+          </Link>
+          <a href="tel:3106865053" className="cm-nav-cta">
+            (310) 686-5053
+          </a>
         </nav>
       </header>
 
-      <section className="demo-hero">
-        <h1>Boutique mortgage strategy for serious buyers.</h1>
-        <p>
-          Jumbo, Non-QM, and high-balance financing across California and the
-          West Coast — structured around your real numbers.
-        </p>
+      {/* --- hero --- */}
+      <section className="cm-hero">
+        <div className="cm-hero-inner">
+          <span className="cm-eyebrow">California Mortgage · Purchase & Refinance</span>
+          <h1>Serious mortgage strategy for California buyers.</h1>
+          <p>
+            Jumbo, Non-QM, and high-balance financing — structured around your
+            real numbers, not a generic quote. Know exactly what it takes to
+            close before you write an offer.
+          </p>
+          <div className="cm-hero-cta">
+            <Link className="cm-btn cm-btn-primary" to={ADVISOR_ROUTE}>
+              Estimate My Cash to Close
+            </Link>
+            <a className="cm-btn cm-btn-ghost" href="tel:3106865053">
+              Talk to a Mortgage Broker
+            </a>
+          </div>
+        </div>
       </section>
 
-      {/* --- EMBEDDED WIDGET dropped into the homepage --- */}
-      <section className="demo-section">
+      {/* --- EMBEDDED WIDGET: below the hero, near the mortgage assistant --- */}
+      <section className="cm-section" id="cash-to-close">
         <CashToCloseWidget
-          config={wccmConfig}
-          advisorHref="/tools/cash-to-close"
+          config={californiaMortgageConfig}
+          advisorHref={ADVISOR_ROUTE}
+          headline={HOMEPAGE_WIDGET_HEADLINE}
+          subtext={HOMEPAGE_WIDGET_SUBTEXT}
+          hideSecondaryCta
         />
       </section>
 
-      <section className="demo-section demo-muted" id="loans">
-        <p>
-          ↑ The navy band above is the reusable <strong>CashToCloseWidget</strong>{' '}
-          in <em>embedded mode</em>. It can be inserted into any existing page.
-          The <strong>Review My Cash to Close</strong> button routes to the full
-          advisor at <code>/tools/cash-to-close</code>.
-        </p>
+      {/* --- mortgage assistant section (existing host content) --- */}
+      <section className="cm-section cm-assistant" id="assistant">
+        <div className="cm-assistant-grid">
+          <div>
+            <span className="cm-eyebrow">Mortgage Assistant</span>
+            <h2>Guidance at every step — from pre-approval to closing.</h2>
+            <p>
+              Our team and tools walk you through program selection, rate
+              strategy, and the full cost of closing so there are no surprises at
+              the table.
+            </p>
+            <Link className="cm-btn cm-btn-primary" to={ADVISOR_ROUTE}>
+              Estimate My Cash to Close
+            </Link>
+          </div>
+          <ul className="cm-assistant-list">
+            <li>Purchase & refinance strategy</li>
+            <li>Jumbo & Non-QM financing</li>
+            <li>Real cash-to-close planning</li>
+            <li>Seller & lender credit guidance</li>
+          </ul>
+        </div>
       </section>
 
-      <footer className="demo-footer">
-        West Coast Capital Mortgage · Broker 01385024 · NMLS ID 2775380 · (310)
-        686-5053
+      <footer className="cm-footer">
+        <div>California Mortgage</div>
+        <div>Broker 01385024 · NMLS ID 2775380 · (310) 686-5053</div>
       </footer>
     </div>
   );

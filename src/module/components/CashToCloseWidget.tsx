@@ -17,7 +17,16 @@ export interface CashToCloseWidgetProps {
    * Defaults to /tools/cash-to-close.
    */
   advisorHref?: string;
+  /** Override the widget headline. Defaults to the core module message. */
+  headline?: string;
+  /** Override the widget subtext. */
+  subtext?: string;
+  /** Hide the "Talk to a broker" secondary link (show only the primary CTA). */
+  hideSecondaryCta?: boolean;
 }
+
+const DEFAULT_HEADLINE =
+  'Your down payment is not your total cash needed to close.';
 
 /**
  * Compact, embeddable homepage / landing-page band. Drops into any existing
@@ -28,9 +37,20 @@ export function CashToCloseWidget({
   config: configOverrides,
   input = defaultScenario,
   advisorHref = '/tools/cash-to-close',
+  headline,
+  subtext,
+  hideSecondaryCta = false,
 }: CashToCloseWidgetProps) {
   const config = resolveBrandConfig(configOverrides);
   const result = useMemo(() => calculateCashToClose(input), [input]);
+
+  const bodyText =
+    subtext ??
+    `The AI Cash-to-Close Advisor shows the real cash you need at the table — ` +
+      `lender fees, third-party fees, prepaids, taxes, insurance, and escrow ` +
+      `reserves — plus the strategy to fund the gap` +
+      (config.stateFocus ? ` in ${config.stateFocus}` : '') +
+      '.';
 
   return (
     <div className="ctc-root">
@@ -38,25 +58,20 @@ export function CashToCloseWidget({
         <div className="ctc-widget-inner">
           <div>
             <div className="ctc-widget-eyebrow">{config.brandName}</div>
-            <h2 className="ctc-widget-h">
-              Your down payment is not your total cash needed to close.
-            </h2>
-            <p className="ctc-widget-p">
-              The AI Cash-to-Close Advisor shows the real cash you need at the
-              table — lender fees, third-party fees, prepaids, taxes, insurance,
-              and escrow reserves — plus the strategy to fund the gap
-              {config.stateFocus ? ` in ${config.stateFocus}` : ''}.
-            </p>
+            <h2 className="ctc-widget-h">{headline ?? DEFAULT_HEADLINE}</h2>
+            <p className="ctc-widget-p">{bodyText}</p>
             <div className="ctc-widget-cta">
               <a className="ctc-btn ctc-btn-gold" href={advisorHref}>
                 {config.primaryCTA.label}
               </a>
-              <a
-                className="ctc-btn ctc-btn-ghost"
-                href={config.contactCTA.href ?? '#contact'}
-              >
-                {config.contactCTA.label}
-              </a>
+              {!hideSecondaryCta && (
+                <a
+                  className="ctc-btn ctc-btn-ghost"
+                  href={config.contactCTA.href ?? '#contact'}
+                >
+                  {config.contactCTA.label}
+                </a>
+              )}
             </div>
           </div>
 
