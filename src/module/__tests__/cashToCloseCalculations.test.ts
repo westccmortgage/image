@@ -113,6 +113,24 @@ describe('risk tiers', () => {
   it('below 20% down always warns', () => {
     expect(assessRisk(85, 15, 'Conventional').belowTwentyDown).toBe(true);
   });
+
+  it('below-20% warning mentions all five required risks', () => {
+    const [warning] = assessRisk(89.35, 10.65, 'Conventional').warnings;
+    expect(warning).toMatch(/interest rate/i); // higher interest rate risk
+    expect(warning).toMatch(/PMI|MI|mortgage insurance/i); // PMI / MI risk
+    expect(warning).toMatch(/pricing adjustment/i); // lender pricing adjustments
+    expect(warning).toMatch(/monthly payment/i); // higher monthly payment
+    expect(warning).toMatch(/verified/i); // stronger need for verified funds
+  });
+
+  it('Non-QM above 85% LTV produces the strong Non-QM warning', () => {
+    const risk = assessRisk(89.35, 10.65, 'Non-QM');
+    const nonQm = risk.warnings.find((w) => w.startsWith('Non-QM'));
+    expect(nonQm).toContain(
+      'can materially affect rate, pricing, mortgage insurance, approval ' +
+        'strength, monthly payment, and total cash to close',
+    );
+  });
 });
 
 describe('down payment scenarios', () => {

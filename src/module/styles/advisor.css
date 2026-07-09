@@ -58,7 +58,7 @@
 
 .ctc-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
 }
 @media (min-width: 900px) {
@@ -648,7 +648,15 @@
 /* ---- Utility ------------------------------------------------------------ */
 .ctc-stack {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
+}
+/* Grid items default to min-width:auto, which lets wide content (e.g. the
+   scenario table) push the whole layout past the viewport. Clamp them so
+   overflow stays inside each item's own scroll container. */
+.ctc-stack > *,
+.ctc-grid > * {
+  min-width: 0;
 }
 .ctc-muted {
   color: var(--ctc-slate-500);
@@ -683,7 +691,7 @@
 }
 .ctc-widget-inner {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   position: relative;
   z-index: 1;

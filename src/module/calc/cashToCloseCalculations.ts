@@ -112,7 +112,8 @@ export function assessRisk(
     warnings.push(
       'Your down payment is below 20%. This may increase the interest rate, ' +
         'create mortgage insurance / PMI / MI requirements, increase lender ' +
-        'pricing adjustments, and raise your monthly payment.',
+        'pricing adjustments, and raise your monthly payment. It also creates a ' +
+        'stronger need for verified, fully documented funds to close.',
     );
   }
   if (nonQmHighLtv) {
