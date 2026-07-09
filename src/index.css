@@ -1,0 +1,351 @@
+/* Wallet WCCM standalone site chrome (wwccm.com).
+   Premium mortgage-strategy look: white / light background, navy / slate /
+   soft blue, subtle gold accent. Serious and clean — safe for realtors to send
+   to buyers. Mobile-first, no horizontal overflow. The Cash-to-Close module
+   ships its own scoped styles (its default theme is this same palette), so no
+   variable overrides are needed here. */
+:root {
+  --ww-navy: #0f2444;
+  --ww-navy-800: #14315c;
+  --ww-slate: #475467;
+  --ww-slate-400: #94a3b8;
+  --ww-blue: #2f6fed;
+  --ww-blue-soft: #eaf1fd;
+  --ww-blue-border: #cfe0fb;
+  --ww-gold: #c8a24a;
+  --ww-gold-deep: #a9863a;
+  --ww-gold-soft: #f6efdd;
+  --ww-bg: #f7f9fc;
+  --ww-surface: #ffffff;
+  --ww-line: #e5ebf3;
+  --ww-ink: #101828;
+
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Helvetica, Arial, sans-serif;
+  color: var(--ww-ink);
+  background: var(--ww-bg);
+  -webkit-font-smoothing: antialiased;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+a {
+  color: inherit;
+}
+
+.ww-page {
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.ww-shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 8px 20px 8px;
+  display: grid;
+  gap: 20px;
+}
+
+/* ---- nav ---- */
+.ww-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--ww-line);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  flex-wrap: wrap;
+}
+.ww-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--ww-navy);
+}
+.ww-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, var(--ww-navy), var(--ww-navy-800));
+  color: var(--ww-gold);
+  font-weight: 800;
+  font-size: 20px;
+  flex: 0 0 auto;
+}
+.ww-brand-text {
+  display: flex;
+  flex-direction: column;
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+.ww-brand-text b {
+  color: var(--ww-navy);
+  font-weight: 800;
+}
+.ww-brand-text small {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--ww-slate-400);
+  text-transform: none;
+}
+.ww-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.ww-nav-link {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ww-slate);
+  text-decoration: none;
+}
+.ww-nav-link:hover {
+  color: var(--ww-blue);
+}
+
+/* ---- buttons ---- */
+.ww-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  padding: 12px 20px;
+  font-size: 14.5px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.08s;
+  font-family: inherit;
+}
+.ww-btn:active {
+  transform: translateY(1px);
+}
+.ww-btn-sm {
+  padding: 9px 15px;
+  font-size: 13.5px;
+}
+.ww-btn-primary {
+  background: var(--ww-navy);
+  color: #fff;
+  box-shadow: 0 10px 22px -12px rgba(15, 36, 68, 0.7);
+}
+.ww-btn-primary:hover {
+  background: var(--ww-navy-800);
+}
+.ww-btn-gold {
+  background: var(--ww-gold);
+  color: #2a2205;
+  box-shadow: 0 10px 22px -12px rgba(200, 162, 74, 0.75);
+}
+.ww-btn-gold:hover {
+  background: var(--ww-gold-deep);
+}
+.ww-btn-ghost {
+  background: var(--ww-surface);
+  color: var(--ww-navy);
+  border-color: var(--ww-line);
+}
+.ww-btn-ghost:hover {
+  border-color: var(--ww-blue);
+  background: var(--ww-blue-soft);
+}
+.ww-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ---- hero ---- */
+.ww-hero {
+  background: radial-gradient(
+      120% 120% at 100% 0%,
+      var(--ww-blue-soft) 0%,
+      transparent 55%
+    ),
+    linear-gradient(180deg, #ffffff 0%, var(--ww-bg) 100%);
+  border-bottom: 1px solid var(--ww-line);
+}
+.ww-hero-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 56px 24px 44px;
+}
+.ww-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ww-gold-deep);
+  margin-bottom: 12px;
+}
+.ww-eyebrow::before {
+  content: '';
+  width: 22px;
+  height: 2px;
+  background: var(--ww-gold);
+  border-radius: 2px;
+}
+.ww-hero-title {
+  font-size: clamp(2.1rem, 5.5vw, 3.4rem);
+  color: var(--ww-navy);
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  font-weight: 800;
+  margin: 0 0 14px;
+  max-width: 18ch;
+}
+.ww-hero-sub {
+  font-size: clamp(1.05rem, 2.3vw, 1.28rem);
+  color: var(--ww-slate);
+  max-width: 60ch;
+  margin: 0 0 10px;
+}
+.ww-hero-emotional {
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  color: var(--ww-navy);
+  font-weight: 600;
+  margin: 0 0 20px;
+}
+.ww-corewarn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--ww-navy);
+  color: #fff;
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: clamp(0.98rem, 2vw, 1.1rem);
+  font-weight: 600;
+  margin-bottom: 24px;
+  max-width: 100%;
+}
+.ww-corewarn .ico {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--ww-gold);
+  color: #2a2205;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+/* ---- cards / sections ---- */
+.ww-card {
+  background: var(--ww-surface);
+  border: 1px solid var(--ww-line);
+  border-radius: 16px;
+  padding: 26px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+}
+.ww-h2 {
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  color: var(--ww-navy);
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  margin: 6px 0 10px;
+}
+.ww-muted {
+  color: var(--ww-slate);
+  margin: 0 0 18px;
+  max-width: 70ch;
+  line-height: 1.6;
+}
+.ww-realtor {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+}
+
+/* ---- share section ---- */
+.ww-linkrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--ww-blue-soft);
+  border: 1px solid var(--ww-blue-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.ww-link-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ww-slate-400);
+}
+.ww-link {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  color: var(--ww-navy);
+  font-weight: 600;
+  word-break: break-all;
+}
+.ww-note {
+  font-size: 12.5px;
+  color: var(--ww-slate-400);
+  margin: 14px 0 0;
+}
+
+/* ---- footer ---- */
+.ww-footer {
+  border-top: 1px solid var(--ww-line);
+  background: var(--ww-navy);
+  color: #cdd9ec;
+  padding: 28px 24px 44px;
+  margin-top: 8px;
+}
+.ww-footer-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+.ww-footer-brand {
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+}
+.ww-footer a {
+  color: var(--ww-gold);
+  text-decoration: none;
+}
+
+/* ---- embed route ---- */
+.ww-embed {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  background: var(--ww-bg);
+}
+.ww-embed-note {
+  text-align: center;
+  font-size: 12px;
+  color: var(--ww-slate-400);
+  margin: 0;
+}

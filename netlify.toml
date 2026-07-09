@@ -1,0 +1,14 @@
+# Netlify deployment config for the Wallet WCCM standalone site (wwccm.com).
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# SPA fallback: every route serves the built index.html so client-side routing
+# (/, /embed, etc.) works on direct hits and refreshes.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
