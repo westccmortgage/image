@@ -12,14 +12,12 @@ import { HERO, PHONE, PHONE_HREF, walletWccmConfig } from '../site/walletWccm';
  */
 export function AdvisorPage() {
   return (
-    <div className="ww-page">
+    <div className="ww-page ww-theme">
       {/* --- top bar --- */}
       <header className="ww-nav">
         <a className="ww-brand" href="/" aria-label="Wallet WCCM home">
-          <span className="ww-brand-mark" aria-hidden="true">W</span>
           <span className="ww-brand-text">
-            Wallet <b>WCCM</b>
-            <small>Powered by West Coast Capital Mortgage</small>
+            wallet wccm<small>Powered by West Coast Capital Mortgage</small>
           </span>
         </a>
         <div className="ww-nav-actions">
@@ -38,8 +36,12 @@ export function AdvisorPage() {
       {/* --- hero --- */}
       <section className="ww-hero">
         <div className="ww-hero-inner">
-          <span className="ww-eyebrow">{HERO.brand}</span>
-          <h1 className="ww-hero-title">{HERO.title}</h1>
+          <span className="ww-eyebrow">
+            {HERO.brand} · Cash-to-Close · West Coast Capital Mortgage
+          </span>
+          <h1 className="ww-hero-title">
+            AI Cash-to-Close <span className="ww-hero-accent">Advisor.</span>
+          </h1>
           <p className="ww-hero-sub">{HERO.subtitle}</p>
           <p className="ww-hero-emotional">{HERO.emotional}</p>
 
@@ -52,10 +54,10 @@ export function AdvisorPage() {
             <a className="ww-btn ww-btn-primary" href="#advisor">
               Review My Scenario
             </a>
-            <a className="ww-btn ww-btn-gold" href={PHONE_HREF}>
+            <a className="ww-btn ww-btn-outline" href={PHONE_HREF}>
               Talk to a Mortgage Broker
             </a>
-            <a className="ww-btn ww-btn-ghost" href={PHONE_HREF}>
+            <a className="ww-btn ww-btn-outline" href={PHONE_HREF}>
               Start Application
             </a>
           </div>

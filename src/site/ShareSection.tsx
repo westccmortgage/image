@@ -52,7 +52,7 @@ export function ShareSection() {
           {copied ? 'Link Copied ✓' : 'Copy Tool Link'}
         </button>
         <button
-          className="ww-btn ww-btn-gold"
+          className="ww-btn ww-btn-outline"
           type="button"
           onClick={shareWithBuyer}
         >

@@ -8,7 +8,7 @@ import { EMBED, SITE_URL, walletWccmConfig } from '../site/walletWccm';
  */
 export function EmbedPage() {
   return (
-    <div className="ww-embed">
+    <div className="ww-embed ww-theme">
       <CashToCloseWidget
         config={{
           ...walletWccmConfig,
