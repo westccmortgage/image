@@ -1,29 +1,27 @@
-/* Wallet WCCM standalone site chrome (wwccm.com).
-   Premium mortgage-strategy look: white / light background, navy / slate /
-   soft blue, subtle gold accent. Serious and clean — safe for realtors to send
-   to buyers. Mobile-first, no horizontal overflow. The Cash-to-Close module
-   ships its own scoped styles (its default theme is this same palette), so no
-   variable overrides are needed here. */
+/* Wallet WCCM standalone site (wwccm.com).
+   "Properly papered" editorial aesthetic: warm paper/bone background, near-black
+   ink, a muted warm-gray accent, heavy grotesque display type, and uppercase
+   letter-spaced monospace labels/buttons in sharp rectangles. Monochrome, with
+   the module's functional risk colors (red/amber) preserved for meaning.
+   Mobile-first, no horizontal overflow. */
 :root {
-  --ww-navy: #0f2444;
-  --ww-navy-800: #14315c;
-  --ww-slate: #475467;
-  --ww-slate-400: #94a3b8;
-  --ww-blue: #2f6fed;
-  --ww-blue-soft: #eaf1fd;
-  --ww-blue-border: #cfe0fb;
-  --ww-gold: #c8a24a;
-  --ww-gold-deep: #a9863a;
-  --ww-gold-soft: #f6efdd;
-  --ww-bg: #f7f9fc;
-  --ww-surface: #ffffff;
-  --ww-line: #e5ebf3;
-  --ww-ink: #101828;
+  --ww-paper: #f1efe8;
+  --ww-paper-2: #eae7dc;
+  --ww-surface: #faf9f3;
+  --ww-ink: #1a1712;
+  --ww-ink-btn: #14110c;
+  --ww-gray: #8a8477; /* warm-gray accent / second headline line */
+  --ww-muted: #6a6456;
+  --ww-line: #d9d4c5;
+  --ww-line-ink: #1a1712;
 
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    Helvetica, Arial, sans-serif;
+  --ww-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ww-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, Helvetica, Arial, sans-serif;
+
+  font-family: var(--ww-sans);
   color: var(--ww-ink);
-  background: var(--ww-bg);
+  background: var(--ww-paper);
   -webkit-font-smoothing: antialiased;
 }
 * {
@@ -39,11 +37,12 @@ a {
 .ww-page {
   min-height: 100vh;
   overflow-x: hidden;
+  background: var(--ww-paper);
 }
 .ww-shell {
-  max-width: 1120px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 8px 20px 8px;
+  padding: 12px 20px;
   display: grid;
   gap: 20px;
 }
@@ -54,68 +53,52 @@ a {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  padding: 14px 24px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--ww-line);
+  padding: 18px 24px;
+  background: var(--ww-paper);
+  border-bottom: 1.5px solid var(--ww-line-ink);
   position: sticky;
   top: 0;
   z-index: 20;
   flex-wrap: wrap;
 }
 .ww-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
   text-decoration: none;
-  color: var(--ww-navy);
-}
-.ww-brand-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 11px;
-  background: linear-gradient(135deg, var(--ww-navy), var(--ww-navy-800));
-  color: var(--ww-gold);
-  font-weight: 800;
-  font-size: 20px;
-  flex: 0 0 auto;
+  color: var(--ww-ink);
 }
 .ww-brand-text {
   display: flex;
   flex-direction: column;
-  font-size: 1.1rem;
-  font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
-}
-.ww-brand-text b {
-  color: var(--ww-navy);
+  font-size: 1.4rem;
   font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
 }
 .ww-brand-text small {
-  font-size: 10.5px;
+  font-family: var(--ww-mono);
+  font-size: 9.5px;
   font-weight: 500;
-  letter-spacing: 0.01em;
-  color: var(--ww-slate-400);
-  text-transform: none;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ww-muted);
+  margin-top: 6px;
 }
 .ww-nav-actions {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 20px;
   flex-wrap: wrap;
 }
 .ww-nav-link {
-  font-size: 14px;
+  font-family: var(--ww-mono);
+  font-size: 12px;
   font-weight: 500;
-  color: var(--ww-slate);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ww-muted);
   text-decoration: none;
 }
 .ww-nav-link:hover {
-  color: var(--ww-blue);
+  color: var(--ww-ink);
 }
 
 /* ---- buttons ---- */
@@ -123,47 +106,41 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 11px;
-  padding: 12px 20px;
-  font-size: 14.5px;
+  border-radius: 4px;
+  padding: 14px 22px;
+  font-family: var(--ww-mono);
+  font-size: 12.5px;
   font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
-  border: 1px solid transparent;
-  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.08s;
-  font-family: inherit;
+  border: 1.5px solid transparent;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.08s;
 }
 .ww-btn:active {
   transform: translateY(1px);
 }
 .ww-btn-sm {
-  padding: 9px 15px;
-  font-size: 13.5px;
+  padding: 10px 16px;
+  font-size: 11.5px;
 }
 .ww-btn-primary {
-  background: var(--ww-navy);
-  color: #fff;
-  box-shadow: 0 10px 22px -12px rgba(15, 36, 68, 0.7);
+  background: var(--ww-ink-btn);
+  color: #f6f4ec;
+  border-color: var(--ww-ink-btn);
 }
 .ww-btn-primary:hover {
-  background: var(--ww-navy-800);
+  background: #000;
 }
-.ww-btn-gold {
-  background: var(--ww-gold);
-  color: #2a2205;
-  box-shadow: 0 10px 22px -12px rgba(200, 162, 74, 0.75);
+.ww-btn-outline {
+  background: transparent;
+  color: var(--ww-ink);
+  border-color: var(--ww-line-ink);
 }
-.ww-btn-gold:hover {
-  background: var(--ww-gold-deep);
-}
-.ww-btn-ghost {
-  background: var(--ww-surface);
-  color: var(--ww-navy);
-  border-color: var(--ww-line);
-}
-.ww-btn-ghost:hover {
-  border-color: var(--ww-blue);
-  background: var(--ww-blue-soft);
+.ww-btn-outline:hover {
+  background: var(--ww-ink-btn);
+  color: #f6f4ec;
 }
 .ww-btn-row {
   display: flex;
@@ -173,164 +150,166 @@ a {
 
 /* ---- hero ---- */
 .ww-hero {
-  background: radial-gradient(
-      120% 120% at 100% 0%,
-      var(--ww-blue-soft) 0%,
-      transparent 55%
-    ),
-    linear-gradient(180deg, #ffffff 0%, var(--ww-bg) 100%);
+  background: var(--ww-paper);
   border-bottom: 1px solid var(--ww-line);
 }
 .ww-hero-inner {
-  max-width: 1120px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 56px 24px 44px;
+  padding: 60px 24px 48px;
 }
 .ww-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  display: block;
+  font-family: var(--ww-mono);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--ww-gold-deep);
-  margin-bottom: 12px;
-}
-.ww-eyebrow::before {
-  content: '';
-  width: 22px;
-  height: 2px;
-  background: var(--ww-gold);
-  border-radius: 2px;
+  color: var(--ww-muted);
+  margin-bottom: 22px;
 }
 .ww-hero-title {
-  font-size: clamp(2.1rem, 5.5vw, 3.4rem);
-  color: var(--ww-navy);
-  letter-spacing: -0.025em;
-  line-height: 1.05;
+  font-size: clamp(2.6rem, 8vw, 5rem);
+  color: var(--ww-ink);
+  letter-spacing: -0.04em;
+  line-height: 0.98;
   font-weight: 800;
-  margin: 0 0 14px;
-  max-width: 18ch;
+  margin: 0 0 22px;
+  max-width: 14ch;
+}
+.ww-hero-accent {
+  color: var(--ww-gray);
 }
 .ww-hero-sub {
-  font-size: clamp(1.05rem, 2.3vw, 1.28rem);
-  color: var(--ww-slate);
-  max-width: 60ch;
-  margin: 0 0 10px;
+  font-size: clamp(1.1rem, 2.4vw, 1.4rem);
+  color: var(--ww-muted);
+  max-width: 54ch;
+  line-height: 1.45;
+  margin: 0 0 12px;
 }
 .ww-hero-emotional {
-  font-size: clamp(1rem, 2vw, 1.15rem);
-  color: var(--ww-navy);
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  color: var(--ww-ink);
   font-weight: 600;
-  margin: 0 0 20px;
+  margin: 0 0 22px;
 }
 .ww-corewarn {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  background: var(--ww-navy);
-  color: #fff;
-  border-radius: 12px;
-  padding: 14px 18px;
-  font-size: clamp(0.98rem, 2vw, 1.1rem);
+  gap: 14px;
+  background: var(--ww-ink-btn);
+  color: #f6f4ec;
+  border-radius: 4px;
+  padding: 16px 20px;
+  font-size: clamp(0.98rem, 2vw, 1.12rem);
   font-weight: 600;
-  margin-bottom: 24px;
+  letter-spacing: -0.01em;
+  margin-bottom: 28px;
   max-width: 100%;
 }
 .ww-corewarn .ico {
   flex: 0 0 auto;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--ww-gold);
-  color: #2a2205;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: #f6f4ec;
+  color: var(--ww-ink-btn);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
+  font-family: var(--ww-mono);
+  font-weight: 700;
 }
 
 /* ---- cards / sections ---- */
 .ww-card {
   background: var(--ww-surface);
-  border: 1px solid var(--ww-line);
-  border-radius: 16px;
-  padding: 26px;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  border: 1.5px solid var(--ww-line-ink);
+  border-radius: 6px;
+  padding: 30px;
 }
 .ww-h2 {
-  font-size: clamp(1.35rem, 3vw, 1.8rem);
-  color: var(--ww-navy);
-  letter-spacing: -0.02em;
-  font-weight: 700;
-  margin: 6px 0 10px;
+  font-size: clamp(1.5rem, 3.4vw, 2.1rem);
+  color: var(--ww-ink);
+  letter-spacing: -0.03em;
+  font-weight: 800;
+  line-height: 1.02;
+  margin: 10px 0 12px;
 }
 .ww-muted {
-  color: var(--ww-slate);
-  margin: 0 0 18px;
-  max-width: 70ch;
+  color: var(--ww-muted);
+  margin: 0 0 20px;
+  max-width: 68ch;
   line-height: 1.6;
+  font-size: 1.02rem;
 }
-.ww-realtor {
-  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+.ww-realtor .ww-eyebrow,
+.ww-share .ww-eyebrow {
+  margin-bottom: 8px;
 }
 
 /* ---- share section ---- */
 .ww-linkrow {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   flex-wrap: wrap;
-  background: var(--ww-blue-soft);
-  border: 1px solid var(--ww-blue-border);
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 16px;
+  background: var(--ww-paper-2);
+  border: 1.5px solid var(--ww-line);
+  border-radius: 4px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
 }
 .ww-link-label {
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-family: var(--ww-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ww-slate-400);
+  color: var(--ww-muted);
 }
 .ww-link {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--ww-mono);
   font-size: 14px;
-  color: var(--ww-navy);
+  color: var(--ww-ink);
   font-weight: 600;
   word-break: break-all;
 }
 .ww-note {
-  font-size: 12.5px;
-  color: var(--ww-slate-400);
-  margin: 14px 0 0;
+  font-family: var(--ww-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+  color: var(--ww-muted);
+  margin: 16px 0 0;
 }
 
 /* ---- footer ---- */
 .ww-footer {
-  border-top: 1px solid var(--ww-line);
-  background: var(--ww-navy);
-  color: #cdd9ec;
-  padding: 28px 24px 44px;
-  margin-top: 8px;
+  border-top: 1.5px dashed var(--ww-line-ink);
+  background: var(--ww-paper);
+  padding: 28px 24px 46px;
+  margin-top: 16px;
 }
 .ww-footer-inner {
-  max-width: 1120px;
+  max-width: 1100px;
   margin: 0 auto;
   display: grid;
   gap: 6px;
-  font-size: 13px;
+  font-family: var(--ww-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  color: var(--ww-muted);
 }
 .ww-footer-brand {
-  color: #fff;
-  font-weight: 700;
-  font-size: 15px;
+  color: var(--ww-ink);
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 .ww-footer a {
-  color: var(--ww-gold);
-  text-decoration: none;
+  color: var(--ww-ink);
+  text-decoration: underline;
 }
 
 /* ---- embed route ---- */
@@ -341,11 +320,107 @@ a {
   justify-content: center;
   gap: 12px;
   padding: 20px;
-  background: var(--ww-bg);
+  background: var(--ww-paper);
 }
 .ww-embed-note {
   text-align: center;
-  font-size: 12px;
-  color: var(--ww-slate-400);
+  font-family: var(--ww-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--ww-muted);
   margin: 0;
+}
+
+/* =========================================================================
+   Re-theme the embedded Cash-to-Close module to the paper/ink/mono system.
+   We remap the module's CSS variables + a few targeted rules — the module
+   source stays brand-neutral. Applies on both the full page and /embed.
+   ========================================================================= */
+.ww-theme .ctc-root {
+  /* dominant dark surfaces → near-black ink block */
+  --ctc-navy: #1a1712;
+  --ctc-navy-800: #211d16;
+  --ctc-navy-700: #2a251d;
+
+  /* accent → warm gray (understated, monochrome) */
+  --ctc-gold: #8a8477;
+  --ctc-gold-soft: #e9e4d6;
+
+  /* neutral text ramp → warm */
+  --ctc-slate: #5c564a;
+  --ctc-slate-500: #6a6456;
+  --ctc-slate-400: #9a9282;
+  --ctc-ink: #1e1a14;
+  --ctc-ink-soft: #5c564a;
+
+  /* "blue" accent role → ink / warm neutrals (no blue) */
+  --ctc-blue: #2a251d;
+  --ctc-blue-soft: #eae6da;
+  --ctc-blue-border: #d9d4c5;
+
+  /* surfaces */
+  --ctc-bg: #f1efe8;
+  --ctc-surface: #faf9f3;
+  --ctc-surface-alt: #f3f1e8;
+  --ctc-line: #d9d4c5;
+  --ctc-panel: #eae6da;
+  --ctc-ai-bg-1: #faf9f3;
+  --ctc-ai-bg-2: #f2efe6;
+
+  /* text on the dark block */
+  --ctc-on-dark-soft: #d9d3c4;
+  --ctc-on-dark-faint: #a8a08c;
+
+  /* sharper corners to match the editorial rectangles */
+  --ctc-radius: 8px;
+  --ctc-radius-sm: 5px;
+}
+
+/* Neutralize the module's gold glow on dark surfaces (would add color). */
+.ww-theme .ctc-hero::after,
+.ww-theme .ctc-widget::after {
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.05),
+    transparent 70%
+  );
+}
+/* Make the dominant "cash to close" figure pop on the near-black card. */
+.ww-theme .ctc-hero-fig.accent .v {
+  color: #f3eede;
+}
+
+/* Module buttons adopt the uppercase mono / sharp-rectangle language. */
+.ww-theme .ctc-root .ctc-btn {
+  font-family: var(--ww-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  border: 1.5px solid transparent;
+  box-shadow: none;
+}
+.ww-theme .ctc-root .ctc-btn-primary {
+  background: var(--ww-ink-btn);
+  color: #f6f4ec;
+  border-color: var(--ww-ink-btn);
+}
+.ww-theme .ctc-root .ctc-btn-primary:hover {
+  background: #000;
+}
+/* The module's "gold" CTA becomes a paper outline button. */
+.ww-theme .ctc-root .ctc-btn-gold {
+  background: transparent;
+  color: var(--ww-ink);
+  border-color: var(--ww-line-ink);
+  box-shadow: none;
+}
+.ww-theme .ctc-root .ctc-btn-gold:hover {
+  background: var(--ww-ink-btn);
+  color: #f6f4ec;
+}
+.ww-theme .ctc-root .ctc-btn-ghost:hover {
+  border-color: var(--ww-line-ink);
+  background: var(--ww-paper-2);
 }
