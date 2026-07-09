@@ -424,3 +424,67 @@ a {
   border-color: var(--ww-line-ink);
   background: var(--ww-paper-2);
 }
+
+/* -------------------------------------------------------------------------
+   Strict monochrome: flatten risk warnings and badges to the paper/ink
+   system. Meaning is preserved through weight, borders, the black block for
+   the strong warning, and the label text itself — not color.
+   ------------------------------------------------------------------------- */
+.ww-theme .ctc-warn {
+  border-radius: 5px;
+}
+.ww-theme .ctc-warn.moderate {
+  background: var(--ww-paper-2);
+  border-color: var(--ww-line-ink);
+  color: var(--ww-ink);
+}
+.ww-theme .ctc-warn.strongwarn {
+  background: var(--ww-ink-btn);
+  border-color: var(--ww-ink-btn);
+  color: #f6f4ec;
+}
+/* Replace the coloured emoji marker with a monochrome mono "!" chip. */
+.ww-theme .ctc-warn .ico {
+  font-size: 0;
+  position: relative;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+}
+.ww-theme .ctc-warn .ico::before {
+  content: '!';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-family: var(--ww-mono);
+  font-weight: 700;
+  font-size: 14px;
+}
+.ww-theme .ctc-warn.moderate .ico::before {
+  background: var(--ww-ink);
+  color: var(--ww-paper);
+}
+.ww-theme .ctc-warn.strongwarn .ico::before {
+  background: #f6f4ec;
+  color: var(--ww-ink-btn);
+}
+
+/* Risk badges → monochrome chips (tier still named in the label text). */
+.ww-theme .ctc-badge {
+  background: var(--ww-paper-2);
+  color: var(--ww-ink);
+  border: 1px solid var(--ww-line-ink);
+  font-family: var(--ww-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 10.5px;
+}
+/* On the near-black result card, render the badge as an inverted chip. */
+.ww-theme .ctc-hero .ctc-badge {
+  background: rgba(246, 244, 236, 0.12);
+  color: #f6f4ec;
+  border-color: rgba(246, 244, 236, 0.4);
+}
