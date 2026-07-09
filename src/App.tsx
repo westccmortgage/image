@@ -1,18 +1,20 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { HomePage } from './pages/HomePage';
-import { CashToClosePage } from './pages/CashToClosePage';
+import { AdvisorPage } from './pages/AdvisorPage';
+import { EmbedPage } from './pages/EmbedPage';
 
 /**
- * Demo router. In a host site these routes would live inside that site's own
- * router. The advisor is mounted at both /tools/cash-to-close and
- * /calculators/cash-to-close per the module spec.
+ * Wallet WCCM standalone site routes.
+ *   /        → full AI Cash-to-Close Advisor
+ *   /embed   → compact embeddable widget
+ * Legacy aliases keep the module's documented tool routes working.
  */
 export function App() {
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/tools/cash-to-close" element={<CashToClosePage />} />
-      <Route path="/calculators/cash-to-close" element={<CashToClosePage />} />
+      <Route path="/" element={<AdvisorPage />} />
+      <Route path="/embed" element={<EmbedPage />} />
+      <Route path="/tools/cash-to-close" element={<AdvisorPage />} />
+      <Route path="/calculators/cash-to-close" element={<AdvisorPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

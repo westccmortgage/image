@@ -1,133 +1,71 @@
-# AI Cash-to-Close Advisor
+# Wallet WCCM · AI Cash-to-Close Advisor
 
-A reusable, AI-powered mortgage strategy module — **not** a basic calculator and
-**not** a standalone website. It is a self-contained React component set that
-drops into any existing mortgage site (California Mortgage, West Coast Capital
-Mortgage, WCCI, Before Jumbo Loan, and future Florida / Key West / boutique
-sites).
+Standalone single-purpose site for **wwccm.com**, powered by West Coast Capital
+Mortgage. Built for Netlify to deploy directly from this repository.
 
 > **Core message:** _Your down payment is not your total cash needed to close._
 
-**Primary product name:** AI Cash-to-Close Advisor
-**Alternative UI label:** Real Cash to Close Strategy Tool
+## Routes
+- **`/`** — the full Wallet WCCM AI Cash-to-Close Advisor
+- **`/embed`** — a compact, iframe-friendly widget version
+- `/tools/cash-to-close`, `/calculators/cash-to-close` — legacy aliases → `/`
 
----
+## Netlify deployment
+Config is in [`netlify.toml`](netlify.toml) (plus [`public/_redirects`](public/_redirects) for the SPA fallback):
 
-## Two modes
-
-| Mode | Component | Where it lives |
-| --- | --- | --- |
-| **Full Page** | `<CashToCloseAdvisor />` | Route `/tools/cash-to-close` (also `/calculators/cash-to-close`) |
-| **Embedded Widget** | `<CashToCloseWidget />` | A compact band inside any existing page (e.g. the homepage) |
-
-This repo also ships a small **demo app** (Vite + React Router) so you can see
-both modes running. The reusable module itself lives entirely under
-[`src/module/`](src/module) and has no dependency on the demo app.
-
----
-
-## Architecture
-
-```
-src/module/                     ← the reusable module (import from here)
-  index.ts                      ← public API (components + utils + types)
-  types.ts                      ← domain types
-  brand.ts                      ← BrandConfig + compliance disclaimer
-  calc/
-    cashToCloseCalculations.ts  ← DETERMINISTIC engine (all math)
-    format.ts                   ← currency / percent formatters
-  ai/
-    aiCashToCloseSummary.ts     ← LOCAL mock "AI" strategy generator
-  fixtures/
-    defaultScenario.ts          ← canonical demo/test scenario
-  components/
-    CashToCloseAdvisor.tsx       ← full-page mode
-    CashToCloseWidget.tsx        ← embedded widget mode
-    parts/                       ← ResultCard, CostBreakdown, AiSummaryPanel,
-                                   ScenarioComparison, ClosingDateSensitivity,
-                                   RiskWarning, InputsPanel, CtaBar, Disclaimer…
-  styles/advisor.css            ← scoped, self-contained styling (.ctc-* )
-  __tests__/                    ← calculation + AI summary tests
-
-src/pages/                      ← demo app pages (HomePage, CashToClosePage)
-src/App.tsx, src/main.tsx       ← demo router + entry
-```
-
-### Deterministic engine vs. AI
-- **All numbers** come from `calc/cashToCloseCalculations.ts` — pure, testable
-  functions. The AI layer never computes figures.
-- **`ai/aiCashToCloseSummary.ts`** is a **local mock generator**. It consumes the
-  computed result and dynamically composes a structured, plain-English strategy
-  summary (it is _not_ hardcoded to one example). When a live LLM endpoint is
-  ready, swap this one function to call the model with the same result object;
-  the `AiSummary` shape can stay identical.
-
----
-
-## Using the module in another site
-
-```tsx
-import {
-  CashToCloseAdvisor,
-  CashToCloseWidget,
-  type BrandConfig,
-} from '<path>/src/module';
-
-const brand: Partial<BrandConfig> = {
-  brandName: 'West Coast Capital Mortgage',
-  stateFocus: 'California',
-  showApplyButton: true,
-  showLeadForm: true,
-  applyHref: 'https://apply.example.com',
-  contactCTA: { label: 'Talk to a Mortgage Broker', href: 'tel:3106865053' },
-  primaryCTA: { label: 'Review My Cash to Close', href: '#breakdown' },
-  nmlsLine: 'West Coast Capital Mortgage · Broker 01385024 · NMLS ID 2775380',
-  // disclosureText defaults to the required compliance disclaimer
-};
-
-// Full page (mount at your /tools/cash-to-close route)
-<CashToCloseAdvisor config={brand} />
-
-// Embedded widget (drop into any existing page)
-<CashToCloseWidget config={brand} advisorHref="/tools/cash-to-close" />
-```
-
-All `BrandConfig` fields are optional and merge onto sensible defaults:
-`brandName`, `altLabel`, `primaryCTA`, `contactCTA`, `showApplyButton`,
-`applyHref`, `showLeadForm`, `leadFormAction`, `stateFocus`, `disclosureText`,
-`nmlsLine`, `phone`.
-
-The styling is namespaced under `.ctc-root` so it will not collide with a host
-site's CSS.
-
----
+| Setting | Value |
+| --- | --- |
+| Build command | `npm run build` |
+| Publish directory | `dist` |
+| Node version | 20 |
+| SPA redirect | `/*  →  /index.html  200` |
 
 ## Local commands
-
 ```bash
-npm install       # install dependencies
-npm run dev       # start the demo app (Vite dev server)
-npm run build     # type-check (tsc --noEmit) + production build
-npm run lint      # ESLint
-npm test          # run the Vitest suite (calculation + AI summary)
+npm install
+npm run dev      # local dev server
+npm run build    # tsc --noEmit + vite build  → dist/
+npm run lint     # ESLint
+npm test         # Vitest (default-scenario + AI-summary tests)
 ```
 
-Demo routes once running:
-- `/` — homepage with the **embedded widget**
-- `/tools/cash-to-close` — the **full advisor**
-- `/calculators/cash-to-close` — same advisor (alias)
+## Architecture — logic separated from UI
+```
+src/
+  module/                       ← reusable, brand-neutral Cash-to-Close module
+    calc/cashToCloseCalculations.ts   ← DETERMINISTIC engine (all math)
+    ai/aiCashToCloseSummary.ts        ← LOCAL dynamic AI-style summary (no live API)
+    fixtures/defaultScenario.ts       ← the canonical demo scenario
+    components/                       ← CashToCloseAdvisor, CashToCloseWidget, parts
+    styles/advisor.css                ← scoped module styles (navy/slate/gold)
+    __tests__/                        ← calculation + summary tests
+  site/                         ← Wallet WCCM site glue
+    walletWccm.ts                     ← brand config + copy
+    ShareSection.tsx                  ← "Use this tool anywhere"
+  pages/
+    AdvisorPage.tsx             ← route "/"     (hero + module + realtor + share)
+    EmbedPage.tsx               ← route "/embed"
+  App.tsx, main.tsx, index.css  ← router, entry, Wallet WCCM chrome
+public/
+  legacy/                       ← preserved original upload (business-card image)
+  _redirects                    ← Netlify SPA fallback
+```
 
----
+- **Calculation engine and AI summary are pure and UI-free** — the AI layer only
+  explains numbers the engine computes. `ai/aiCashToCloseSummary.ts` is a local
+  mock generator (dynamic, not hardcoded); swap that one function for a live LLM
+  later without touching the UI.
+
+## Default scenario (verified by tests)
+Purchase $1,399,000 · Loan $1,250,000 · Down $149,000 · Non-QM · 7.25% · LTV
+≈ 89.35% · Lender fees $20,535.00 · Third-party $5,773.20 · Government $200.00 ·
+Prepaids & escrow $20,873.02 · **Total cash to close $196,381.22** ·
+**Additional above down payment $47,381.22** · P&I ≈ $8,527.20 · Monthly housing
+≈ $10,315.18.
 
 ## Compliance
-
-Every rendering shows this disclaimer:
-
-> This tool is for educational and planning purposes only. It is not a Loan
-> Estimate, loan approval, or commitment to lend. Actual fees, rate, APR,
-> credits, prepaids, escrow reserves, mortgage insurance, and cash to close may
-> vary by lender, program, borrower profile, property, and closing date.
-
-Scenario comparisons never invent lender rates — they use safe qualitative
-labels (e.g. _Higher rate risk_, _Better pricing possible_, _Usually avoids
-PMI/MI_).
+Every rendering shows: _"This tool is for educational and planning purposes only.
+It is not a Loan Estimate, loan approval, or commitment to lend. Actual fees,
+rate, APR, credits, prepaids, escrow reserves, mortgage insurance, and cash to
+close may vary by lender, program, borrower profile, property, and closing
+date."_

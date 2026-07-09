@@ -1,9 +1,9 @@
 {
-  "name": "ai-cash-to-close-advisor",
+  "name": "wallet-wccm",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "AI Cash-to-Close Advisor — a reusable AI mortgage strategy module (full page + embedded widget) for West Coast Capital Mortgage and sibling brands.",
+  "description": "Wallet WCCM · AI Cash-to-Close Advisor — standalone site (wwccm.com), powered by West Coast Capital Mortgage. Built on a reusable, deterministic cash-to-close engine with a local AI-style strategy summary.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

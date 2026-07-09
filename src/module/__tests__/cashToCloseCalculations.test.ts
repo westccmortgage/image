@@ -120,7 +120,7 @@ describe('risk tiers', () => {
     expect(warning).toMatch(/PMI|MI|mortgage insurance/i); // PMI / MI risk
     expect(warning).toMatch(/pricing adjustment/i); // lender pricing adjustments
     expect(warning).toMatch(/monthly payment/i); // higher monthly payment
-    expect(warning).toMatch(/verified/i); // stronger need for verified funds
+    expect(warning).toMatch(/verified funds to close/i); // stronger need for verified funds
   });
 
   it('Non-QM above 85% LTV produces the strong Non-QM warning', () => {

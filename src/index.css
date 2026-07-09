@@ -1,38 +1,31 @@
-/* California Mortgage host-site chrome (californiamtg.com).
-   Warm editorial luxury palette taken from the live site: cream / ivory
-   background, antique bronze-gold accents, near-black serif display headings,
-   solid bronze buttons. The advisor module ships its own scoped styles and is
-   re-themed here purely by overriding its CSS variables (see .cm-page .ctc-root
-   at the bottom) — the module source stays brand-neutral. */
+/* Wallet WCCM standalone site chrome (wwccm.com).
+   Premium mortgage-strategy look: white / light background, navy / slate /
+   soft blue, subtle gold accent. Serious and clean — safe for realtors to send
+   to buyers. Mobile-first, no horizontal overflow. The Cash-to-Close module
+   ships its own scoped styles (its default theme is this same palette), so no
+   variable overrides are needed here. */
 :root {
-  --cm-cream: #f4ecdd;
-  --cm-cream-2: #efe5d2;
-  --cm-ivory: #faf4e8;
-  --cm-surface: #fffdf7;
-  --cm-espresso: #241c11;
-  --cm-espresso-2: #33281a;
-  --cm-ink: #2a2216;
-  --cm-ink-soft: #5c5140;
-  --cm-bronze: #9a7b3f;
-  --cm-bronze-deep: #806528;
-  --cm-bronze-soft: #f0e6cf;
-  --cm-line: #e4d8bd;
+  --ww-navy: #0f2444;
+  --ww-navy-800: #14315c;
+  --ww-slate: #475467;
+  --ww-slate-400: #94a3b8;
+  --ww-blue: #2f6fed;
+  --ww-blue-soft: #eaf1fd;
+  --ww-blue-border: #cfe0fb;
+  --ww-gold: #c8a24a;
+  --ww-gold-deep: #a9863a;
+  --ww-gold-soft: #f6efdd;
+  --ww-bg: #f7f9fc;
+  --ww-surface: #ffffff;
+  --ww-line: #e5ebf3;
+  --ww-ink: #101828;
 
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     Helvetica, Arial, sans-serif;
-  color: var(--cm-ink);
-  background: var(--cm-cream);
+  color: var(--ww-ink);
+  background: var(--ww-bg);
+  -webkit-font-smoothing: antialiased;
 }
-
-/* Elegant serif for display headings / brand, matching the live site. */
-.cm-serif,
-.cm-brand-text,
-.cm-hero h1,
-.cm-assistant-grid h2 {
-  font-family: 'Playfair Display', 'Cormorant Garamond', Georgia,
-    'Times New Roman', serif;
-}
-
 * {
   box-sizing: border-box;
 }
@@ -43,286 +36,316 @@ a {
   color: inherit;
 }
 
-.cm-page {
+.ww-page {
   min-height: 100vh;
-  background: var(--cm-cream);
+  overflow-x: hidden;
+}
+.ww-shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 8px 20px 8px;
+  display: grid;
+  gap: 20px;
 }
 
 /* ---- nav ---- */
-.cm-nav {
+.ww-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  padding: 16px 24px;
-  background: rgba(250, 244, 232, 0.9);
+  padding: 14px 24px;
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--cm-line);
+  border-bottom: 1px solid var(--ww-line);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 20;
   flex-wrap: wrap;
 }
-.cm-brand {
+.ww-brand {
   display: inline-flex;
   align-items: center;
   gap: 12px;
   text-decoration: none;
-  color: var(--cm-espresso);
+  color: var(--ww-navy);
 }
-.cm-brand-mark {
+.ww-brand-mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  border: 1.5px solid var(--cm-bronze);
-  color: var(--cm-bronze);
-  background: var(--cm-ivory);
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, var(--ww-navy), var(--ww-navy-800));
+  color: var(--ww-gold);
+  font-weight: 800;
+  font-size: 20px;
   flex: 0 0 auto;
 }
-.cm-brand-text {
-  font-size: 1.15rem;
+.ww-brand-text {
+  display: flex;
+  flex-direction: column;
+  font-size: 1.1rem;
   font-weight: 600;
-  line-height: 1.05;
-  letter-spacing: 0.01em;
-  color: var(--cm-espresso);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
 }
-.cm-links {
+.ww-brand-text b {
+  color: var(--ww-navy);
+  font-weight: 800;
+}
+.ww-brand-text small {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--ww-slate-400);
+  text-transform: none;
+}
+.ww-nav-actions {
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.ww-nav-link {
   font-size: 14px;
   font-weight: 500;
-  flex-wrap: wrap;
-}
-.cm-links a {
+  color: var(--ww-slate);
   text-decoration: none;
-  color: var(--cm-ink-soft);
 }
-.cm-links a:hover {
-  color: var(--cm-bronze-deep);
-}
-.cm-link-accent {
-  color: var(--cm-espresso) !important;
-  font-weight: 700 !important;
-  position: relative;
-}
-.cm-link-accent::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -4px;
-  height: 2px;
-  background: var(--cm-bronze);
-  border-radius: 2px;
-}
-.cm-nav-cta {
-  font-weight: 700 !important;
-  color: #fff !important;
-  background: var(--cm-bronze);
-  padding: 9px 16px;
-  border-radius: 10px;
-}
-.cm-nav-cta:hover {
-  background: var(--cm-bronze-deep);
-}
-
-/* ---- hero ---- */
-.cm-hero {
-  background: linear-gradient(180deg, var(--cm-ivory) 0%, var(--cm-cream) 100%);
-  border-bottom: 1px solid var(--cm-line);
-}
-.cm-hero-inner {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 64px 24px 44px;
-}
-.cm-eyebrow {
-  display: inline-block;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--cm-bronze);
-  margin-bottom: 14px;
-}
-.cm-hero h1 {
-  font-size: clamp(2.4rem, 6vw, 3.8rem);
-  color: var(--cm-espresso);
-  letter-spacing: -0.01em;
-  line-height: 1.05;
-  font-weight: 600;
-  margin: 0 0 18px;
-  max-width: 16ch;
-}
-.cm-hero h1 .accent {
-  color: var(--cm-bronze);
-}
-.cm-hero p {
-  font-size: clamp(1.05rem, 2.2vw, 1.2rem);
-  color: var(--cm-ink-soft);
-  max-width: 60ch;
-  margin: 0 0 26px;
-}
-.cm-hero-cta {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+.ww-nav-link:hover {
+  color: var(--ww-blue);
 }
 
 /* ---- buttons ---- */
-.cm-btn {
+.ww-btn {
   display: inline-flex;
   align-items: center;
-  border-radius: 12px;
-  padding: 13px 22px;
-  font-size: 15px;
+  justify-content: center;
+  border-radius: 11px;
+  padding: 12px 20px;
+  font-size: 14.5px;
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.08s;
+  font-family: inherit;
 }
-.cm-btn-primary {
-  background: var(--cm-bronze);
+.ww-btn:active {
+  transform: translateY(1px);
+}
+.ww-btn-sm {
+  padding: 9px 15px;
+  font-size: 13.5px;
+}
+.ww-btn-primary {
+  background: var(--ww-navy);
   color: #fff;
-  box-shadow: 0 10px 22px -12px rgba(128, 101, 40, 0.8);
+  box-shadow: 0 10px 22px -12px rgba(15, 36, 68, 0.7);
 }
-.cm-btn-primary:hover {
-  background: var(--cm-bronze-deep);
+.ww-btn-primary:hover {
+  background: var(--ww-navy-800);
 }
-.cm-btn-ghost {
-  background: var(--cm-surface);
-  color: var(--cm-espresso);
-  border-color: var(--cm-line);
+.ww-btn-gold {
+  background: var(--ww-gold);
+  color: #2a2205;
+  box-shadow: 0 10px 22px -12px rgba(200, 162, 74, 0.75);
 }
-.cm-btn-ghost:hover {
-  border-color: var(--cm-bronze);
-  color: var(--cm-bronze-deep);
+.ww-btn-gold:hover {
+  background: var(--ww-gold-deep);
+}
+.ww-btn-ghost {
+  background: var(--ww-surface);
+  color: var(--ww-navy);
+  border-color: var(--ww-line);
+}
+.ww-btn-ghost:hover {
+  border-color: var(--ww-blue);
+  background: var(--ww-blue-soft);
+}
+.ww-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
-/* ---- generic section wrapper ---- */
-.cm-section {
+/* ---- hero ---- */
+.ww-hero {
+  background: radial-gradient(
+      120% 120% at 100% 0%,
+      var(--ww-blue-soft) 0%,
+      transparent 55%
+    ),
+    linear-gradient(180deg, #ffffff 0%, var(--ww-bg) 100%);
+  border-bottom: 1px solid var(--ww-line);
+}
+.ww-hero-inner {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 28px 24px;
+  padding: 56px 24px 44px;
 }
-
-/* ---- mortgage assistant ---- */
-.cm-assistant {
-  padding-top: 12px;
-  padding-bottom: 56px;
-}
-.cm-assistant-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-  gap: 32px;
+.ww-eyebrow {
+  display: inline-flex;
   align-items: center;
-  background: var(--cm-surface);
-  border: 1px solid var(--cm-line);
-  border-radius: 18px;
-  padding: 34px;
-  box-shadow: 0 20px 44px -30px rgba(53, 40, 18, 0.4);
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ww-gold-deep);
+  margin-bottom: 12px;
 }
-@media (max-width: 760px) {
-  .cm-assistant-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.ww-eyebrow::before {
+  content: '';
+  width: 22px;
+  height: 2px;
+  background: var(--ww-gold);
+  border-radius: 2px;
 }
-.cm-assistant-grid h2 {
-  font-size: clamp(1.5rem, 3vw, 2.1rem);
-  color: var(--cm-espresso);
-  letter-spacing: -0.01em;
+.ww-hero-title {
+  font-size: clamp(2.1rem, 5.5vw, 3.4rem);
+  color: var(--ww-navy);
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  font-weight: 800;
+  margin: 0 0 14px;
+  max-width: 18ch;
+}
+.ww-hero-sub {
+  font-size: clamp(1.05rem, 2.3vw, 1.28rem);
+  color: var(--ww-slate);
+  max-width: 60ch;
+  margin: 0 0 10px;
+}
+.ww-hero-emotional {
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  color: var(--ww-navy);
   font-weight: 600;
-  margin: 0 0 12px;
+  margin: 0 0 20px;
 }
-.cm-assistant-grid p {
-  color: var(--cm-ink-soft);
-  margin: 0 0 22px;
-}
-.cm-assistant-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 10px;
-}
-.cm-assistant-list li {
-  background: var(--cm-bronze-soft);
-  color: var(--cm-espresso);
+.ww-corewarn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--ww-navy);
+  color: #fff;
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: clamp(0.98rem, 2vw, 1.1rem);
   font-weight: 600;
-  font-size: 14px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  position: relative;
-  padding-left: 34px;
+  margin-bottom: 24px;
+  max-width: 100%;
 }
-.cm-assistant-list li::before {
-  content: '✓';
-  position: absolute;
-  left: 14px;
-  color: var(--cm-bronze);
+.ww-corewarn .ico {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--ww-gold);
+  color: #2a2205;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 800;
 }
 
-/* ---- footer ---- */
-.cm-footer {
-  border-top: 1px solid var(--cm-line);
-  background: var(--cm-ivory);
-  padding: 28px 24px 48px;
-  color: var(--cm-ink-soft);
-  font-size: 13px;
+/* ---- cards / sections ---- */
+.ww-card {
+  background: var(--ww-surface);
+  border: 1px solid var(--ww-line);
+  border-radius: 16px;
+  padding: 26px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
 }
-.cm-footer-inner {
+.ww-h2 {
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  color: var(--ww-navy);
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  margin: 6px 0 10px;
+}
+.ww-muted {
+  color: var(--ww-slate);
+  margin: 0 0 18px;
+  max-width: 70ch;
+  line-height: 1.6;
+}
+.ww-realtor {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+}
+
+/* ---- share section ---- */
+.ww-linkrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--ww-blue-soft);
+  border: 1px solid var(--ww-blue-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.ww-link-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ww-slate-400);
+}
+.ww-link {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  color: var(--ww-navy);
+  font-weight: 600;
+  word-break: break-all;
+}
+.ww-note {
+  font-size: 12.5px;
+  color: var(--ww-slate-400);
+  margin: 14px 0 0;
+}
+
+/* ---- footer ---- */
+.ww-footer {
+  border-top: 1px solid var(--ww-line);
+  background: var(--ww-navy);
+  color: #cdd9ec;
+  padding: 28px 24px 44px;
+  margin-top: 8px;
+}
+.ww-footer-inner {
   max-width: 1120px;
   margin: 0 auto;
   display: grid;
-  gap: 4px;
+  gap: 6px;
+  font-size: 13px;
 }
-.cm-footer-inner div:first-child {
-  color: var(--cm-espresso);
+.ww-footer-brand {
+  color: #fff;
   font-weight: 700;
-  font-family: 'Playfair Display', Georgia, serif;
   font-size: 15px;
 }
+.ww-footer a {
+  color: var(--ww-gold);
+  text-decoration: none;
+}
 
-/* =========================================================================
-   California Mortgage theme for the embedded advisor module.
-   We only remap the module's CSS variables — no module source is touched.
-   ========================================================================= */
-.cm-page .ctc-root {
-  /* brand */
-  --ctc-navy: #2a2114; /* dark espresso for dominant cards / headers */
-  --ctc-navy-800: #382b1a;
-  --ctc-navy-700: #4a3a20; /* warm gradient stop (replaces the blue) */
-  --ctc-gold: #9a7b3f; /* antique bronze accent */
-  --ctc-gold-soft: #f2e8d2;
-
-  /* slate / ink → warm neutrals */
-  --ctc-slate: #5c5140;
-  --ctc-slate-500: #6f6249;
-  --ctc-slate-400: #9a8c6f;
-  --ctc-ink: #2a2216;
-  --ctc-ink-soft: #5c5140;
-
-  /* "blue" accent role → bronze so nothing reads as soft blue */
-  --ctc-blue: #8f7132;
-  --ctc-blue-soft: #f2e8d2;
-  --ctc-blue-border: #e2d3ad;
-
-  /* surfaces */
-  --ctc-bg: #f4ecdd;
-  --ctc-surface: #fffdf7;
-  --ctc-surface-alt: #f9f2e3;
-  --ctc-line: #e4d8bd;
-  --ctc-panel: #efe5d0;
-  --ctc-ai-bg-1: #fffdf7;
-  --ctc-ai-bg-2: #f6eeda;
-
-  /* text on dark espresso surfaces */
-  --ctc-on-dark-soft: #e6d9bf;
-  --ctc-on-dark-faint: #b8a883;
+/* ---- embed route ---- */
+.ww-embed {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  background: var(--ww-bg);
+}
+.ww-embed-note {
+  text-align: center;
+  font-size: 12px;
+  color: var(--ww-slate-400);
+  margin: 0;
 }
