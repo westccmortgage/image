@@ -2,10 +2,19 @@ import { useState } from 'react';
 import { SITE_URL } from './walletWccm';
 
 /**
- * "Use this tool anywhere" — copy link + share-with-buyer, plus an embed note.
- * Clipboard / Web Share are progressive: they no-op gracefully where absent.
+ * Compact share block — Copy Link + Share With Buyer. Clipboard / Web Share are
+ * progressive: they no-op gracefully where absent. Copy is reusable for the
+ * realtor block and the general "use anywhere" block via title/subtitle props.
  */
-export function ShareSection() {
+export function ShareSection({
+  title = 'Send this before your buyer writes an offer.',
+  subtitle,
+  id = 'share',
+}: {
+  title?: string;
+  subtitle?: string;
+  id?: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   const copyLink = async () => {
@@ -29,27 +38,19 @@ export function ShareSection() {
         await navigator.share(shareData);
         return;
       } catch {
-        /* user cancelled — fall through to copy */
+        /* cancelled — fall through to copy */
       }
     }
     void copyLink();
   };
 
   return (
-    <section className="ww-card ww-share" id="share">
-      <h2 className="ww-h2">Use this tool anywhere</h2>
-      <p className="ww-muted">
-        Share the Wallet WCCM AI Cash-to-Close Advisor with buyers and partners.
-      </p>
-
-      <div className="ww-linkrow">
-        <span className="ww-link-label">Direct link</span>
-        <code className="ww-link">{SITE_URL}</code>
-      </div>
-
+    <section className="ww-share" id={id}>
+      <p className="ww-share-title">{title}</p>
+      {subtitle ? <p className="ww-share-sub">{subtitle}</p> : null}
       <div className="ww-btn-row">
         <button className="ww-btn ww-btn-primary" type="button" onClick={copyLink}>
-          {copied ? 'Link Copied ✓' : 'Copy Tool Link'}
+          {copied ? 'Link copied' : 'Copy Link'}
         </button>
         <button
           className="ww-btn ww-btn-outline"
@@ -59,10 +60,6 @@ export function ShareSection() {
           Share With Buyer
         </button>
       </div>
-
-      <p className="ww-note">
-        Embedding code can be added later for partner websites.
-      </p>
     </section>
   );
 }

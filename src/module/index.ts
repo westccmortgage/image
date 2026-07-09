@@ -37,10 +37,11 @@ export {
 } from './calc/format';
 
 // AI strategy summary generator (local mock; swap for a live LLM later)
-export { generateAiSummary } from './ai/aiCashToCloseSummary';
+export { generateAiSummary, generateAiTakeaway } from './ai/aiCashToCloseSummary';
 export type {
   AiSummary,
   AiSummarySection,
+  AiTakeaway,
 } from './ai/aiCashToCloseSummary';
 
 // Brand configuration
