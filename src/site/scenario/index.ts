@@ -23,6 +23,8 @@ export {
   humanCaptured,
 } from './converse';
 export type { Intent, ReplyNumbers, ReplyInput } from './converse';
+export { askLiveBrain, liveBrainDisabled } from './liveBrain';
+export type { LiveBrainRequest, LiveBrainNumbers } from './liveBrain';
 export {
   matchLoanPaths,
   estimateCashToClose,
