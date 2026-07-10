@@ -6,6 +6,8 @@ import {
   missingRequired,
   nextQuestions,
   buildLead,
+  encodeNetlifyForm,
+  NETLIFY_FORM_NAME,
   CONTACT_FIELDS,
 } from '../index';
 
@@ -138,5 +140,20 @@ describe('5. lead submission object is complete', () => {
     for (const banned of ['ssn', 'dob', 'accountNumber', 'routing']) {
       expect(keys).not.toContain(banned);
     }
+  });
+
+  it('encodes cleanly for the Netlify Forms (email) adapter', () => {
+    const body = encodeNetlifyForm(NETLIFY_FORM_NAME, lead);
+    const params = new URLSearchParams(body);
+    expect(params.get('form-name')).toBe('scenario-lead');
+    expect(params.get('email')).toBe('jane@example.com');
+    expect(params.get('purchase_price')).toBe('2000000');
+    expect(params.get('occupancy')).toBe('primary');
+    // full structured object is preserved for downstream/CRM use
+    expect(JSON.parse(params.get('scenario_json') || '{}').parsedScenario.state).toBe(
+      'California',
+    );
+    // never leaks sensitive keys
+    expect(body.toLowerCase()).not.toContain('ssn');
   });
 });

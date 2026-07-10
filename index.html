@@ -17,6 +17,35 @@
     />
   </head>
   <body>
+    <!--
+      Hidden static form so Netlify detects "scenario-lead" at build time and
+      captures JS submissions. Configure the recipient in:
+      Netlify → Forms → scenario-lead → Form notifications → Email notification.
+      No API keys or server code required.
+    -->
+    <form name="scenario-lead" data-netlify="true" netlify-honeypot="bot-field" hidden>
+      <input type="text" name="name" />
+      <input type="text" name="phone" />
+      <input type="email" name="email" />
+      <input type="text" name="purchase_price" />
+      <input type="text" name="down_payment" />
+      <input type="text" name="state" />
+      <input type="text" name="zip_or_county" />
+      <input type="text" name="occupancy" />
+      <input type="text" name="employment" />
+      <input type="text" name="income_doc" />
+      <input type="text" name="goal" />
+      <input type="text" name="fico" />
+      <input type="text" name="loan_paths" />
+      <input type="text" name="cash_to_close" />
+      <textarea name="strategy_summary"></textarea>
+      <input type="text" name="missing_required" />
+      <input type="text" name="source_page" />
+      <textarea name="original_message"></textarea>
+      <textarea name="scenario_json"></textarea>
+      <input name="bot-field" />
+    </form>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

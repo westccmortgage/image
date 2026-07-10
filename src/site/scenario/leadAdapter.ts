@@ -144,6 +144,74 @@ export function createWebhookAdapter(url?: string): LeadSubmissionAdapter {
   };
 }
 
+// --- Netlify Forms (email) adapter -----------------------------------------
+// Active email path today. Netlify captures the POST and emails it to the
+// address configured in: Netlify → Forms → the "scenario-lead" form →
+// Form notifications → Add notification → Email. No API keys or server code.
+// The hidden static form in index.html lets Netlify detect the form at build.
+export const NETLIFY_FORM_NAME = 'scenario-lead';
+
+/** Flatten a lead into the Netlify form fields (urlencoded). Pure/testable. */
+export function encodeNetlifyForm(
+  formName: string,
+  lead: LeadSubmission,
+): string {
+  const f = lead.formFields;
+  const fields: Record<string, string> = {
+    'form-name': formName,
+    name: f.name ?? '',
+    phone: f.phone ?? '',
+    email: f.email ?? '',
+    purchase_price: f.purchasePrice != null ? String(f.purchasePrice) : '',
+    down_payment: f.downPayment != null ? String(f.downPayment) : '',
+    state: f.state ?? '',
+    zip_or_county: f.zipOrCounty ?? '',
+    occupancy: f.occupancy ?? '',
+    employment: f.employmentType ?? '',
+    income_doc: f.incomeDocPath ?? '',
+    goal: f.borrowerGoal ?? '',
+    fico: f.fico != null ? String(f.fico) : '',
+    loan_paths: lead.loanPaths.map((p) => p.name).join(', '),
+    cash_to_close:
+      lead.cashToCloseEstimate != null
+        ? String(lead.cashToCloseEstimate.estimatedCashToClose)
+        : '',
+    strategy_summary: lead.strategySummary.join(' | '),
+    missing_required: lead.missingFields.required.join(', '),
+    source_page: lead.sourcePage,
+    original_message: lead.originalMessage,
+    scenario_json: JSON.stringify(lead),
+  };
+  return new URLSearchParams(fields).toString();
+}
+
+export function createNetlifyFormsAdapter(opts?: {
+  formName?: string;
+  action?: string;
+}): LeadSubmissionAdapter {
+  const formName = opts?.formName ?? NETLIFY_FORM_NAME;
+  const action = opts?.action ?? '/';
+  return {
+    name: 'netlify-forms',
+    async submit(lead) {
+      try {
+        const res = await fetch(action, {
+          method: 'POST',
+          headers: { 'content-type': 'application/x-www-form-urlencoded' },
+          body: encodeNetlifyForm(formName, lead),
+        });
+        return {
+          ok: res.ok,
+          adapter: 'netlify-forms',
+          error: res.ok ? undefined : `HTTP ${res.status}`,
+        };
+      } catch (e) {
+        return { ok: false, error: String(e), adapter: 'netlify-forms' };
+      }
+    },
+  };
+}
+
 /** Placeholder adapters — implement when the backend is chosen. */
 export function createEmailAdapter(): LeadSubmissionAdapter {
   return notConfigured('email');
@@ -170,8 +238,27 @@ function notConfigured(name: string): LeadSubmissionAdapter {
   };
 }
 
-/** The adapter the app uses today. Swap for a real one when a backend exists. */
-export const defaultLeadAdapter: LeadSubmissionAdapter = createLocalLogAdapter();
+/**
+ * The adapter the app uses today: submit via Netlify Forms (→ email
+ * notification, configured in the Netlify dashboard). If that POST fails
+ * (e.g. local dev, or Netlify not reachable), fall back to the local/log
+ * adapter so a lead is never silently lost.
+ */
+export function createDefaultAdapter(): LeadSubmissionAdapter {
+  const primary = createNetlifyFormsAdapter();
+  const fallback = createLocalLogAdapter();
+  return {
+    name: 'netlify-forms+local',
+    async submit(lead) {
+      const r = await primary.submit(lead);
+      if (r.ok) return r;
+      const fb = await fallback.submit(lead);
+      return { ...fb, error: r.error ?? fb.error };
+    },
+  };
+}
+
+export const defaultLeadAdapter: LeadSubmissionAdapter = createDefaultAdapter();
 
 export async function submitLead(
   lead: LeadSubmission,
