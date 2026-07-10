@@ -78,6 +78,23 @@ export type {
   BuildDocumentReviewContext,
 } from './documentReview';
 export {
+  deliverDocumentReview,
+  buildBrokerNotification,
+  resolveStoragePlan,
+  createDevSimStorage,
+} from './documentDelivery';
+export type {
+  UploadFile,
+  StoredFileRef,
+  StorageAdapter,
+  Notifier,
+  BrokerNotification,
+  DeliveryInput,
+  DeliveryResult,
+  StoragePlan,
+  StorageProviderName,
+} from './documentDelivery';
+export {
   buildLead,
   submitLead,
   postNetlifyForm,

@@ -236,8 +236,11 @@ export function createDefaultDocumentReviewAdapter(): DocumentReviewSubmissionAd
         // deployed at all. Both mean "not configured for real file delivery".
         if (res.status === 501 || res.status === 404) return notConfigured(payload, files);
         if (!res.ok) return { ok: false, adapter: 'netlify-fn', error: `HTTP ${res.status}` };
-        const data = (await res.json().catch(() => ({}))) as { id?: string };
-        return { ok: true, id: data.id, adapter: 'netlify-fn' };
+        // Success is authoritative: the function only returns 200 after the
+        // files were stored AND the broker notification was sent. `dev` is set
+        // when the server used a labeled development simulation.
+        const data = (await res.json().catch(() => ({}))) as { id?: string; dev?: boolean };
+        return { ok: true, id: data.id, adapter: 'netlify-fn', dev: !!data.dev };
       } catch (e) {
         return notConfigured(payload, files, String(e));
       }
