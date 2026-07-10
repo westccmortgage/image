@@ -578,6 +578,288 @@ a {
   text-decoration: underline;
 }
 
+/* ---- text link ---- */
+.ww-textlink {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ww-muted);
+  text-decoration: none;
+  border-bottom: 1px solid var(--ww-line);
+  align-self: flex-start;
+  padding-bottom: 2px;
+}
+.ww-textlink:hover {
+  color: var(--ww-ink);
+  border-color: var(--ww-ink);
+}
+
+/* =========================================================================
+   AI Mortgage Strategy Advisor (/strategy) — conversation + live profile.
+   ========================================================================= */
+.sa-shell {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 20px 18px 48px;
+}
+.sa-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+@media (min-width: 920px) {
+  .sa-grid {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+}
+
+/* conversation */
+.sa-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.sa-chat-head .sa-title {
+  font-size: clamp(1.6rem, 4.5vw, 2.3rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 8px 0 8px;
+}
+.sa-sub {
+  font-size: 14.5px;
+  color: var(--ww-muted);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 56ch;
+}
+.sa-stream {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sa-msg {
+  border-radius: 14px;
+  padding: 14px 16px;
+  max-width: 92%;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.sa-msg p {
+  margin: 0 0 6px;
+}
+.sa-msg p:last-child {
+  margin-bottom: 0;
+}
+.sa-ai {
+  background: var(--ww-surface);
+  border: 1px solid var(--ww-line);
+  align-self: flex-start;
+  border-bottom-left-radius: 5px;
+}
+.sa-user {
+  background: var(--ww-ink-btn);
+  color: #faf7ef;
+  align-self: flex-end;
+  border-bottom-right-radius: 5px;
+}
+.sa-snap-h {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  font-size: 15.5px;
+}
+
+/* composer */
+.sa-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sa-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sa-chip {
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ww-ink);
+  background: var(--ww-surface);
+  border: 1px solid var(--ww-line);
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.sa-chip:hover {
+  border-color: var(--ww-ink);
+}
+.sa-inputrow,
+.sa-contact-row {
+  display: flex;
+  gap: 10px;
+}
+.sa-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--ww-surface);
+  border: 1px solid var(--ww-line);
+  border-radius: 14px;
+  padding: 16px;
+}
+.sa-input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--ww-ink);
+  background: #fff;
+  border: 1px solid var(--ww-line);
+  border-radius: 10px;
+  outline: none;
+}
+.sa-input:focus {
+  border-color: var(--ww-ink);
+}
+.sa-inputrow .ww-btn,
+.sa-contact .ww-btn {
+  flex: 0 0 auto;
+}
+.sa-disclaimer {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ww-muted);
+  margin: 2px 0 0;
+}
+.sa-done {
+  font-size: 13px;
+  color: var(--ww-muted);
+}
+.sa-done-id {
+  font-family: var(--ww-mono);
+}
+
+/* live profile card */
+.sa-profile {
+  background: var(--ww-surface);
+  border: 1px solid var(--ww-line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+@media (min-width: 920px) {
+  .sa-profile {
+    position: sticky;
+    top: 80px;
+  }
+}
+.sa-profile > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 16px 18px;
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+.sa-profile > summary::-webkit-details-marker {
+  display: none;
+}
+.sa-profile > summary b {
+  font-family: var(--ww-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ww-muted);
+}
+@media (min-width: 920px) {
+  /* On desktop the profile is a static card, not a toggle. */
+  .sa-profile > summary {
+    pointer-events: none;
+  }
+}
+.sa-profile-body {
+  padding: 0 18px 18px;
+}
+.sa-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ww-paper-2);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.sa-progress span {
+  display: block;
+  height: 100%;
+  background: var(--ww-ink);
+  transition: width 0.25s ease;
+}
+.sa-sec-h {
+  font-family: var(--ww-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ww-muted);
+  margin: 14px 0 8px;
+}
+.sa-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.sa-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 13.5px;
+}
+.sa-list li span {
+  color: var(--ww-muted);
+}
+.sa-list li b {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.sa-list li em {
+  font-style: normal;
+  font-family: var(--ww-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ww-muted);
+  border: 1px solid var(--ww-line);
+  border-radius: 5px;
+  padding: 2px 7px;
+}
+.sa-need li em {
+  color: var(--ww-ink);
+  border-color: var(--ww-ink);
+}
+.sa-empty {
+  font-size: 13px;
+  color: var(--ww-muted);
+  margin: 0;
+}
+.sa-next {
+  margin-top: 16px;
+  border-top: 1px dashed var(--ww-line);
+  padding-top: 12px;
+}
+.sa-next p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 /* ---- embed route ---- */
 .ww-embed {
   min-height: 100vh;

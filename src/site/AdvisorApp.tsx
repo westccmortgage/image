@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   calculateCashToClose,
   buildDownPaymentScenarios,
@@ -127,6 +128,9 @@ export function AdvisorApp({ config: configOverrides }: { config?: Partial<Brand
             Share With Buyer
           </a>
         </div>
+        <Link className="ww-textlink" to="/strategy">
+          Prefer to talk it through? Try the AI Strategy Advisor →
+        </Link>
       </section>
 
       {/* ---------- Plain-language result ---------- */}
