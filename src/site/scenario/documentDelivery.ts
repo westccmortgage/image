@@ -36,6 +36,13 @@ export interface StorageAdapter {
   name: string;
   /** Store one file securely; return a reference. MUST throw on failure. */
   store(file: UploadFile, key: string): Promise<StoredFileRef>;
+  /**
+   * Best-effort delete of a previously stored object — used to clean up
+   * orphaned files when the broker notification fails after storage. Optional:
+   * a provider that can't delete simply omits it (keys are then logged for
+   * manual reconciliation).
+   */
+  remove?(key: string): Promise<void>;
   /** True only for the labeled development simulation (nothing really stored). */
   dev?: boolean;
 }
@@ -99,6 +106,14 @@ export interface DeliveryResult {
   references?: StoredFileRef[];
   /** True only when a labeled development simulation was used. */
   dev?: boolean;
+  /**
+   * On a notify failure: whether the stored (now orphaned) files were removed.
+   * true = all cleaned up; false = some could not be removed (see orphanedKeys
+   * for manual reconciliation).
+   */
+  cleanedUp?: boolean;
+  /** Storage keys left behind when cleanup could not remove them. */
+  orphanedKeys?: string[];
 }
 
 /** Build the broker notification from the submission + stored references. */
@@ -163,10 +178,44 @@ export async function deliverDocumentReview(args: {
   try {
     await notify.send(notification);
   } catch (e) {
-    return { ok: false, stage: 'notify', error: String(e) };
+    // Notification failed: the stored files are now orphaned (the borrower will
+    // NOT be told they were received). Best-effort clean them up so we don't
+    // leave documents behind with no delivery.
+    const cleanup = await cleanupStored(storage, references);
+    return {
+      ok: false,
+      stage: 'notify',
+      error: String(e),
+      references,
+      cleanedUp: cleanup.cleanedUp,
+      orphanedKeys: cleanup.orphanedKeys,
+    };
   }
 
   return { ok: true, references, dev: storage.dev };
+}
+
+/**
+ * Best-effort removal of stored objects after a failed notification. If the
+ * adapter can't delete (no `remove`) or a delete throws, the affected keys are
+ * returned as `orphanedKeys` for the operator to reconcile.
+ */
+async function cleanupStored(
+  storage: StorageAdapter,
+  references: StoredFileRef[],
+): Promise<{ cleanedUp: boolean; orphanedKeys: string[] }> {
+  if (!storage.remove) {
+    return { cleanedUp: false, orphanedKeys: references.map((r) => r.storageKey) };
+  }
+  const orphanedKeys: string[] = [];
+  for (const ref of references) {
+    try {
+      await storage.remove(ref.storageKey);
+    } catch {
+      orphanedKeys.push(ref.storageKey);
+    }
+  }
+  return { cleanedUp: orphanedKeys.length === 0, orphanedKeys };
 }
 
 function sanitize(name: string): string {

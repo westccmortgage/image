@@ -120,6 +120,53 @@ describe('notification failure blocks success', () => {
   });
 });
 
+// Orphaned-file cleanup after a notify failure -------------------------------
+describe('notify failure cleans up orphaned stored files', () => {
+  function storageWithRemove(removed: string[], failRemoveKey?: string): StorageAdapter {
+    return {
+      name: 'rec',
+      async store(f, key) {
+        return { name: f.name, type: f.type, size: f.size, storageKey: key, uploadedAt: 'now', link: null };
+      },
+      async remove(key) {
+        if (key === failRemoveKey) throw new Error('remove failed');
+        removed.push(key);
+      },
+    };
+  }
+  it('removes every stored file and reports cleanedUp when the webhook fails', async () => {
+    const removed: string[] = [];
+    const res = await deliverDocumentReview({
+      files: FILES, input: INPUT, storage: storageWithRemove(removed), notify: recordingNotifier([], true),
+    });
+    expect(res.ok).toBe(false);
+    expect(res.stage).toBe('notify');
+    expect(res.cleanedUp).toBe(true);
+    expect(removed).toHaveLength(2);
+    expect(res.orphanedKeys).toEqual([]);
+  });
+  it('reports orphaned keys when the adapter cannot delete', async () => {
+    const storage: StorageAdapter = {
+      name: 'no-remove',
+      async store(f, key) { return { name: f.name, type: f.type, size: f.size, storageKey: key, uploadedAt: 'now', link: null }; },
+      // no remove()
+    };
+    const res = await deliverDocumentReview({ files: FILES, input: INPUT, storage, notify: recordingNotifier([], true) });
+    expect(res.cleanedUp).toBe(false);
+    expect(res.orphanedKeys?.length).toBe(2);
+  });
+  it('lists the specific key that could not be removed', async () => {
+    const removed: string[] = [];
+    const res = await deliverDocumentReview({
+      files: FILES, input: INPUT, storage: storageWithRemove(removed, `${INPUT.sessionId}/${INPUT.timestamp}/1-Bank.pdf`),
+      notify: recordingNotifier([], true),
+    });
+    expect(res.cleanedUp).toBe(false);
+    expect(res.orphanedKeys).toHaveLength(1);
+    expect(res.orphanedKeys?.[0]).toContain('Bank.pdf');
+  });
+});
+
 // 6. production never simulates success -------------------------------------
 describe('storage plan resolution', () => {
   it('is not configured with no provider', () => {

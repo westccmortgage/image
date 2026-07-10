@@ -9,9 +9,9 @@ import type {
 
 // ---------------------------------------------------------------------------
 // Lead submission — structured object + a pluggable adapter interface so a
-// backend (email / Telegram / CRM / Arive-LOS / Google Sheet / webhook) can be
-// wired in later without touching the UI. No backend is connected yet, so the
-// default adapter stores locally and logs.
+// backend (secure webhook / email / CRM / Arive-LOS / Google Sheet / secure
+// broker dashboard) can be wired in later without touching the UI. No backend
+// is connected yet, so the default adapter stores locally and logs.
 // ---------------------------------------------------------------------------
 
 export interface LeadSubmission {
@@ -216,12 +216,11 @@ export function createNetlifyFormsAdapter(opts?: {
   };
 }
 
-/** Placeholder adapters — implement when the backend is chosen. */
+// Placeholder adapters — implement when the backend is chosen. Approved
+// delivery channels: secure webhook, email, CRM, Arive / LOS, secure broker
+// dashboard, Google Sheet.
 export function createEmailAdapter(): LeadSubmissionAdapter {
   return notConfigured('email');
-}
-export function createTelegramAdapter(): LeadSubmissionAdapter {
-  return notConfigured('telegram');
 }
 export function createCrmAdapter(): LeadSubmissionAdapter {
   return notConfigured('crm');
@@ -231,6 +230,9 @@ export function createAriveAdapter(): LeadSubmissionAdapter {
 }
 export function createGoogleSheetAdapter(): LeadSubmissionAdapter {
   return notConfigured('google-sheet');
+}
+export function createBrokerDashboardAdapter(): LeadSubmissionAdapter {
+  return notConfigured('broker-dashboard');
 }
 
 function notConfigured(name: string): LeadSubmissionAdapter {

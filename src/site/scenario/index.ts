@@ -107,10 +107,10 @@ export {
   NETLIFY_FORM_NAME,
   createWebhookAdapter,
   createEmailAdapter,
-  createTelegramAdapter,
   createCrmAdapter,
   createAriveAdapter,
   createGoogleSheetAdapter,
+  createBrokerDashboardAdapter,
 } from './leadAdapter';
 export type {
   LeadSubmission,

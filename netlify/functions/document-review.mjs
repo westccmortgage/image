@@ -83,7 +83,19 @@ export default async (req) => {
       await sendWebhook(env.DOCUMENT_REVIEW_WEBHOOK, notification);
     }
   } catch (e) {
-    return json({ error: 'notify_failed', stage: 'notify', detail: String(e).slice(0, 200) }, 502);
+    // Delivery failed after storage → the stored files are orphaned. Best-effort
+    // clean them up so nothing is left behind with no delivery. Any keys that
+    // can't be removed are logged (keys only, no secrets) for reconciliation.
+    const orphaned = await cleanupStored(storage, references);
+    if (orphaned.length) {
+      console.warn('[document-review] orphaned files need reconciliation', { keys: orphaned });
+    }
+    return json({
+      error: 'notify_failed',
+      stage: 'notify',
+      detail: String(e).slice(0, 200),
+      cleanedUp: orphaned.length === 0,
+    }, 502);
   }
 
   return json({
@@ -117,6 +129,7 @@ async function getStorageProvider(name, env, origin) {
       async store(f, key) {
         return ref(f, key, `devsim://not-delivered/${key}`, null);
       },
+      async remove() { /* nothing stored */ },
     };
   }
 
@@ -136,6 +149,7 @@ async function getStorageProvider(name, env, origin) {
           : null;
         return ref(f, key, link, null);
       },
+      async remove(key) { await store.delete(key); },
     };
   }
 
@@ -157,11 +171,15 @@ async function getStorageProvider(name, env, origin) {
         if (signed.error) throw new Error(`supabase sign: ${signed.error.message}`);
         return ref(f, key, signed.data.signedUrl, isoAfter(ttl));
       },
+      async remove(key) {
+        const del = await client.storage.from(bucket).remove([key]);
+        if (del.error) throw new Error(`supabase remove: ${del.error.message}`);
+      },
     };
   }
 
   if (name === 's3') {
-    const { S3Client, PutObjectCommand, GetObjectCommand } = await import('@aws-sdk/client-s3');
+    const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = await import('@aws-sdk/client-s3');
     const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
     const region = env.AWS_REGION || 'us-east-1';
     const bucket = env.S3_BUCKET;
@@ -175,6 +193,7 @@ async function getStorageProvider(name, env, origin) {
         const link = await getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: key }), { expiresIn: ttl });
         return ref(f, key, link, isoAfter(ttl));
       },
+      async remove(key) { await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key })); },
     };
   }
 
@@ -183,6 +202,21 @@ async function getStorageProvider(name, env, origin) {
 
 function ref(f, key, link, linkExpiresAt) {
   return { name: f.name, type: f.type, size: f.size, storageKey: key, uploadedAt: nowIso(), link, linkExpiresAt };
+}
+
+/** Best-effort delete of stored objects after a failed delivery. Returns the
+ *  keys that could NOT be removed (for reconciliation). */
+async function cleanupStored(storage, references) {
+  if (!storage.remove) return references.map((r) => r.storageKey);
+  const orphaned = [];
+  for (const r of references) {
+    try {
+      await storage.remove(r.storageKey);
+    } catch {
+      orphaned.push(r.storageKey);
+    }
+  }
+  return orphaned;
 }
 
 // --- broker notification ----------------------------------------------------
