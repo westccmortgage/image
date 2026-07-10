@@ -7,6 +7,7 @@
 // ---------------------------------------------------------------------------
 
 import type { BrandConfig } from '../module';
+import { LICENSE_LINE } from './licensing';
 
 export const PHONE = '310-686-5053';
 export const PHONE_HREF = 'tel:3106865053';
@@ -22,8 +23,7 @@ export const walletWccmConfig: Partial<BrandConfig> = {
   showApplyButton: true,
   applyHref: PHONE_HREF,
   showLeadForm: false,
-  nmlsLine:
-    'Powered by West Coast Capital Mortgage · Broker 01385024 · NMLS ID 2775380 · (310) 686-5053',
+  nmlsLine: `${LICENSE_LINE} · (310) 686-5053`,
   phone: PHONE,
   // disclosureText falls back to the required compliance disclaimer in the module.
 };

@@ -1,5 +1,6 @@
 import { missingHelpful, missingRequired } from './profile';
 import { matchLoanPaths, estimateCashToClose, strategyBullets } from './loanPaths';
+import { LICENSE_LINE } from '../licensing';
 import type {
   CashToCloseEstimate,
   FieldKey,
@@ -278,6 +279,7 @@ export function crmFieldsFromLead(lead: LeadSubmission): CrmLeadFields {
   if (lead.missingFields.required.length) lines.push(`Missing: ${lead.missingFields.required.join(', ')}`);
   if (lead.originalMessage) lines.push(`Message: ${lead.originalMessage}`);
   lines.push(`Source: ${lead.sourcePage}`);
+  lines.push(LICENSE_LINE);
   return { name: f.name ?? '', email: f.email ?? '', phone: f.phone ?? '', message: lines.join('\n') };
 }
 

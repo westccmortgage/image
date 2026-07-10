@@ -54,7 +54,11 @@ export const defaultBrandConfig: BrandConfig = {
   showLeadForm: false,
   stateFocus: 'California',
   disclosureText: COMPLIANCE_DISCLAIMER,
-  nmlsLine: 'West Coast Capital Mortgage · Broker 01385024 · NMLS ID 2775380',
+  // Fallback licensing line (the site passes the canonical value via config).
+  // Company and individual NMLS are distinct and must not be interchanged.
+  nmlsLine:
+    'West Coast Capital Mortgage Inc. · CA DRE Corporation License #02440065 · NMLS #2817729 · ' +
+    'Anatoliy Kanevsky · California Real Estate Broker · CA DRE Broker License #01385024 · NMLS #2775380',
   phone: '310-686-5053',
 };
 

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Wallet WCCM · AI Cash-to-Close Advisor — standalone site (wwccm.com), powered by West Coast Capital Mortgage. Built on a reusable, deterministic cash-to-close engine with a local AI-style strategy summary.",
+  "description": "Wallet WCCM · AI Mortgage Strategy Advisor — standalone site (wwccm.com) by West Coast Capital Mortgage Inc. (CA DRE Corporation License #02440065 · NMLS #2817729). Broker: Anatoliy Kanevsky (CA DRE Broker License #01385024 · NMLS #2775380).",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

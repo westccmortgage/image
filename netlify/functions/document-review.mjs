@@ -15,6 +15,12 @@ const MAX_FILES = 10;
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 const STORE_NAME = 'document-review';
 
+// Licensing (company NMLS and individual NMLS are distinct — never interchanged).
+const LICENSING = {
+  company: 'West Coast Capital Mortgage Inc. · CA DRE Corporation License #02440065 · NMLS #2817729',
+  broker: 'Anatoliy Kanevsky · California Real Estate Broker · CA DRE Broker License #01385024 · NMLS #2775380',
+};
+
 export default async (req) => {
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
 
@@ -225,6 +231,7 @@ function buildNotification(payload, references, env) {
   return {
     title: 'New Document Review Request',
     disclaimer: 'These documents were submitted for broker review, not as a completed mortgage application.',
+    licensing: LICENSING,
     borrower: {
       name: contact.name || '',
       phone: contact.phone || '',

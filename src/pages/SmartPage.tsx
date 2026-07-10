@@ -3,6 +3,7 @@ import { SmartAdvisor } from '../site/SmartAdvisor';
 import { PHONE, PHONE_HREF } from '../site/walletWccm';
 import { t, readInitialLanguage, persistLanguage } from '../site/i18n';
 import type { Language } from '../site/scenario';
+import { COMPANY, INDIVIDUAL, COMPANY_LICENSE, INDIVIDUAL_LICENSE } from '../site/licensing';
 
 type Theme = 'light' | 'dark';
 
@@ -54,7 +55,7 @@ export function SmartPage() {
           <span className="sm-brand-mark" aria-hidden="true" />
           <span className="sm-brand-text">
             WALLET <b>WCCM</b>
-            <small>Powered by West Coast Capital Mortgage</small>
+            <small>Powered by West Coast Capital Mortgage Inc.</small>
           </span>
         </a>
         <div className="sm-nav-actions">
@@ -79,8 +80,13 @@ export function SmartPage() {
 
       <footer className="sm-footer">
         <p>
-          Wallet WCCM · AI Mortgage Strategy Advisor · Powered by West Coast Capital
-          Mortgage · NMLS ID 2775380 · <a href={PHONE_HREF}>{PHONE}</a>
+          Wallet WCCM · AI Mortgage Strategy Advisor · <a href={PHONE_HREF}>{PHONE}</a>
+        </p>
+        <p className="sm-footer-license">
+          {COMPANY.legalName} · {COMPANY_LICENSE}
+        </p>
+        <p className="sm-footer-license">
+          {INDIVIDUAL.name} · {INDIVIDUAL.title} · {INDIVIDUAL_LICENSE}
         </p>
         <p className="sm-footer-fine">
           This is for educational and planning purposes only. It is not a mortgage

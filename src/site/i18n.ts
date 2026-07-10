@@ -210,7 +210,7 @@ const en: Dict = {
   docSubmittedStatus: 'Submitted for broker review',
   docEventTitle: 'Document Review Submitted',
   docSuccess:
-    'Documents received. Your documents have been submitted to West Coast Capital Mortgage for broker review. A licensed mortgage professional will review them and contact you directly. Please make sure your phone number, email, preferred contact time, and preferred language are correct.',
+    'Documents received. Your documents have been submitted to West Coast Capital Mortgage Inc. for broker review. A licensed mortgage professional will review them and contact you directly. Please make sure your phone number, email, preferred contact time, and preferred language are correct.',
   docFailure:
     'We could not submit your documents yet. Please try again or contact the broker directly.',
   docDevMode: 'Development mode — documents were not actually delivered.',
@@ -351,7 +351,7 @@ const ru: Dict = {
   docSubmittedStatus: 'Отправлено на ревью брокеру',
   docEventTitle: 'Документы отправлены на ревью',
   docSuccess:
-    'Документы получены. Ваши документы отправлены в West Coast Capital Mortgage для ревью лицензированным mortgage broker. С вами свяжутся напрямую. Пожалуйста, проверьте, что телефон, email, удобное время связи и предпочитаемый язык указаны правильно.',
+    'Документы получены. Ваши документы отправлены в West Coast Capital Mortgage Inc. для ревью лицензированным mortgage broker. С вами свяжутся напрямую. Пожалуйста, проверьте, что телефон, email, удобное время связи и предпочитаемый язык указаны правильно.',
   docFailure:
     'Не удалось отправить ваши документы. Пожалуйста, попробуйте снова или свяжитесь с брокером напрямую.',
   docDevMode: 'Режим разработки — документы фактически не были отправлены.',
@@ -492,7 +492,7 @@ const es: Dict = {
   docSubmittedStatus: 'Enviado para revisión del corredor',
   docEventTitle: 'Documentos enviados para revisión',
   docSuccess:
-    'Documentos recibidos. Sus documentos se enviaron a West Coast Capital Mortgage para revisión del corredor. Un profesional hipotecario con licencia los revisará y lo contactará directamente. Verifique que su teléfono, correo, horario de contacto e idioma preferido sean correctos.',
+    'Documentos recibidos. Sus documentos se enviaron a West Coast Capital Mortgage Inc. para revisión del corredor. Un profesional hipotecario con licencia los revisará y lo contactará directamente. Verifique que su teléfono, correo, horario de contacto e idioma preferido sean correctos.',
   docFailure:
     'No pudimos enviar sus documentos todavía. Inténtelo de nuevo o contacte al corredor directamente.',
   docDevMode: 'Modo de desarrollo — los documentos no se enviaron realmente.',
@@ -632,7 +632,7 @@ const zh: Dict = {
   docSubmittedStatus: '已提交经纪人审阅',
   docEventTitle: '文件已提交审阅',
   docSuccess:
-    '文件已收到。您的文件已提交至 West Coast Capital Mortgage 供经纪人审阅。持牌房贷专业人士将审阅并直接与您联系。请确认您的电话、电子邮件、首选联系时间和首选语言正确无误。',
+    '文件已收到。您的文件已提交至 West Coast Capital Mortgage Inc. 供经纪人审阅。持牌房贷专业人士将审阅并直接与您联系。请确认您的电话、电子邮件、首选联系时间和首选语言正确无误。',
   docFailure: '暂时无法提交您的文件。请重试或直接联系经纪人。',
   docDevMode: '开发模式 — 文件实际上尚未发送。',
   docTypeLabel: '文件类型',
