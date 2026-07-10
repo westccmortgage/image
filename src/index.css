@@ -260,8 +260,10 @@ a { color: inherit; }
 }
 .sm-input::placeholder { color: var(--faint); }
 .sm-input:focus { border-color: var(--brd-strong); box-shadow: 0 0 0 3px var(--focus-ring); }
+/* The main "describe your scenario" bar is a touch larger than other inputs. */
+.sm-inputrow .sm-input { min-height: 68px; font-size: 17px; padding: 20px 22px; border-radius: 16px; }
 /* Send matches the taller input and sits flush at the right of the bottom bar. */
-.sm-inputrow .sm-btn { flex: 0 0 auto; min-height: 58px; padding-inline: 30px; border-radius: 14px; font-size: 16px; }
+.sm-inputrow .sm-btn { flex: 0 0 auto; min-height: 68px; padding-inline: 32px; border-radius: 16px; font-size: 16px; }
 .sm-contact .sm-btn { flex: 0 0 auto; min-height: 54px; border-radius: 14px; }
 .sm-fine, .sm-fineprint { font-size: 11px; line-height: 1.5; color: var(--faint); margin: 2px 0 0; }
 .sm-fineprint { margin: 8px 4px 0; }
@@ -316,6 +318,7 @@ a { color: inherit; }
 .sm-bullets li { position: relative; padding-left: 22px; font-size: 15px; line-height: 1.45; color: var(--ink); }
 .sm-bullets li::before { content: ''; position: absolute; left: 3px; top: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 10px var(--glow); }
 .sm-explain { font-size: 13px; line-height: 1.55; color: var(--muted); margin: 0; }
+.sm-strategy-sub { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 20px 0 12px; padding-top: 16px; border-top: 1px solid var(--brd); }
 .sm-warns { display: grid; gap: 10px; }
 .sm-warn { background: var(--warn-bg); border: 1px solid var(--warn-brd); border-radius: 12px; padding: 13px 15px; }
 .sm-warn > summary { cursor: pointer; list-style: none; display: flex; gap: 12px; align-items: flex-start; font-size: 14px; font-weight: 500; line-height: 1.45; color: var(--ink); }

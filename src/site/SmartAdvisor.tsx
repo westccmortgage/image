@@ -320,55 +320,54 @@ export function SmartAdvisor() {
             </div>
           </details>
 
-          <section className="sm-panel">
-            <div className="sm-panel-h"><span>How the cash to close adds up</span></div>
-            <div className="sm-formula">
-              {formula.map((r, i) => (
-                <div className="sm-frow" key={i}>
-                  <span className="op">{r.op || ' '}</span>
-                  <span className="fl">{r.label}</span>
-                  <span className="fa">{r.op === '−' && r.amount > 0 ? '−' : ''}{formatMoney(r.amount)}</span>
-                </div>
-              ))}
-              <div className="sm-frow is-total">
-                <span className="op">=</span><span className="fl">Estimated cash to close</span>
-                <span className="fa">{formatMoney(calc.totalCashToClose)}</span>
-              </div>
-            </div>
-            <details className="sm-acc">
-              <summary>Adjust numbers</summary>
-              <div className="sm-row2 sm-mt">
-                <label className="sm-field"><span>Purchase price</span>
-                  <input type="number" step={1000} value={input.purchasePrice}
-                    onChange={(e) => patchNumbers({ purchasePrice: Number(e.target.value) })} /></label>
-                <label className="sm-field"><span>Down payment</span>
-                  <input type="number" step={1000} value={input.downPayment}
-                    onChange={(e) => patchNumbers({ downPayment: Number(e.target.value) })} /></label>
-              </div>
-              <div className="sm-row2 sm-mt">
-                <label className="sm-field"><span>State</span>
-                  <input value={profile.state ?? input.state ?? ''}
-                    onChange={(e) => patchNumbers({ state: e.target.value })} /></label>
-                <label className="sm-field"><span>Loan type</span>
-                  <select value={input.loanType} onChange={(e) => patchNumbers({ incomeDocPath: e.target.value === 'Non-QM' ? 'bank-statements' : 'full-doc' } as Partial<ScenarioProfile>)}>
-                    {(['Conventional', 'FHA', 'VA', 'Jumbo', 'Non-QM'] as LoanType[]).map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select></label>
-              </div>
-            </details>
-            <details className="sm-acc">
-              <summary>Show full breakdown</summary>
-              <div className="ctc-root sm-mt"><CostBreakdown result={calc} /></div>
-            </details>
-          </section>
         </aside>
       </div>
 
-      {/* ---------- takeaway ---------- */}
+      {/* ---------- AI Strategy: takeaway + how the cash to close adds up ---------- */}
       <section className="sm-panel sm-wide">
-        <div className="sm-panel-h"><span>AI Takeaway</span><span className="sm-beta">beta</span></div>
+        <div className="sm-panel-h"><span>AI Strategy</span><span className="sm-beta">beta</span></div>
         <ul className="sm-bullets">{takeaway.bullets.map((b, i) => (<li key={i}>{b}</li>))}</ul>
+
+        <div className="sm-strategy-sub">How the cash to close adds up</div>
+        <div className="sm-formula">
+          {formula.map((r, i) => (
+            <div className="sm-frow" key={i}>
+              <span className="op">{r.op || ' '}</span>
+              <span className="fl">{r.label}</span>
+              <span className="fa">{r.op === '−' && r.amount > 0 ? '−' : ''}{formatMoney(r.amount)}</span>
+            </div>
+          ))}
+          <div className="sm-frow is-total">
+            <span className="op">=</span><span className="fl">Estimated cash to close</span>
+            <span className="fa">{formatMoney(calc.totalCashToClose)}</span>
+          </div>
+        </div>
+        <details className="sm-acc">
+          <summary>Adjust numbers</summary>
+          <div className="sm-row2 sm-mt">
+            <label className="sm-field"><span>Purchase price</span>
+              <input type="number" step={1000} value={input.purchasePrice}
+                onChange={(e) => patchNumbers({ purchasePrice: Number(e.target.value) })} /></label>
+            <label className="sm-field"><span>Down payment</span>
+              <input type="number" step={1000} value={input.downPayment}
+                onChange={(e) => patchNumbers({ downPayment: Number(e.target.value) })} /></label>
+          </div>
+          <div className="sm-row2 sm-mt">
+            <label className="sm-field"><span>State</span>
+              <input value={profile.state ?? input.state ?? ''}
+                onChange={(e) => patchNumbers({ state: e.target.value })} /></label>
+            <label className="sm-field"><span>Loan type</span>
+              <select value={input.loanType} onChange={(e) => patchNumbers({ incomeDocPath: e.target.value === 'Non-QM' ? 'bank-statements' : 'full-doc' } as Partial<ScenarioProfile>)}>
+                {(['Conventional', 'FHA', 'VA', 'Jumbo', 'Non-QM'] as LoanType[]).map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select></label>
+          </div>
+        </details>
+        <details className="sm-acc">
+          <summary>Show full breakdown</summary>
+          <div className="ctc-root sm-mt"><CostBreakdown result={calc} /></div>
+        </details>
       </section>
 
       {/* ---------- warnings ---------- */}
