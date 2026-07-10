@@ -30,6 +30,7 @@ import {
   FIELD_BY_KEY,
 } from './scenario';
 import type { FieldKey, Question, ScenarioProfile } from './scenario';
+import { StartApplication } from './StartApplication';
 import { PHONE_HREF, walletWccmConfig } from './walletWccm';
 
 type Role = 'ai' | 'user';
@@ -386,7 +387,7 @@ export function SmartAdvisor() {
 
       {/* ---------- CTAs ---------- */}
       <section className="sm-cta">
-        <a className="sm-btn sm-btn-primary" href="#top">Review My Scenario</a>
+        <a className="sm-btn sm-btn-primary" href="#apply">Start Application</a>
         <a className="sm-btn sm-btn-ghost" href={PHONE_HREF}>Talk to a Mortgage Broker</a>
       </section>
 
@@ -403,9 +404,8 @@ export function SmartAdvisor() {
         </details>
       </section>
 
-      <section className="sm-cta sm-apply">
-        <a className="sm-btn sm-btn-quiet" href={walletWccmConfig.applyHref ?? PHONE_HREF}>Start Application</a>
-      </section>
+      {/* ---------- Start Application form (→ Netlify email) ---------- */}
+      <StartApplication profile={profile} />
 
       <p className="sm-fineprint">{walletWccmConfig.disclosureText ?? COMPLIANCE_DISCLAIMER}</p>
     </div>

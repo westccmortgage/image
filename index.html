@@ -46,6 +46,26 @@
       <input name="bot-field" />
     </form>
 
+    <!-- Hidden static form for the Start Application request. Configure the
+         recipient in Netlify → Forms → start-application → Email notification. -->
+    <form name="start-application" data-netlify="true" netlify-honeypot="bot-field" hidden>
+      <input type="text" name="name" />
+      <input type="text" name="phone" />
+      <input type="email" name="email" />
+      <input type="text" name="state" />
+      <input type="text" name="purchase_price" />
+      <input type="text" name="down_payment" />
+      <input type="text" name="occupancy" />
+      <input type="text" name="employment" />
+      <input type="text" name="loan_purpose" />
+      <input type="text" name="best_time" />
+      <textarea name="notes"></textarea>
+      <input type="text" name="consent" />
+      <input type="text" name="source_page" />
+      <input type="text" name="utm" />
+      <input name="bot-field" />
+    </form>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -266,3 +266,33 @@ export async function submitLead(
 ): Promise<LeadResult> {
   return adapter.submit(lead);
 }
+
+/**
+ * Post an arbitrary set of fields to a named Netlify form (→ email
+ * notification, configured in the Netlify dashboard). Falls back to a console
+ * log so a submission is never silently lost in dev. Used by the Start
+ * Application form ("start-application").
+ */
+export async function postNetlifyForm(
+  formName: string,
+  fields: Record<string, string>,
+  action = '/',
+): Promise<LeadResult> {
+  const body = new URLSearchParams({ 'form-name': formName, ...fields }).toString();
+  try {
+    const res = await fetch(action, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body,
+    });
+    if (res.ok) return { ok: true, adapter: 'netlify-forms' };
+    throw new Error(`HTTP ${res.status}`);
+  } catch (e) {
+    try {
+      console.info(`[netlify-form:${formName}] fallback capture`, fields);
+    } catch {
+      /* ignore */
+    }
+    return { ok: false, adapter: 'netlify-forms', error: String(e) };
+  }
+}
