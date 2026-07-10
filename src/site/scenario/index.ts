@@ -24,6 +24,7 @@ export {
 export {
   buildLead,
   submitLead,
+  postNetlifyForm,
   readUtm,
   defaultLeadAdapter,
   createDefaultAdapter,

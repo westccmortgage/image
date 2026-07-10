@@ -324,6 +324,14 @@ a { color: inherit; }
 .sm-warn.is-strong { background: var(--bad-bg); border-color: var(--bad-brd); }
 .sm-warn.is-strong .wi { background: var(--bad); color: var(--wi-ink); }
 
+/* ---- Start Application form ---- */
+.sm-appform { display: flex; flex-direction: column; gap: 12px; }
+.sm-appform .sm-field input, .sm-appform .sm-field select { min-height: 48px; }
+.sm-consent { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; color: var(--muted); line-height: 1.45; cursor: pointer; }
+.sm-consent input { width: 18px; height: 18px; margin-top: 1px; accent-color: var(--cyan); flex: 0 0 auto; }
+.sm-appform .sm-btn { min-height: 54px; }
+.sm-appform .sm-btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+
 /* ---- CTAs / footer ---- */
 .sm-cta { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 .sm-cta .sm-btn { flex: 1 1 auto; min-width: 200px; }
