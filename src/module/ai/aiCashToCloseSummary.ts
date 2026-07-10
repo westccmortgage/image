@@ -30,8 +30,56 @@ export interface AiSummary {
   generatedBy: string;
 }
 
+export interface AiTakeaway {
+  /** Up to 3 short, dynamic bullets — the fast "5-second" insight. */
+  bullets: string[];
+}
+
 function pct(v: number): string {
   return formatPercent(v);
+}
+
+/**
+ * Compact AI takeaway — at most 3 short, dynamically-generated bullets. Drives
+ * the fast readiness-check experience. All values come from `result`; nothing
+ * is hardcoded to a single scenario.
+ */
+export function generateAiTakeaway(
+  result: CashToCloseResult,
+  input?: Pick<CashToCloseInput, 'loanType'>,
+): AiTakeaway {
+  const { additionalFundsNeeded, ltv, risk } = result;
+  const bullets: string[] = [];
+
+  bullets.push(
+    `You may need about ${formatMoney(additionalFundsNeeded)} more than your ` +
+      `down payment to close.`,
+  );
+
+  if (risk.nonQmHighLtv) {
+    bullets.push(
+      `This is a Non-QM loan above 85% LTV (${pct(ltv)}) — rate, mortgage ` +
+        `insurance, and pricing can move materially.`,
+    );
+  } else if (risk.belowTwentyDown) {
+    bullets.push(
+      `Because this is below 20% down (${pct(ltv)} LTV), PMI/MI and higher ` +
+        `pricing may apply.`,
+    );
+  } else {
+    bullets.push(
+      `At ${pct(ltv)} LTV you're positioned to avoid PMI/MI and qualify for ` +
+        `stronger pricing.`,
+    );
+  }
+
+  bullets.push(
+    `Ask about seller credit, lender credit, or a different down payment ` +
+      `strategy before writing the offer.`,
+  );
+
+  void input; // reserved for future loan-type-specific phrasing
+  return { bullets: bullets.slice(0, 3) };
 }
 
 /**

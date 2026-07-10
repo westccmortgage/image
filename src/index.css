@@ -1,19 +1,17 @@
-/* Wallet WCCM standalone site (wwccm.com).
-   "Properly papered" editorial aesthetic: warm paper/bone background, near-black
-   ink, a muted warm-gray accent, heavy grotesque display type, and uppercase
-   letter-spaced monospace labels/buttons in sharp rectangles. Monochrome, with
-   the module's functional risk colors (red/amber) preserved for meaning.
-   Mobile-first, no horizontal overflow. */
+/* Wallet WCCM (wwccm.com) — fast, mobile-first cash-to-close readiness check.
+   Premium black / warm-white. Breathable, clear hierarchy, minimal all-caps.
+   The heavy module parts (full breakdown, scenarios, full AI) are reused only
+   inside collapsed sections and re-themed via .ww-theme .ctc-root. */
 :root {
-  --ww-paper: #f1efe8;
-  --ww-paper-2: #eae7dc;
-  --ww-surface: #faf9f3;
-  --ww-ink: #1a1712;
-  --ww-ink-btn: #14110c;
-  --ww-gray: #8a8477; /* warm-gray accent / second headline line */
+  --ww-paper: #f4f1e9;
+  --ww-paper-2: #ece8dc;
+  --ww-surface: #fffdf8;
+  --ww-ink: #17140e;
+  --ww-ink-btn: #16130d;
+  --ww-gray: #857f70;
   --ww-muted: #6a6456;
-  --ww-line: #d9d4c5;
-  --ww-line-ink: #1a1712;
+  --ww-line: #ddd7c8;
+  --ww-line-soft: #e7e2d5;
 
   --ww-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --ww-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
@@ -37,14 +35,6 @@ a {
 .ww-page {
   min-height: 100vh;
   overflow-x: hidden;
-  background: var(--ww-paper);
-}
-.ww-shell {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 12px 20px;
-  display: grid;
-  gap: 20px;
 }
 
 /* ---- nav ---- */
@@ -53,13 +43,13 @@ a {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  padding: 18px 24px;
-  background: var(--ww-paper);
-  border-bottom: 1.5px solid var(--ww-line-ink);
+  padding: 14px 20px;
+  background: color-mix(in srgb, var(--ww-paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--ww-line);
   position: sticky;
   top: 0;
-  z-index: 20;
-  flex-wrap: wrap;
+  z-index: 30;
 }
 .ww-brand {
   text-decoration: none;
@@ -68,67 +58,48 @@ a {
 .ww-brand-text {
   display: flex;
   flex-direction: column;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.03em;
 }
 .ww-brand-text small {
   font-family: var(--ww-mono);
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 500;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ww-muted);
-  margin-top: 6px;
-}
-.ww-nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-.ww-nav-link {
-  font-family: var(--ww-mono);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ww-muted);
-  text-decoration: none;
-}
-.ww-nav-link:hover {
-  color: var(--ww-ink);
+  margin-top: 5px;
 }
 
-/* ---- buttons ---- */
+/* ---- buttons (softer, sentence case) ---- */
 .ww-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  padding: 14px 22px;
-  font-family: var(--ww-mono);
-  font-size: 12.5px;
+  border-radius: 11px;
+  padding: 13px 20px;
+  font-family: var(--ww-sans);
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: -0.01em;
   text-decoration: none;
   cursor: pointer;
-  border: 1.5px solid transparent;
+  border: 1px solid transparent;
   transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.08s;
 }
 .ww-btn:active {
   transform: translateY(1px);
 }
 .ww-btn-sm {
-  padding: 10px 16px;
-  font-size: 11.5px;
+  padding: 9px 15px;
+  font-size: 13.5px;
+  border-radius: 9px;
 }
 .ww-btn-primary {
   background: var(--ww-ink-btn);
-  color: #f6f4ec;
-  border-color: var(--ww-ink-btn);
+  color: #faf7ef;
 }
 .ww-btn-primary:hover {
   background: #000;
@@ -136,176 +107,471 @@ a {
 .ww-btn-outline {
   background: transparent;
   color: var(--ww-ink);
-  border-color: var(--ww-line-ink);
+  border-color: var(--ww-line);
 }
 .ww-btn-outline:hover {
-  background: var(--ww-ink-btn);
-  color: #f6f4ec;
+  border-color: var(--ww-ink);
+}
+.ww-btn-ghost2 {
+  background: transparent;
+  color: var(--ww-muted);
+  border-color: var(--ww-line-soft);
+}
+.ww-btn-ghost2:hover {
+  color: var(--ww-ink);
+  border-color: var(--ww-line);
 }
 .ww-btn-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
+}
+
+/* ---- shared app container ---- */
+.ww-app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 18px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.ww-kicker {
+  font-family: var(--ww-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ww-muted);
+  margin: 0;
+}
+.ww-mt {
+  margin-top: 12px;
 }
 
 /* ---- hero ---- */
-.ww-hero {
-  background: var(--ww-paper);
-  border-bottom: 1px solid var(--ww-line);
-}
-.ww-hero-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 60px 24px 48px;
-}
-.ww-eyebrow {
-  display: block;
-  font-family: var(--ww-mono);
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ww-muted);
-  margin-bottom: 22px;
-}
-.ww-hero-title {
-  font-size: clamp(2.6rem, 8vw, 5rem);
-  color: var(--ww-ink);
-  letter-spacing: -0.04em;
-  line-height: 0.98;
-  font-weight: 800;
-  margin: 0 0 22px;
-  max-width: 14ch;
-}
-.ww-hero-accent {
-  color: var(--ww-gray);
-}
-.ww-hero-sub {
-  font-size: clamp(1.1rem, 2.4vw, 1.4rem);
-  color: var(--ww-muted);
-  max-width: 54ch;
-  line-height: 1.45;
-  margin: 0 0 12px;
-}
-.ww-hero-emotional {
-  font-size: clamp(1rem, 2vw, 1.2rem);
-  color: var(--ww-ink);
-  font-weight: 600;
-  margin: 0 0 22px;
-}
-.ww-corewarn {
-  display: inline-flex;
-  align-items: center;
+.ww-hero2 {
+  display: flex;
+  flex-direction: column;
   gap: 14px;
-  background: var(--ww-ink-btn);
-  color: #f6f4ec;
-  border-radius: 4px;
-  padding: 16px 20px;
-  font-size: clamp(0.98rem, 2vw, 1.12rem);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  margin-bottom: 28px;
-  max-width: 100%;
+  padding-top: 8px;
 }
-.ww-corewarn .ico {
+.ww-core {
+  font-size: clamp(1.5rem, 5.5vw, 2.15rem);
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  font-weight: 800;
+  margin: 0;
+  max-width: 20ch;
+}
+.ww-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.ww-numcard {
+  background: var(--ww-surface);
+  border: 1px solid var(--ww-line);
+  border-radius: 12px;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.ww-numcard .k {
+  font-size: 11px;
+  color: var(--ww-muted);
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+}
+.ww-numcard .v {
+  font-size: clamp(1.15rem, 4.6vw, 1.55rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.ww-numcard.is-primary {
+  background: var(--ww-ink-btn);
+  border-color: var(--ww-ink-btn);
+  color: #faf7ef;
+}
+.ww-numcard.is-primary .k {
+  color: rgba(250, 247, 239, 0.72);
+}
+.ww-numcard.is-extra .v {
+  color: var(--ww-ink);
+}
+.ww-hero2-line {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ww-muted);
+  margin: 0;
+  max-width: 52ch;
+}
+
+/* ---- plain-language restatement ---- */
+.ww-restate {
+  border-left: 3px solid var(--ww-ink);
+  padding: 2px 0 2px 16px;
+}
+.ww-restate p {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: var(--ww-ink);
+}
+.ww-restate b {
+  font-weight: 800;
+}
+
+/* ---- panels ---- */
+.ww-panel {
+  background: var(--ww-surface);
+  border: 1px solid var(--ww-line);
+  border-radius: 14px;
+  padding: 18px;
+}
+.ww-panel-h {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ww-tag {
+  font-family: var(--ww-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ww-muted);
+  border: 1px solid var(--ww-line);
+  border-radius: 5px;
+  padding: 2px 6px;
+  font-weight: 500;
+}
+
+/* ---- quick inputs ---- */
+.ww-quickgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.ww-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ww-muted);
+  min-width: 0;
+}
+.ww-field > span:first-child {
+  font-weight: 500;
+}
+.ww-field input,
+.ww-field select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--ww-ink);
+  background: #fff;
+  border: 1px solid var(--ww-line);
+  border-radius: 9px;
+  outline: none;
+}
+.ww-field input:focus,
+.ww-field select:focus {
+  border-color: var(--ww-ink);
+}
+.ww-input-prefix {
+  position: relative;
+  display: block;
+}
+.ww-input-prefix i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ww-muted);
+  font-style: normal;
+  font-size: 15px;
+}
+.ww-input-prefix input {
+  padding-left: 24px;
+}
+
+/* ---- accordions ---- */
+.ww-acc {
+  margin-top: 14px;
+  border-top: 1px solid var(--ww-line-soft);
+  padding-top: 12px;
+}
+.ww-acc-inline {
+  border-top: none;
+  padding-top: 0;
+}
+.ww-acc > summary,
+.ww-warn > summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ww-ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ww-acc > summary::-webkit-details-marker,
+.ww-warn > summary::-webkit-details-marker {
+  display: none;
+}
+.ww-acc > summary::before {
+  content: '+';
+  font-family: var(--ww-mono);
+  font-weight: 600;
+  color: var(--ww-muted);
+}
+.ww-acc[open] > summary::before {
+  content: '–';
+}
+.ww-note {
+  font-size: 12.5px;
+  color: var(--ww-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ---- AI takeaway ---- */
+.ww-bullets {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+.ww-bullets li {
+  position: relative;
+  padding-left: 24px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ww-ink);
+}
+.ww-bullets li::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 9px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ww-ink);
+}
+.ww-explain {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ww-muted);
+  margin: 0 0 10px;
+}
+.ww-explain:last-child {
+  margin-bottom: 0;
+}
+
+/* ---- visual formula ---- */
+.ww-formula {
+  display: grid;
+  gap: 8px;
+}
+.ww-frow {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  background: var(--ww-paper);
+  border: 1px solid var(--ww-line-soft);
+  border-radius: 10px;
+  padding: 11px 13px;
+}
+.ww-frow .op {
+  font-family: var(--ww-mono);
+  font-size: 15px;
+  color: var(--ww-muted);
+  text-align: center;
+}
+.ww-frow .fl {
+  font-size: 13.5px;
+  color: var(--ww-muted);
+}
+.ww-frow .fa {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 14.5px;
+}
+.ww-frow.is-total {
+  background: var(--ww-ink-btn);
+  border-color: var(--ww-ink-btn);
+  color: #faf7ef;
+}
+.ww-frow.is-total .op,
+.ww-frow.is-total .fl {
+  color: rgba(250, 247, 239, 0.75);
+}
+.ww-frow.is-total .fa {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+/* ---- warnings (short, expandable) ---- */
+.ww-warns {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+.ww-warn {
+  background: var(--ww-paper-2);
+  border: 1px solid var(--ww-line);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.ww-warn > summary {
+  align-items: flex-start;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.ww-warn .wico {
   flex: 0 0 auto;
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  background: #f6f4ec;
-  color: var(--ww-ink-btn);
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  background: var(--ww-ink);
+  color: var(--ww-paper);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-family: var(--ww-mono);
   font-weight: 700;
+  font-size: 12px;
+  margin-top: 1px;
+}
+.ww-warn.is-strong {
+  background: var(--ww-ink-btn);
+  border-color: var(--ww-ink-btn);
+  color: #faf7ef;
+}
+.ww-warn.is-strong > summary {
+  color: #faf7ef;
+}
+.ww-warn.is-strong .wico {
+  background: #faf7ef;
+  color: var(--ww-ink-btn);
+}
+.ww-warn.is-strong .ww-explain {
+  color: rgba(250, 247, 239, 0.82);
 }
 
-/* ---- cards / sections ---- */
-.ww-card {
-  background: var(--ww-surface);
-  border: 1.5px solid var(--ww-line-ink);
-  border-radius: 6px;
-  padding: 30px;
-}
-.ww-h2 {
-  font-size: clamp(1.5rem, 3.4vw, 2.1rem);
-  color: var(--ww-ink);
-  letter-spacing: -0.03em;
-  font-weight: 800;
-  line-height: 1.02;
-  margin: 10px 0 12px;
-}
-.ww-muted {
-  color: var(--ww-muted);
-  margin: 0 0 20px;
-  max-width: 68ch;
-  line-height: 1.6;
-  font-size: 1.02rem;
-}
-.ww-realtor .ww-eyebrow,
-.ww-share .ww-eyebrow {
-  margin-bottom: 8px;
-}
-
-/* ---- share section ---- */
-.ww-linkrow {
+/* ---- CTA blocks ---- */
+.ww-cta-block {
   display: flex;
-  align-items: center;
-  gap: 14px;
   flex-wrap: wrap;
-  background: var(--ww-paper-2);
-  border: 1.5px solid var(--ww-line);
-  border-radius: 4px;
-  padding: 14px 16px;
-  margin-bottom: 18px;
+  gap: 10px;
+  justify-content: center;
 }
-.ww-link-label {
-  font-family: var(--ww-mono);
+.ww-cta-block .ww-btn {
+  flex: 1 1 auto;
+  min-width: 180px;
+}
+.ww-apply {
+  margin-top: -6px;
+}
+.ww-apply .ww-btn {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+/* ---- share / realtor ---- */
+.ww-share-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+.ww-share-sub {
+  font-size: 13.5px;
+  color: var(--ww-muted);
+  margin: 0 0 14px;
+  line-height: 1.5;
+}
+.ww-realtor2 {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---- full report ---- */
+.ww-report {
+  display: grid;
+  gap: 16px;
+}
+
+/* ---- compact disclaimer ---- */
+.ww-fineprint {
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  line-height: 1.5;
   color: var(--ww-muted);
+  margin: 6px 2px 0;
 }
-.ww-link {
-  font-family: var(--ww-mono);
-  font-size: 14px;
-  color: var(--ww-ink);
-  font-weight: 600;
-  word-break: break-all;
+
+/* ---- sticky mobile CTA ---- */
+.ww-sticky {
+  display: none;
 }
-.ww-note {
-  font-family: var(--ww-mono);
-  font-size: 11.5px;
-  letter-spacing: 0.03em;
-  color: var(--ww-muted);
-  margin: 16px 0 0;
+@media (max-width: 720px) {
+  .ww-app {
+    padding-bottom: 84px; /* room for the sticky bar */
+  }
+  .ww-sticky {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 40;
+    background: var(--ww-ink-btn);
+    color: #faf7ef;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.45);
+  }
 }
 
 /* ---- footer ---- */
 .ww-footer {
-  border-top: 1.5px dashed var(--ww-line-ink);
+  border-top: 1px dashed var(--ww-line);
   background: var(--ww-paper);
-  padding: 28px 24px 46px;
-  margin-top: 16px;
+  padding: 24px 20px 40px;
 }
 .ww-footer-inner {
-  max-width: 1100px;
+  max-width: 720px;
   margin: 0 auto;
   display: grid;
   gap: 6px;
   font-family: var(--ww-mono);
-  font-size: 12.5px;
+  font-size: 11.5px;
   letter-spacing: 0.02em;
   color: var(--ww-muted);
 }
 .ww-footer-brand {
   color: var(--ww-ink);
   font-weight: 600;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 .ww-footer a {
   color: var(--ww-ink);
@@ -326,165 +592,64 @@ a {
   text-align: center;
   font-family: var(--ww-mono);
   font-size: 11px;
-  letter-spacing: 0.03em;
   color: var(--ww-muted);
   margin: 0;
 }
 
 /* =========================================================================
-   Re-theme the embedded Cash-to-Close module to the paper/ink/mono system.
-   We remap the module's CSS variables + a few targeted rules — the module
-   source stays brand-neutral. Applies on both the full page and /embed.
+   Re-theme the reused module parts (inside collapsed sections) to paper/ink.
    ========================================================================= */
 .ww-theme .ctc-root {
-  /* dominant dark surfaces → near-black ink block */
-  --ctc-navy: #1a1712;
-  --ctc-navy-800: #211d16;
-  --ctc-navy-700: #2a251d;
-
-  /* accent → warm gray (understated, monochrome) */
-  --ctc-gold: #8a8477;
-  --ctc-gold-soft: #e9e4d6;
-
-  /* neutral text ramp → warm */
+  --ctc-navy: #17140e;
+  --ctc-navy-800: #201b12;
+  --ctc-navy-700: #2a2418;
+  --ctc-gold: #857f70;
+  --ctc-gold-soft: #ece7d8;
   --ctc-slate: #5c564a;
   --ctc-slate-500: #6a6456;
-  --ctc-slate-400: #9a9282;
-  --ctc-ink: #1e1a14;
+  --ctc-slate-400: #948c7c;
+  --ctc-ink: #17140e;
   --ctc-ink-soft: #5c564a;
-
-  /* "blue" accent role → ink / warm neutrals (no blue) */
-  --ctc-blue: #2a251d;
-  --ctc-blue-soft: #eae6da;
-  --ctc-blue-border: #d9d4c5;
-
-  /* surfaces */
-  --ctc-bg: #f1efe8;
-  --ctc-surface: #faf9f3;
-  --ctc-surface-alt: #f3f1e8;
-  --ctc-line: #d9d4c5;
-  --ctc-panel: #eae6da;
-  --ctc-ai-bg-1: #faf9f3;
-  --ctc-ai-bg-2: #f2efe6;
-
-  /* text on the dark block */
-  --ctc-on-dark-soft: #d9d3c4;
-  --ctc-on-dark-faint: #a8a08c;
-
-  /* sharper corners to match the editorial rectangles */
-  --ctc-radius: 8px;
-  --ctc-radius-sm: 5px;
+  --ctc-blue: #2a2418;
+  --ctc-blue-soft: #ece7d8;
+  --ctc-blue-border: #ddd7c8;
+  --ctc-bg: #f4f1e9;
+  --ctc-surface: #fffdf8;
+  --ctc-surface-alt: #f5f2ea;
+  --ctc-line: #ddd7c8;
+  --ctc-panel: #ece7d8;
+  --ctc-ai-bg-1: #fffdf8;
+  --ctc-ai-bg-2: #f5f1e7;
+  --ctc-on-dark-soft: #ddd6c6;
+  --ctc-on-dark-faint: #a89f8b;
+  --ctc-radius: 12px;
+  --ctc-radius-sm: 8px;
 }
-
-/* Neutralize the module's gold glow on dark surfaces (would add color). */
 .ww-theme .ctc-hero::after,
 .ww-theme .ctc-widget::after {
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.05),
-    transparent 70%
-  );
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 70%);
 }
-/* Make the dominant "cash to close" figure pop on the near-black card. */
 .ww-theme .ctc-hero-fig.accent .v {
   color: #f3eede;
 }
-
-/* Module buttons adopt the uppercase mono / sharp-rectangle language. */
+/* Module buttons: softer, sentence case (no brutalist all-caps mono). */
 .ww-theme .ctc-root .ctc-btn {
-  font-family: var(--ww-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 4px;
-  border: 1.5px solid transparent;
+  border-radius: 10px;
   box-shadow: none;
 }
 .ww-theme .ctc-root .ctc-btn-primary {
   background: var(--ww-ink-btn);
-  color: #f6f4ec;
-  border-color: var(--ww-ink-btn);
+  color: #faf7ef;
 }
-.ww-theme .ctc-root .ctc-btn-primary:hover {
-  background: #000;
-}
-/* The module's "gold" CTA becomes a paper outline button. */
 .ww-theme .ctc-root .ctc-btn-gold {
   background: transparent;
   color: var(--ww-ink);
-  border-color: var(--ww-line-ink);
+  border: 1px solid var(--ww-line);
   box-shadow: none;
 }
-.ww-theme .ctc-root .ctc-btn-gold:hover {
-  background: var(--ww-ink-btn);
-  color: #f6f4ec;
-}
-.ww-theme .ctc-root .ctc-btn-ghost:hover {
-  border-color: var(--ww-line-ink);
-  background: var(--ww-paper-2);
-}
-
-/* -------------------------------------------------------------------------
-   Strict monochrome: flatten risk warnings and badges to the paper/ink
-   system. Meaning is preserved through weight, borders, the black block for
-   the strong warning, and the label text itself — not color.
-   ------------------------------------------------------------------------- */
-.ww-theme .ctc-warn {
-  border-radius: 5px;
-}
-.ww-theme .ctc-warn.moderate {
-  background: var(--ww-paper-2);
-  border-color: var(--ww-line-ink);
-  color: var(--ww-ink);
-}
-.ww-theme .ctc-warn.strongwarn {
-  background: var(--ww-ink-btn);
-  border-color: var(--ww-ink-btn);
-  color: #f6f4ec;
-}
-/* Replace the coloured emoji marker with a monochrome mono "!" chip. */
-.ww-theme .ctc-warn .ico {
-  font-size: 0;
-  position: relative;
-  width: 24px;
-  height: 24px;
-  flex: 0 0 auto;
-}
-.ww-theme .ctc-warn .ico::before {
-  content: '!';
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  font-family: var(--ww-mono);
-  font-weight: 700;
-  font-size: 14px;
-}
-.ww-theme .ctc-warn.moderate .ico::before {
-  background: var(--ww-ink);
-  color: var(--ww-paper);
-}
-.ww-theme .ctc-warn.strongwarn .ico::before {
-  background: #f6f4ec;
-  color: var(--ww-ink-btn);
-}
-
-/* Risk badges → monochrome chips (tier still named in the label text). */
+/* Scenario-table risk badges → monochrome chips. */
 .ww-theme .ctc-badge {
   background: var(--ww-paper-2);
   color: var(--ww-ink);
-  border: 1px solid var(--ww-line-ink);
-  font-family: var(--ww-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-size: 10.5px;
-}
-/* On the near-black result card, render the badge as an inverted chip. */
-.ww-theme .ctc-hero .ctc-badge {
-  background: rgba(246, 244, 236, 0.12);
-  color: #f6f4ec;
-  border-color: rgba(246, 244, 236, 0.4);
+  border: 1px solid var(--ww-line);
 }
