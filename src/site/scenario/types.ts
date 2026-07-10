@@ -33,19 +33,36 @@ export type BorrowerGoal =
   | 'fastest-close'
   | 'compare-all';
 
-/** The structured Scenario Profile filled by the conversation. */
+export type LoanPurpose = 'purchase' | 'refinance';
+
+/** Supported advisor languages. */
+export type Language = 'en' | 'ru' | 'es' | 'zh';
+
+/** How confident we are about the property's county (drives loan-limit area). */
+export type CountyConfidence = 'confirmed' | 'uncertain';
+
+/** The structured Loan Strategy Profile filled by the conversation. */
 export interface ScenarioProfile {
   // Contact (requested only after value is provided)
   name?: string;
   phone?: string;
   email?: string;
+  preferredContactTime?: string;
+  preferredLanguage?: Language;
   // Scenario
   purchasePrice?: number;
   downPayment?: number;
   /** Down payment expressed as a percent, when stated that way. */
   downPaymentPercent?: number;
+  loanPurpose?: LoanPurpose;
   zipOrCounty?: string;
+  city?: string;
   state?: string;
+  /** Two-letter USPS code for the state when known (e.g. "CA"). */
+  stateCode?: string;
+  /** County only when reliably resolved/confirmed — never guessed from a city. */
+  county?: string;
+  countyConfidence?: CountyConfidence;
   occupancy?: Occupancy;
   employmentType?: EmploymentType;
   incomeDocPath?: IncomeDocPath;
@@ -96,6 +113,47 @@ export interface LoanPath {
   why: string;
   /** Safe qualitative label — never an invented rate. */
   tag: string;
+}
+
+/** The loan-program categories the strategy advisor compares. */
+export type ProgramCategory =
+  | 'Conforming QM'
+  | 'High-Balance QM'
+  | 'Jumbo QM'
+  | 'Non-QM Bank Statement'
+  | 'Non-QM P&L'
+  | 'Non-QM Asset Depletion'
+  | 'DSCR Investment'
+  | 'FHA'
+  | 'VA'
+  | 'Bridge / Private';
+
+/** Cautious fit labels — never "approved" / "qualified" / "guaranteed". */
+export type FitLabel =
+  | 'Possible strong fit'
+  | 'Possible fit'
+  | 'May fit — needs review'
+  | 'Likely not a fit';
+
+/**
+ * A compared loan path. Numbers come only from deterministic calculators; every
+ * qualitative field uses cautious, non-committal language.
+ */
+export interface LoanProgramMatch {
+  id: string;
+  name: string;
+  category: ProgramCategory;
+  fit: FitLabel;
+  /** Rough ordering score (higher = better fit) — for deterministic sorting. */
+  score: number;
+  why: string;
+  missing: string[];
+  /** Estimated monthly P&I at an assumed rate, or null when not computable. */
+  paymentEstimate: number | null;
+  /** Estimated cash to close (planning), or null when not computable. */
+  cashToCloseEstimate: number | null;
+  documentation: string[];
+  risks: string[];
 }
 
 export interface CashToCloseEstimate {

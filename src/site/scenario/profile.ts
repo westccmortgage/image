@@ -79,8 +79,68 @@ export function hasProvidedValue(p: ScenarioProfile): boolean {
   return hasValue(p, 'purchasePrice') || hasValue(p, 'downPayment');
 }
 
+/**
+ * True only when BOTH price and down payment are known — the gate for showing
+ * the borrower their real cash-to-close numbers. Until then the hero shows an
+ * "Example only" placeholder rather than default demo figures as if they were
+ * the user's result.
+ */
+export function hasFullNumbers(p: ScenarioProfile): boolean {
+  return hasValue(p, 'purchasePrice') && hasValue(p, 'downPayment');
+}
+
 export const CONTACT_FIELDS: FieldKey[] = ['name', 'phone', 'email'];
 
 export function missingContact(p: ScenarioProfile): FieldKey[] {
   return CONTACT_FIELDS.filter((k) => !hasValue(p, k));
+}
+
+// ---------------------------------------------------------------------------
+// Session / state hygiene.
+//
+// The active borrower scenario is intentionally NEVER persisted — it lives only
+// in React state during the visit. On a new visit the page starts clean, and
+// any legacy advisor keys left in storage are cleared so a stale scenario can
+// never hydrate into the page. (The theme preference is a UI setting, not
+// scenario data, and is kept separately.)
+// ---------------------------------------------------------------------------
+
+/** Storage keys that older builds may have written — cleared on load & reset. */
+export const ADVISOR_STORAGE_KEYS = [
+  'ww-advisor-profile',
+  'ww-scenario',
+  'ww-advisor-state',
+  'ww-messages',
+  'scenario-profile',
+  'advisor-scenario',
+];
+
+/** The initial profile is ALWAYS empty — we never hydrate a saved scenario. */
+export function readInitialProfile(): ScenarioProfile {
+  return {};
+}
+
+/** Remove any advisor scenario keys from both storages. Safe in SSR/no-DOM. */
+export function clearAdvisorState(): void {
+  const wipe = (store: Storage | undefined) => {
+    if (!store) return;
+    for (const k of ADVISOR_STORAGE_KEYS) {
+      try {
+        store.removeItem(k);
+      } catch {
+        /* ignore */
+      }
+    }
+  };
+  if (typeof window === 'undefined') return;
+  try {
+    wipe(window.localStorage);
+  } catch {
+    /* ignore */
+  }
+  try {
+    wipe(window.sessionStorage);
+  } catch {
+    /* ignore */
+  }
 }

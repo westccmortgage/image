@@ -11,9 +11,15 @@ export {
   completionPercent,
   isReadyForOptions,
   hasProvidedValue,
+  hasFullNumbers,
   hasValue,
   CONTACT_FIELDS,
+  ADVISOR_STORAGE_KEYS,
+  readInitialProfile,
+  clearAdvisorState,
 } from './profile';
+export { buildCompactProfile } from './selectors';
+export type { CompactProfile, CompactFact } from './selectors';
 export { nextQuestions, nextBestQuestion } from './questionEngine';
 export type { NextQuestionOptions } from './questionEngine';
 export {
@@ -23,8 +29,22 @@ export {
   humanCaptured,
 } from './converse';
 export type { Intent, ReplyNumbers, ReplyInput } from './converse';
-export { askLiveBrain, liveBrainDisabled } from './liveBrain';
-export type { LiveBrainRequest, LiveBrainNumbers } from './liveBrain';
+export { askAdvisor, advisorMode, buildProgramSummaries } from './advisor';
+export type { AdvisorRequest, AdvisorResponse } from './advisor';
+export { resolveLoanLimitArea } from './location';
+export type { AreaResolution } from './location';
+export { matchLoanPrograms, PLANNING_RATE } from './loanPrograms';
+export {
+  parseBorrowerScenario,
+  generateNextQuestions,
+  calculateLTV,
+  calculateMonthlyPayment,
+  calculateCashToClose,
+  compareDownPaymentOptions,
+  profileToEngineInput,
+  prepareBrokerReviewSummary,
+} from './tools';
+export type { BrokerReviewSummary } from './tools';
 export {
   matchLoanPaths,
   estimateCashToClose,

@@ -14,7 +14,7 @@ export const SITE_URL = 'https://wwccm.com';
 
 export const walletWccmConfig: Partial<BrandConfig> = {
   brandName: 'Wallet WCCM',
-  altLabel: 'AI Cash-to-Close Advisor',
+  altLabel: 'AI Mortgage Strategy Advisor',
   // No single-state focus — Wallet WCCM is a West Coast Capital Mortgage tool.
   stateFocus: undefined,
   primaryCTA: { label: 'Review My Scenario', href: '#advisor' },
@@ -31,11 +31,11 @@ export const walletWccmConfig: Partial<BrandConfig> = {
 // Hero copy per the Wallet WCCM brief.
 export const HERO = {
   brand: 'Wallet WCCM',
-  title: 'AI Cash-to-Close Advisor',
+  title: 'AI Mortgage Strategy Advisor',
   subtitle:
-    'Before your buyer writes an offer, estimate the real funds needed to close — not just the down payment.',
-  emotional: 'Know what your wallet really needs before closing.',
-  coreWarning: 'Do not assume your down payment is your cash to close.',
+    'Describe your mortgage scenario. The advisor will compare possible loan paths, estimate real cash to close, and prepare the scenario for broker review.',
+  emotional: 'Describe your scenario — the advisor compares your possible loan paths.',
+  coreWarning: 'Cash-to-close is one module inside the advisor, not the whole product.',
 };
 
 // Embedded widget copy.

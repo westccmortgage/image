@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Wallet WCCM · AI Cash-to-Close Advisor — your down payment is not your total cash needed to close. Estimate the real funds needed to close before you write an offer."
+      content="Wallet WCCM · AI Mortgage Strategy Advisor — describe your mortgage scenario and the advisor compares possible loan paths, estimates real cash to close, and prepares the scenario for broker review."
     />
     <meta name="theme-color" content="#05070e" />
-    <title>Wallet WCCM · AI Cash-to-Close Advisor</title>
+    <title>Wallet WCCM · AI Mortgage Strategy Advisor</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -27,6 +27,10 @@
       <input type="text" name="name" />
       <input type="text" name="phone" />
       <input type="email" name="email" />
+      <input type="text" name="contact_time" />
+      <input type="text" name="language" />
+      <input type="text" name="loan_purpose" />
+      <input type="text" name="county" />
       <input type="text" name="purchase_price" />
       <input type="text" name="down_payment" />
       <input type="text" name="state" />
@@ -43,26 +47,6 @@
       <input type="text" name="source_page" />
       <textarea name="original_message"></textarea>
       <textarea name="scenario_json"></textarea>
-      <input name="bot-field" />
-    </form>
-
-    <!-- Hidden static form for the Start Application request. Configure the
-         recipient in Netlify → Forms → start-application → Email notification. -->
-    <form name="start-application" data-netlify="true" netlify-honeypot="bot-field" hidden>
-      <input type="text" name="name" />
-      <input type="text" name="phone" />
-      <input type="email" name="email" />
-      <input type="text" name="state" />
-      <input type="text" name="purchase_price" />
-      <input type="text" name="down_payment" />
-      <input type="text" name="occupancy" />
-      <input type="text" name="employment" />
-      <input type="text" name="loan_purpose" />
-      <input type="text" name="best_time" />
-      <textarea name="notes"></textarea>
-      <input type="text" name="consent" />
-      <input type="text" name="source_page" />
-      <input type="text" name="utm" />
       <input name="bot-field" />
     </form>
 
