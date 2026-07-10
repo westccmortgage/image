@@ -33,17 +33,30 @@ import {
   askAdvisor,
   advisorMode,
   buildProgramSummaries,
+  buildDocumentReviewPayload,
+  submitDocumentReview,
+  toSubmittedMetas,
+  DOCUMENT_CATEGORIES,
   FIELD_BY_KEY,
 } from './scenario';
-import type { FieldKey, Language, Question, ScenarioProfile, LoanProgramMatch } from './scenario';
+import type {
+  FieldKey, Language, Question, ScenarioProfile, LoanProgramMatch,
+  ContactInfo, PendingUpload, SubmittedDocMeta, DocumentReviewResult,
+} from './scenario';
+import { DocumentReviewModal } from './DocumentReviewModal';
 import { t, LANGUAGES } from './i18n';
 import { PHONE_HREF } from './walletWccm';
 
-type Role = 'ai' | 'user' | 'system';
-interface Msg { id: number; role: Role; lines: string[] }
+type Role = 'ai' | 'user' | 'system' | 'event';
+interface Msg { id: number; role: Role; lines: string[]; docEvent?: SubmittedDocMeta[] }
 
 /** Bridge a conversational profile into the deterministic engine. */
 const toInput = profileToEngineInput;
+
+const CAT_LABEL_KEY: Record<string, Parameters<typeof t>[1]> = Object.fromEntries(
+  DOCUMENT_CATEGORIES.map((c) => [c.value, c.labelKey as Parameters<typeof t>[1]]),
+);
+const catLabelKey = (v: string): Parameters<typeof t>[1] => CAT_LABEL_KEY[v] ?? 'catOther';
 
 function numberFromText(text: string): number | null {
   const m = text.replace(/\$/g, '').match(/([\d,]+(?:\.\d+)?)\s*(k|mm|m|million|thousand)?/i);
@@ -107,6 +120,7 @@ export function SmartAdvisor() {
   const [mode, setMode] = useState<'unknown' | 'live' | 'local'>('unknown');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [docModalOpen, setDocModalOpen] = useState(false);
   const [contact, setContact] = useState({ name: '', phone: '', email: '', time: '', language: 'en' as Language });
   const [result, setResult] = useState<{ ok: boolean } | null>(null);
   const firstMsgRef = useRef('');
@@ -251,11 +265,65 @@ export function SmartAdvisor() {
     setThinking(false);
     setDrawerOpen(false);
     setReviewOpen(false);
+    setDocModalOpen(false); // unmounts the modal → any unsent files are dropped
     setResult(null);
     firstMsgRef.current = '';
     parsedFirstRef.current = {};
     idRef.current = 1;
+    // Resetting messages clears any Document Review events from this session.
     setMessages([{ id: nextId(), role: 'ai', lines: [t(lang, 'heroTitle'), 'e.g. “$2M home in California, self-employed, $400k down.”'] }]);
+  }
+
+  /** Assemble the payload, route it through the adapter, and — only on success —
+   *  record a permanent Document Review event + confirmation in the chat. */
+  async function handleDocSubmit(files: PendingUpload[], dc: ContactInfo, note: string): Promise<DocumentReviewResult> {
+    const merged = mergeProfile(profile, {
+      name: dc.name, phone: dc.phone, email: dc.email,
+      preferredContactTime: dc.preferredContactTime, preferredLanguage: dc.preferredLanguage,
+    });
+    setProfile(merged);
+    const isBoth = hasBothOf(merged);
+    const mInput = isBoth ? toInput(merged) : defaultScenario;
+    const c = calculateCashToClose(mInput);
+    const payload = buildDocumentReviewPayload({
+      contact: dc,
+      originalMessage: firstMsgRef.current,
+      profile: merged,
+      parsedScenario: parsedFirstRef.current,
+      possibleLoanPaths: buildProgramSummaries(matchLoanPrograms(merged)),
+      cashToCloseEstimate: isBoth
+        ? {
+            hasBoth: true,
+            totalCashToClose: c.totalCashToClose,
+            additionalFundsNeeded: c.additionalFundsNeeded,
+            downPayment: c.downPayment,
+            ltv: c.ltv,
+            loanType: mInput.loanType,
+          }
+        : null,
+      advisorSummary: isBoth ? generateAiTakeaway(c, { loanType: mInput.loanType }).bullets : undefined,
+      missingFields: missingRequired(merged).map((k) => FIELD_BY_KEY[k].label),
+      files,
+      note,
+      sourcePage: '/',
+      utm: typeof window !== 'undefined' ? readUtm(window.location.search) : {},
+      sessionId: sessionIdRef.current,
+    });
+    const metas = toSubmittedMetas(files);
+    const res = await submitDocumentReview(payload, files);
+    if (res.ok) {
+      setMessages((m) => [
+        ...m,
+        { id: nextId(), role: 'event', lines: [], docEvent: metas },
+        { id: nextId(), role: 'ai', lines: [tr('docSuccess')] },
+        ...(res.dev ? [{ id: nextId(), role: 'system' as Role, lines: [tr('docDevMode')] }] : []),
+      ]);
+    }
+    return res;
+  }
+
+  function paperclip() {
+    setDocModalOpen(true);
   }
 
   async function submitReview(e: React.FormEvent) {
@@ -281,9 +349,6 @@ export function SmartAdvisor() {
     setTimeout(() => setReviewOpen(false), 1400);
   }
 
-  function paperclip() {
-    pushSystem(tr('docSoon'));
-  }
   function mic() {
     pushSystem(tr('micSoon'));
   }
@@ -369,11 +434,23 @@ export function SmartAdvisor() {
 
           <div className="sm-stream" ref={streamRef}>
             {messages.map((m) => (
-              <div key={m.id} className={`sm-msg sm-${m.role}`}>
-                {m.lines.map((l, i) => (
-                  <p key={i} className={l.startsWith('◈') ? 'sm-snap-h' : undefined}>{l}</p>
-                ))}
-              </div>
+              m.role === 'event' && m.docEvent ? (
+                <div key={m.id} className="sm-docevent">
+                  <div className="sm-docevent-h">📄 {tr('docEventTitle')}</div>
+                  <ul>
+                    {m.docEvent.map((d, i) => (
+                      <li key={i}><b>{d.name}</b> — {d.category ? tr(catLabelKey(d.category)) : tr('catOther')}</li>
+                    ))}
+                  </ul>
+                  <div className="sm-docevent-status">✓ {tr('docSubmittedStatus')}</div>
+                </div>
+              ) : (
+                <div key={m.id} className={`sm-msg sm-${m.role}`}>
+                  {m.lines.map((l, i) => (
+                    <p key={i} className={l.startsWith('◈') ? 'sm-snap-h' : undefined}>{l}</p>
+                  ))}
+                </div>
+              )
             ))}
             {thinking && (
               <div className="sm-msg sm-ai sm-typing" aria-live="polite">
@@ -392,7 +469,7 @@ export function SmartAdvisor() {
               </div>
             ) : null}
             <form className="sm-inputrow" onSubmit={(e) => { e.preventDefault(); handleText(); }}>
-              <button type="button" className="sm-iconbtn" onClick={paperclip} title={tr('docSoon')} aria-label="Attach document (coming soon)">📎</button>
+              <button type="button" className="sm-iconbtn" onClick={paperclip} title={tr('docUploadCta')} aria-label={tr('docModalTitle')}>📎</button>
               <button type="button" className="sm-iconbtn" onClick={mic} title={tr('micSoon')} aria-label="Voice input (coming soon)">🎙️</button>
               <input className="sm-input" value={text} onChange={(e) => setText(e.target.value)}
                 placeholder={focus ? focus.prompt : tr('describePlaceholder')} />
@@ -603,6 +680,16 @@ export function SmartAdvisor() {
             )}
           </div>
         </div>
+      )}
+
+      {/* ---------- Document Review upload modal ---------- */}
+      {docModalOpen && (
+        <DocumentReviewModal
+          lang={lang}
+          profile={profile}
+          onClose={() => setDocModalOpen(false)}
+          onSubmit={handleDocSubmit}
+        />
       )}
     </div>
   );

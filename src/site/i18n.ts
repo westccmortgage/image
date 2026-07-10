@@ -60,7 +60,42 @@ export type UIKey =
   | 'micSoon'
   | 'docSoon'
   | 'complianceShort'
-  | 'countyNeedsConfirm';
+  | 'countyNeedsConfirm'
+  // --- document review flow ---
+  | 'docModalTitle'
+  | 'docModalIntro'
+  | 'docSafetyNote'
+  | 'docCompliance'
+  | 'docReviewedBy'
+  | 'docContactPrompt'
+  | 'docUploadCta'
+  | 'docSendForReview'
+  | 'docSubmittedStatus'
+  | 'docEventTitle'
+  | 'docSuccess'
+  | 'docFailure'
+  | 'docDevMode'
+  | 'docTypeLabel'
+  | 'docNoteLabel'
+  | 'docAddFiles'
+  | 'docRemove'
+  | 'docExplainSoon'
+  | 'docFilesHeading'
+  | 'docValidationType'
+  | 'docValidationSize'
+  | 'docValidationEmpty'
+  | 'docValidationNone'
+  | 'docValidationMax'
+  | 'docTypeMissing'
+  | 'catLoanEstimate'
+  | 'catBankStatement'
+  | 'catPaystub'
+  | 'catTaxReturn'
+  | 'catPurchaseContract'
+  | 'catMortgageStatement'
+  | 'catInsuranceQuote'
+  | 'catTitleEscrow'
+  | 'catOther';
 
 type Dict = Record<UIKey, string>;
 
@@ -116,6 +151,46 @@ const en: Dict = {
   complianceShort:
     'This is for educational and planning purposes only. It is not a mortgage application, Loan Estimate, approval, or commitment to lend.',
   countyNeedsConfirm: 'county needs confirmation',
+  docModalTitle: 'Upload Documents for Broker Review',
+  docModalIntro:
+    'Upload a loan estimate, lender quote, bank statement, paystub, tax document, purchase contract, or other mortgage-related document for broker review.',
+  docSafetyNote:
+    'Please avoid uploading documents with full SSN, full bank account numbers, or highly sensitive personal information unless specifically requested by a licensed mortgage professional.',
+  docCompliance:
+    'This document review is for educational and planning purposes only. It is not a mortgage application, Loan Estimate, loan approval, or commitment to lend.',
+  docReviewedBy: 'Documents will be reviewed by a licensed mortgage professional.',
+  docContactPrompt:
+    'To make sure the broker can follow up after reviewing your documents, please leave the best way to reach you.',
+  docUploadCta: 'Upload for Broker Review',
+  docSendForReview: 'Send Documents for Review',
+  docSubmittedStatus: 'Submitted for broker review',
+  docEventTitle: 'Document Review Submitted',
+  docSuccess:
+    'Documents received. Your documents have been submitted to West Coast Capital Mortgage for broker review. A licensed mortgage professional will review them and contact you directly. Please make sure your phone number, email, preferred contact time, and preferred language are correct.',
+  docFailure:
+    'We could not submit your documents yet. Please try again or contact the broker directly.',
+  docDevMode: 'Development mode — documents were not actually delivered.',
+  docTypeLabel: 'Document type',
+  docNoteLabel: 'Note to the broker (optional)',
+  docAddFiles: 'Add files',
+  docRemove: 'Remove',
+  docExplainSoon: 'Explain this document — coming soon',
+  docFilesHeading: 'Files to submit',
+  docValidationType: 'Unsupported file type. Allowed: PDF, PNG, JPG, JPEG, HEIC.',
+  docValidationSize: 'File is too large (max 25MB).',
+  docValidationEmpty: 'That file appears to be empty.',
+  docValidationNone: 'Add at least one document to submit.',
+  docValidationMax: 'You can upload up to 10 files.',
+  docTypeMissing: 'Select a document type for each file.',
+  catLoanEstimate: 'Loan Estimate / Lender Quote',
+  catBankStatement: 'Bank Statement',
+  catPaystub: 'Paystub / W-2 / 1099',
+  catTaxReturn: 'Tax Return / P&L',
+  catPurchaseContract: 'Purchase Contract',
+  catMortgageStatement: 'Mortgage Statement',
+  catInsuranceQuote: 'Insurance Quote',
+  catTitleEscrow: 'Title / Escrow Estimate',
+  catOther: 'Other Mortgage Document',
 };
 
 const ru: Dict = {
@@ -170,6 +245,46 @@ const ru: Dict = {
   complianceShort:
     'Только для образовательных и планировочных целей. Это не заявка на ипотеку, не Loan Estimate, не одобрение и не обязательство кредитовать.',
   countyNeedsConfirm: 'округ требует подтверждения',
+  docModalTitle: 'Загрузите документы для ревью брокером',
+  docModalIntro:
+    'Загрузите Loan Estimate, предложение кредитора, банковскую выписку, paystub, налоговый документ, договор купли-продажи или другой документ по ипотеке для ревью брокером.',
+  docSafetyNote:
+    'Пожалуйста, не загружайте документы с полным SSN, полными номерами банковских счетов или другой особо конфиденциальной информацией, если это специально не запросил лицензированный ипотечный специалист.',
+  docCompliance:
+    'Ревью документов предназначено только для образовательных и планировочных целей. Это не заявка на ипотеку, не Loan Estimate, не одобрение кредита и не обязательство кредитовать.',
+  docReviewedBy: 'Документы будут рассмотрены лицензированным ипотечным специалистом.',
+  docContactPrompt:
+    'Чтобы брокер мог связаться с вами после ревью документов, пожалуйста, оставьте удобный способ связи.',
+  docUploadCta: 'Отправить на ревью брокеру',
+  docSendForReview: 'Отправить документы на ревью',
+  docSubmittedStatus: 'Отправлено на ревью брокеру',
+  docEventTitle: 'Документы отправлены на ревью',
+  docSuccess:
+    'Документы получены. Ваши документы отправлены в West Coast Capital Mortgage для ревью лицензированным mortgage broker. С вами свяжутся напрямую. Пожалуйста, проверьте, что телефон, email, удобное время связи и предпочитаемый язык указаны правильно.',
+  docFailure:
+    'Не удалось отправить ваши документы. Пожалуйста, попробуйте снова или свяжитесь с брокером напрямую.',
+  docDevMode: 'Режим разработки — документы фактически не были отправлены.',
+  docTypeLabel: 'Тип документа',
+  docNoteLabel: 'Примечание для брокера (необязательно)',
+  docAddFiles: 'Добавить файлы',
+  docRemove: 'Удалить',
+  docExplainSoon: 'Объяснить документ — скоро',
+  docFilesHeading: 'Файлы для отправки',
+  docValidationType: 'Неподдерживаемый тип файла. Разрешено: PDF, PNG, JPG, JPEG, HEIC.',
+  docValidationSize: 'Файл слишком большой (макс. 25 МБ).',
+  docValidationEmpty: 'Этот файл, похоже, пуст.',
+  docValidationNone: 'Добавьте хотя бы один документ для отправки.',
+  docValidationMax: 'Можно загрузить до 10 файлов.',
+  docTypeMissing: 'Выберите тип документа для каждого файла.',
+  catLoanEstimate: 'Loan Estimate / предложение кредитора',
+  catBankStatement: 'Банковская выписка',
+  catPaystub: 'Paystub / W-2 / 1099',
+  catTaxReturn: 'Налоговая декларация / P&L',
+  catPurchaseContract: 'Договор купли-продажи',
+  catMortgageStatement: 'Выписка по ипотеке',
+  catInsuranceQuote: 'Предложение по страхованию',
+  catTitleEscrow: 'Оценка Title / Escrow',
+  catOther: 'Другой ипотечный документ',
 };
 
 const es: Dict = {
@@ -224,6 +339,46 @@ const es: Dict = {
   complianceShort:
     'Solo para fines educativos y de planificación. No es una solicitud de hipoteca, Loan Estimate, aprobación ni compromiso de préstamo.',
   countyNeedsConfirm: 'el condado necesita confirmación',
+  docModalTitle: 'Suba documentos para revisión del corredor',
+  docModalIntro:
+    'Suba un Loan Estimate, cotización del prestamista, estado de cuenta bancario, talón de pago, documento fiscal, contrato de compra u otro documento hipotecario para revisión del corredor.',
+  docSafetyNote:
+    'Evite subir documentos con el SSN completo, números de cuenta bancaria completos u otra información altamente sensible, a menos que lo solicite específicamente un profesional hipotecario con licencia.',
+  docCompliance:
+    'Esta revisión de documentos es solo para fines educativos y de planificación. No es una solicitud de hipoteca, Loan Estimate, aprobación ni compromiso de préstamo.',
+  docReviewedBy: 'Los documentos serán revisados por un profesional hipotecario con licencia.',
+  docContactPrompt:
+    'Para que el corredor pueda dar seguimiento tras revisar sus documentos, deje la mejor forma de contactarlo.',
+  docUploadCta: 'Enviar para revisión del corredor',
+  docSendForReview: 'Enviar documentos para revisión',
+  docSubmittedStatus: 'Enviado para revisión del corredor',
+  docEventTitle: 'Documentos enviados para revisión',
+  docSuccess:
+    'Documentos recibidos. Sus documentos se enviaron a West Coast Capital Mortgage para revisión del corredor. Un profesional hipotecario con licencia los revisará y lo contactará directamente. Verifique que su teléfono, correo, horario de contacto e idioma preferido sean correctos.',
+  docFailure:
+    'No pudimos enviar sus documentos todavía. Inténtelo de nuevo o contacte al corredor directamente.',
+  docDevMode: 'Modo de desarrollo — los documentos no se enviaron realmente.',
+  docTypeLabel: 'Tipo de documento',
+  docNoteLabel: 'Nota para el corredor (opcional)',
+  docAddFiles: 'Agregar archivos',
+  docRemove: 'Quitar',
+  docExplainSoon: 'Explicar este documento — próximamente',
+  docFilesHeading: 'Archivos para enviar',
+  docValidationType: 'Tipo de archivo no admitido. Permitidos: PDF, PNG, JPG, JPEG, HEIC.',
+  docValidationSize: 'El archivo es demasiado grande (máx. 25 MB).',
+  docValidationEmpty: 'Ese archivo parece estar vacío.',
+  docValidationNone: 'Agregue al menos un documento para enviar.',
+  docValidationMax: 'Puede subir hasta 10 archivos.',
+  docTypeMissing: 'Seleccione un tipo de documento para cada archivo.',
+  catLoanEstimate: 'Loan Estimate / cotización del prestamista',
+  catBankStatement: 'Estado de cuenta bancario',
+  catPaystub: 'Talón de pago / W-2 / 1099',
+  catTaxReturn: 'Declaración de impuestos / P&L',
+  catPurchaseContract: 'Contrato de compra',
+  catMortgageStatement: 'Estado de cuenta hipotecario',
+  catInsuranceQuote: 'Cotización de seguro',
+  catTitleEscrow: 'Estimación de Title / Escrow',
+  catOther: 'Otro documento hipotecario',
 };
 
 const zh: Dict = {
@@ -278,6 +433,44 @@ const zh: Dict = {
   complianceShort:
     '仅供教育和规划参考。这不是房贷申请、贷款估算、批准或放贷承诺。',
   countyNeedsConfirm: '县需要确认',
+  docModalTitle: '上传文件供经纪人审阅',
+  docModalIntro:
+    '上传贷款估算、贷方报价、银行对账单、工资单、税务文件、购房合同或其他与房贷相关的文件，供经纪人审阅。',
+  docSafetyNote:
+    '除非持牌房贷专业人士特别要求，请勿上传包含完整 SSN、完整银行账号或其他高度敏感个人信息的文件。',
+  docCompliance:
+    '本文件审阅仅供教育和规划参考。这不是房贷申请、贷款估算、贷款批准或放贷承诺。',
+  docReviewedBy: '文件将由持牌房贷专业人士审阅。',
+  docContactPrompt: '为便于经纪人在审阅文件后与您联系，请留下最方便的联系方式。',
+  docUploadCta: '提交经纪人审阅',
+  docSendForReview: '提交文件以供审阅',
+  docSubmittedStatus: '已提交经纪人审阅',
+  docEventTitle: '文件已提交审阅',
+  docSuccess:
+    '文件已收到。您的文件已提交至 West Coast Capital Mortgage 供经纪人审阅。持牌房贷专业人士将审阅并直接与您联系。请确认您的电话、电子邮件、首选联系时间和首选语言正确无误。',
+  docFailure: '暂时无法提交您的文件。请重试或直接联系经纪人。',
+  docDevMode: '开发模式 — 文件实际上尚未发送。',
+  docTypeLabel: '文件类型',
+  docNoteLabel: '给经纪人的备注（可选）',
+  docAddFiles: '添加文件',
+  docRemove: '移除',
+  docExplainSoon: '解释此文件 — 即将推出',
+  docFilesHeading: '待提交文件',
+  docValidationType: '不支持的文件类型。允许：PDF、PNG、JPG、JPEG、HEIC。',
+  docValidationSize: '文件过大（最大 25MB）。',
+  docValidationEmpty: '该文件似乎是空的。',
+  docValidationNone: '请至少添加一个文件以提交。',
+  docValidationMax: '最多可上传 10 个文件。',
+  docTypeMissing: '请为每个文件选择文件类型。',
+  catLoanEstimate: '贷款估算 / 贷方报价',
+  catBankStatement: '银行对账单',
+  catPaystub: '工资单 / W-2 / 1099',
+  catTaxReturn: '纳税申报表 / P&L',
+  catPurchaseContract: '购房合同',
+  catMortgageStatement: '房贷对账单',
+  catInsuranceQuote: '保险报价',
+  catTitleEscrow: '产权 / 托管估算',
+  catOther: '其他房贷文件',
 };
 
 const DICTS: Record<Language, Dict> = { en, ru, es, zh };

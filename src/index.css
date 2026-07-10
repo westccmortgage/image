@@ -540,3 +540,45 @@ a { color: inherit; }
 /* footer fine print */
 .sm-footer p { margin: 0 auto; max-width: 900px; }
 .sm-footer-fine { margin-top: 10px !important; font-size: 10.5px; line-height: 1.6; text-transform: none; letter-spacing: 0; opacity: 0.85; }
+
+/* =========================================================================
+   Document Review flow — upload modal (bottom sheet on mobile) + chat event.
+   ========================================================================= */
+.sm-docmodal { display: flex; flex-direction: column; width: min(560px, 100%); max-height: 92vh; padding: 0; overflow: hidden; }
+.sm-docmodal .sm-modal-head { padding: 18px 18px 8px; }
+.sm-docmodal-body { flex: 1 1 auto; overflow-y: auto; padding: 4px 18px 12px; display: flex; flex-direction: column; gap: 12px; }
+.sm-docmodal-foot { flex: 0 0 auto; border-top: 1px solid var(--brd); padding: 14px 18px; background: var(--panel-2); }
+.sm-doc-submit { width: 100%; min-height: 52px; }
+.sm-doc-intro { font-size: 14px; line-height: 1.55; color: var(--ink); margin: 0; }
+.sm-doc-safety { font-size: 12.5px; line-height: 1.5; color: var(--warn); background: var(--warn-bg); border: 1px solid var(--warn-brd); border-radius: 10px; padding: 10px 12px; margin: 0; }
+.sm-doc-compliance, .sm-doc-reviewedby { font-size: 11px; line-height: 1.5; color: var(--faint); margin: 0; }
+.sm-hiddeninput { display: none; }
+.sm-doc-add { align-self: flex-start; }
+.sm-doc-errors { margin: 0; padding: 10px 12px 10px 28px; list-style: disc; background: var(--bad-bg); border: 1px solid var(--bad-brd); border-radius: 10px; color: var(--bad); font-size: 12.5px; line-height: 1.5; }
+.sm-doc-files { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.sm-doc-file { border: 1px solid var(--brd); border-radius: 11px; padding: 10px 12px; background: var(--ai-bubble); display: flex; flex-direction: column; gap: 8px; }
+.sm-doc-file-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.sm-doc-name { font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sm-doc-remove { flex: 0 0 auto; font-family: var(--mono); font-size: 11px; color: var(--bad); background: transparent; border: 1px solid var(--bad-brd); border-radius: 7px; padding: 4px 9px; cursor: pointer; }
+.sm-doc-file-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.sm-doc-type { flex: 1 1 200px; min-width: 0; padding: 9px 11px; font-size: 13.5px; font-family: inherit; color: var(--ink); background: var(--input-bg); border: 1px solid var(--brd); border-radius: 9px; }
+.sm-doc-type.is-empty { border-color: var(--warn-brd); }
+.sm-doc-type option { background: var(--bg-2); color: var(--ink); }
+.sm-doc-explain { flex: 0 0 auto; font-size: 11px; font-family: var(--mono); color: var(--faint); background: transparent; border: 1px dashed var(--brd); border-radius: 7px; padding: 6px 10px; cursor: not-allowed; opacity: 0.7; }
+.sm-doc-note span { font-size: 12.5px; color: var(--muted); }
+.sm-doc-contact { border-top: 1px solid var(--brd); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.sm-doc-contact-prompt { font-size: 13.5px; line-height: 1.5; color: var(--ink); font-weight: 600; margin: 0; }
+.sm-doc-failure { font-size: 13px; color: var(--bad); background: var(--bad-bg); border: 1px solid var(--bad-brd); border-radius: 10px; padding: 10px 12px; margin: 0; }
+
+/* chat event: document review submitted (not an ordinary attachment) */
+.sm-docevent { align-self: stretch; border: 1px solid var(--accent-brd); border-radius: 13px; padding: 12px 14px; background: var(--accent-tint); display: flex; flex-direction: column; gap: 7px; }
+.sm-docevent-h { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--cyan); }
+.sm-docevent ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.sm-docevent li { font-size: 13px; color: var(--ink); }
+.sm-docevent li b { font-weight: 700; }
+.sm-docevent-status { font-family: var(--mono); font-size: 11.5px; color: var(--good); }
+
+@media (max-width: 620px) {
+  .sm-docmodal { width: 100%; max-height: 94vh; border-radius: 18px 18px 0 0; }
+  .sm-modal-overlay { align-items: flex-end; padding: 0; }
+}

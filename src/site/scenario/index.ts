@@ -51,6 +51,33 @@ export {
   strategyBullets,
 } from './loanPaths';
 export {
+  DOCUMENT_CATEGORIES,
+  ALLOWED_EXTENSIONS,
+  ALLOWED_MIME_TYPES,
+  MAX_FILES,
+  MAX_FILE_BYTES,
+  validateFile,
+  validateSubmission,
+  contactComplete,
+  toSubmittedMetas,
+  buildDocumentReviewPayload,
+  submitDocumentReview,
+  createDefaultDocumentReviewAdapter,
+  defaultDocumentReviewAdapter,
+} from './documentReview';
+export type {
+  DocumentCategory,
+  FileMeta,
+  FileValidation,
+  PendingUpload,
+  SubmittedDocMeta,
+  ContactInfo,
+  DocumentReviewPayload,
+  DocumentReviewResult,
+  DocumentReviewSubmissionAdapter,
+  BuildDocumentReviewContext,
+} from './documentReview';
+export {
   buildLead,
   submitLead,
   postNetlifyForm,
