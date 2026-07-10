@@ -6,8 +6,15 @@
 [build.environment]
   NODE_VERSION = "20"
 
+# Serverless functions (the live "brain" proxy at /api/chat lives here). It
+# holds ANTHROPIC_API_KEY server-side; without that env var it returns 501 and
+# the client falls back to the local rule-based engine.
+[functions]
+  directory = "netlify/functions"
+
 # SPA fallback: every route serves the built index.html so client-side routing
-# (/, /embed, etc.) works on direct hits and refreshes.
+# (/, /embed, etc.) works on direct hits and refreshes. Function routes
+# (/api/*) are matched before this catch-all, so the chat proxy is reachable.
 [[redirects]]
   from = "/*"
   to = "/index.html"

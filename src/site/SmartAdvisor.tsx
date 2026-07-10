@@ -29,6 +29,7 @@ import {
   matchChoiceValue,
   buildReply,
   humanCaptured,
+  askLiveBrain,
   FIELD_BY_KEY,
 } from './scenario';
 import type { FieldKey, Question, ScenarioProfile } from './scenario';
@@ -125,6 +126,7 @@ export function SmartAdvisor() {
   const [text, setText] = useState('');
   const [contact, setContact] = useState({ name: '', phone: '', email: '' });
   const [result, setResult] = useState<{ ok: boolean; id?: string } | null>(null);
+  const [thinking, setThinking] = useState(false);
   const firstMsgRef = useRef('');
   const parsedFirstRef = useRef<ScenarioProfile>({});
 
@@ -148,7 +150,7 @@ export function SmartAdvisor() {
   useEffect(() => {
     const el = streamRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages]);
+  }, [messages, thinking]);
 
   const pushAi = (lines: string[]) => setMessages((m) => [...m, { id: nextId(), role: 'ai', lines }]);
   const pushUser = (line: string) => setMessages((m) => [...m, { id: nextId(), role: 'user', lines: [line] }]);
@@ -165,7 +167,7 @@ export function SmartAdvisor() {
   }
 
   /** Core turn: merge facts, speak the numbers, ask ONE next question. */
-  function respondTo(next: ScenarioProfile, prev: ScenarioProfile, userText: string, isFirst: boolean) {
+  async function respondTo(next: ScenarioProfile, prev: ScenarioProfile, userText: string, isFirst: boolean) {
     setProfile(next);
     const captured = newlyCaptured(prev, next);
     const both = !!(next.purchasePrice && next.downPayment != null);
@@ -180,25 +182,58 @@ export function SmartAdvisor() {
     }
     const nq = nextQuestions(next, { max: 1 })[0] ?? null;
     setQuestions(nq ? [nq] : []);
-    pushAi(
-      buildReply({
+
+    const capturedText = captured
+      .map((k) => humanCaptured(k, next, labelForValue))
+      .filter(Boolean);
+    // Deterministic reply — used directly if the live brain isn't available.
+    const localLines = buildReply({
+      userText,
+      capturedText,
+      numbers: {
+        hasBoth: both,
+        downPayment: c.downPayment,
+        totalCashToClose: c.totalCashToClose,
+        additionalFundsNeeded: c.additionalFundsNeeded,
+        ltv: c.ltv,
+        monthlyPI: c.monthlyPI,
+        monthlyHousing: c.monthlyHousingPayment,
+      },
+      nextQuestion: nq,
+      isFirstMessage: isFirst,
+    });
+
+    // Try the live brain (Netlify function → Anthropic). It only PHRASES the
+    // engine's numbers; on any failure/not-configured we keep the local reply.
+    const history = messages.map((m) => ({
+      role: (m.role === 'ai' ? 'assistant' : 'user') as 'assistant' | 'user',
+      text: m.lines.join(' '),
+    }));
+    setThinking(true);
+    let live: string[] | null = null;
+    try {
+      live = await askLiveBrain({
         userText,
-        capturedText: captured
-          .map((k) => humanCaptured(k, next, labelForValue))
-          .filter(Boolean),
+        captured: capturedText,
         numbers: {
           hasBoth: both,
+          purchasePrice: activeInput.purchasePrice ?? null,
           downPayment: c.downPayment,
+          loanAmount: (activeInput.purchasePrice ?? 0) - (activeInput.downPayment ?? 0),
           totalCashToClose: c.totalCashToClose,
           additionalFundsNeeded: c.additionalFundsNeeded,
           ltv: c.ltv,
+          loanType: activeInput.loanType,
           monthlyPI: c.monthlyPI,
           monthlyHousing: c.monthlyHousingPayment,
         },
-        nextQuestion: nq,
-        isFirstMessage: isFirst,
-      }),
-    );
+        nextQuestion: nq?.prompt ?? null,
+        history,
+      });
+    } finally {
+      setThinking(false);
+    }
+    pushAi(live && live.length ? live : localLines);
   }
 
   function handleText() {
@@ -210,11 +245,11 @@ export function SmartAdvisor() {
     if (isFirst) { firstMsgRef.current = t; parsedFirstRef.current = parseScenario(t); }
     let patch = parseScenario(t);
     if (focus) patch = { ...patch, ...coerceAnswer(focus, t) };
-    respondTo(mergeProfile(profile, patch), profile, t, isFirst);
+    void respondTo(mergeProfile(profile, patch), profile, t, isFirst);
   }
   function handleChip(field: FieldKey, value: string, label: string) {
     pushUser(label);
-    respondTo(mergeProfile(profile, { [field]: value } as Partial<ScenarioProfile>), profile, label, false);
+    void respondTo(mergeProfile(profile, { [field]: value } as Partial<ScenarioProfile>), profile, label, false);
   }
   async function handleSubmit() {
     const merged = mergeProfile(profile, contact);
@@ -302,6 +337,11 @@ export function SmartAdvisor() {
                 ))}
               </div>
             ))}
+            {thinking && (
+              <div className="sm-msg sm-ai sm-typing" aria-live="polite">
+                <p><i /><i /><i /></p>
+              </div>
+            )}
           </div>
 
           {stage === 'submitted' ? (
