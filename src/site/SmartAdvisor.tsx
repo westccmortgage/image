@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   calculateCashToClose,
   buildDownPaymentScenarios,
@@ -21,12 +21,14 @@ import {
   nextQuestions,
   nextBestQuestion,
   matchLoanPaths,
-  estimateCashToClose,
   strategyBullets,
   buildLead,
   submitLead,
   readUtm,
   labelForValue,
+  matchChoiceValue,
+  buildReply,
+  humanCaptured,
   FIELD_BY_KEY,
 } from './scenario';
 import type { FieldKey, Question, ScenarioProfile } from './scenario';
@@ -77,16 +79,31 @@ function numberFromText(text: string): number | null {
 }
 function coerceAnswer(q: Question, text: string): Partial<ScenarioProfile> {
   if (q.kind === 'choice' && q.options) {
-    const t = text.toLowerCase();
-    const hit = q.options.find((o) => t.includes(o.value.toLowerCase()) || t.includes(o.label.toLowerCase()));
-    return hit ? ({ [q.field]: hit.value } as Partial<ScenarioProfile>) : {};
+    const val = matchChoiceValue(q.field, q.options, text);
+    return val ? ({ [q.field]: val } as Partial<ScenarioProfile>) : {};
   }
   if (q.kind === 'money' || q.kind === 'number') {
     const n = numberFromText(text);
     if (n == null) return {};
     return q.field === 'fico' ? { fico: Math.round(n) } : ({ [q.field]: n } as Partial<ScenarioProfile>);
   }
+  // Free text (state / ZIP): don't swallow a question as the answer.
+  if (/[?]|how much|what|why|when|which|can you|do i/i.test(text)) return {};
   return { [q.field]: text.trim() } as Partial<ScenarioProfile>;
+}
+
+/** Fields newly filled between two profiles (non-contact). */
+function newlyCaptured(prev: ScenarioProfile, next: ScenarioProfile): FieldKey[] {
+  const keys: FieldKey[] = [
+    'purchasePrice', 'downPayment', 'state', 'zipOrCounty', 'occupancy',
+    'employmentType', 'incomeDocPath', 'fico', 'reserves', 'borrowerGoal',
+  ];
+  return keys.filter((k) => {
+    const a = prev[k];
+    const b = next[k];
+    const has = (v: unknown) => v !== undefined && v !== null && v !== '';
+    return has(b) && (!has(a) || a !== b);
+  });
 }
 function valueDisplay(key: FieldKey, p: ScenarioProfile): string {
   const v = p[key];
@@ -111,55 +128,93 @@ export function SmartAdvisor() {
   const firstMsgRef = useRef('');
   const parsedFirstRef = useRef<ScenarioProfile>({});
 
-  const { input, isTheirs } = useMemo(() => profileToInput(profile), [profile]);
-  const calc = useMemo(() => calculateCashToClose(input), [input]);
+  // Numbers only go "live" once BOTH price and down payment are known — until
+  // then we show the example, so the chat never voices a half-real figure.
+  const hasBoth = !!(profile.purchasePrice && profile.downPayment != null);
+  const input = useMemo(() => profileToInput(profile).input, [profile]);
+  const isTheirs = hasBoth;
+  const calc = useMemo(
+    () => calculateCashToClose(hasBoth ? input : defaultScenario),
+    [hasBoth, input],
+  );
   const scenarios = useMemo(() => buildDownPaymentScenarios(input), [input]);
   const takeaway = useMemo(() => generateAiTakeaway(calc, { loanType: input.loanType }), [calc, input.loanType]);
   const derived = useMemo(() => deriveScenario(profile), [profile]);
   const pct = completionPercent(profile);
   const focus = questions[0];
 
+  // Keep the conversation pinned to the latest message (no manual scrolling).
+  const streamRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = streamRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages]);
+
   const pushAi = (lines: string[]) => setMessages((m) => [...m, { id: nextId(), role: 'ai', lines }]);
   const pushUser = (line: string) => setMessages((m) => [...m, { id: nextId(), role: 'user', lines: [line] }]);
 
-  function optionsLines(p: ScenarioProfile): string[] {
-    const lines = ['◈ Loan Strategy Snapshot'];
+  function optionsLines(p: ScenarioProfile, cashToClose: number): string[] {
+    const lines = [
+      '◈ Loan Strategy Snapshot',
+      `Based on everything, you're looking at about ${formatMoney(cashToClose)} to close. Here are paths that fit:`,
+    ];
     for (const path of matchLoanPaths(p)) lines.push(`• ${path.name} — ${path.why}`);
-    const est = estimateCashToClose(p);
-    if (est) lines.push(`Estimated cash to close: about ${formatMoney(est.estimatedCashToClose)}.`);
     for (const b of strategyBullets(p)) lines.push(`• ${b}`);
     lines.push('I can prepare a personalized strategy summary for you. Where should we send it?');
     return lines;
   }
-  function advance(next: ScenarioProfile) {
+
+  /** Core turn: merge facts, speak the numbers, ask ONE next question. */
+  function respondTo(next: ScenarioProfile, prev: ScenarioProfile, userText: string, isFirst: boolean) {
+    setProfile(next);
+    const captured = newlyCaptured(prev, next);
+    const both = !!(next.purchasePrice && next.downPayment != null);
+    const activeInput = both ? profileToInput(next).input : defaultScenario;
+    const c = calculateCashToClose(activeInput);
+
     if (isReadyForOptions(next)) {
-      pushAi(optionsLines(next));
+      pushAi(optionsLines(next, c.totalCashToClose));
       setQuestions([]);
       setStage('contact');
       return;
     }
-    const qs = nextQuestions(next, { max: 3 });
-    setQuestions(qs);
-    const ack = firstMsgRef.current ? 'Updated your Scenario Profile.' : '';
-    pushAi([ack, ...qs.map((q) => q.prompt)].filter(Boolean));
+    const nq = nextQuestions(next, { max: 1 })[0] ?? null;
+    setQuestions(nq ? [nq] : []);
+    pushAi(
+      buildReply({
+        userText,
+        capturedText: captured
+          .map((k) => humanCaptured(k, next, labelForValue))
+          .filter(Boolean),
+        numbers: {
+          hasBoth: both,
+          downPayment: c.downPayment,
+          totalCashToClose: c.totalCashToClose,
+          additionalFundsNeeded: c.additionalFundsNeeded,
+          ltv: c.ltv,
+          monthlyPI: c.monthlyPI,
+          monthlyHousing: c.monthlyHousingPayment,
+        },
+        nextQuestion: nq,
+        isFirstMessage: isFirst,
+      }),
+    );
   }
+
   function handleText() {
     const t = text.trim();
     if (!t) return;
     setText('');
     pushUser(t);
-    if (!firstMsgRef.current) { firstMsgRef.current = t; parsedFirstRef.current = parseScenario(t); }
+    const isFirst = !firstMsgRef.current;
+    if (isFirst) { firstMsgRef.current = t; parsedFirstRef.current = parseScenario(t); }
     let patch = parseScenario(t);
     if (focus) patch = { ...patch, ...coerceAnswer(focus, t) };
-    const next = mergeProfile(profile, patch);
-    setProfile(next);
-    advance(next);
+    respondTo(mergeProfile(profile, patch), profile, t, isFirst);
   }
   function handleChip(field: FieldKey, value: string, label: string) {
     pushUser(label);
-    const next = mergeProfile(profile, { [field]: value } as Partial<ScenarioProfile>);
-    setProfile(next);
-    advance(next);
+    respondTo(mergeProfile(profile, { [field]: value } as Partial<ScenarioProfile>), profile, label, false);
   }
   async function handleSubmit() {
     const merged = mergeProfile(profile, contact);
@@ -239,7 +294,7 @@ export function SmartAdvisor() {
             <span>AI Strategy Console</span>
             <span className="sm-live">● live</span>
           </div>
-          <div className="sm-stream">
+          <div className="sm-stream" ref={streamRef}>
             {messages.map((m) => (
               <div key={m.id} className={`sm-msg sm-${m.role}`}>
                 {m.lines.map((l, i) => (

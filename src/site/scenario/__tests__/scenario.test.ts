@@ -8,8 +8,12 @@ import {
   buildLead,
   encodeNetlifyForm,
   NETLIFY_FORM_NAME,
+  classifyIntent,
+  buildReply,
+  matchChoiceValue,
   CONTACT_FIELDS,
 } from '../index';
+import { FIELD_BY_KEY } from '../fields';
 
 const EXAMPLE =
   "I want to buy a $2M home in California. I'm self-employed and have $400k down.";
@@ -140,6 +144,43 @@ describe('5. lead submission object is complete', () => {
     for (const banned of ['ssn', 'dob', 'accountNumber', 'routing']) {
       expect(keys).not.toContain(banned);
     }
+  });
+
+  it('conversation understands questions and speaks the numbers', () => {
+    expect(classifyIntent('how much do I need to close?')).toBe('cash');
+    expect(classifyIntent("what's my monthly payment")).toBe('monthly');
+    // short natural answers are understood via synonyms
+    expect(
+      matchChoiceValue('employmentType', FIELD_BY_KEY.employmentType.options!, 'self'),
+    ).toBe('self-employed');
+    expect(
+      matchChoiceValue('incomeDocPath', FIELD_BY_KEY.incomeDocPath.options!, 'bank'),
+    ).toBe('bank-statements');
+    // answers the cash question with a real figure when price + down are known
+    const withBoth = buildReply({
+      userText: 'how much do I need?',
+      capturedText: [],
+      numbers: {
+        hasBoth: true, downPayment: 400000, totalCashToClose: 449189,
+        additionalFundsNeeded: 49189, ltv: 80, monthlyPI: 9000, monthlyHousing: 11000,
+      },
+      nextQuestion: null,
+      isFirstMessage: false,
+    }).join(' ');
+    expect(withBoth).toContain('$449,189');
+    // without a down payment it asks for it instead of inventing a number
+    const noDown = buildReply({
+      userText: 'how much do I need?',
+      capturedText: [],
+      numbers: {
+        hasBoth: false, downPayment: 149000, totalCashToClose: 196381,
+        additionalFundsNeeded: 47381, ltv: 89.3, monthlyPI: 8527, monthlyHousing: 10315,
+      },
+      nextQuestion: null,
+      isFirstMessage: false,
+    }).join(' ');
+    expect(noDown).toMatch(/down payment/i);
+    expect(noDown).not.toContain('$196,381');
   });
 
   it('encodes cleanly for the Netlify Forms (email) adapter', () => {

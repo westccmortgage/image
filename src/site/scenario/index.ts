@@ -17,6 +17,13 @@ export {
 export { nextQuestions, nextBestQuestion } from './questionEngine';
 export type { NextQuestionOptions } from './questionEngine';
 export {
+  classifyIntent,
+  buildReply,
+  matchChoiceValue,
+  humanCaptured,
+} from './converse';
+export type { Intent, ReplyNumbers, ReplyInput } from './converse';
+export {
   matchLoanPaths,
   estimateCashToClose,
   strategyBullets,
