@@ -244,19 +244,91 @@ function notConfigured(name: string): LeadSubmissionAdapter {
   };
 }
 
+// --- GR CRM (authorized) via a server-side proxy ---------------------------
+// Intentional broker-review submissions are forwarded to the GR CRM through the
+// /api/crm-lead Netlify function, which holds the CRM webhook URL + token
+// server-side. The token is NEVER embedded in the browser, and this is only
+// called on deliberate submissions — never on chat input.
+export const CRM_LEAD_ENDPOINT = '/api/crm-lead';
+
+export interface CrmLeadFields {
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+}
+
+/** Flatten a lead into the CRM's {name,email,phone,message} shape. */
+export function crmFieldsFromLead(lead: LeadSubmission): CrmLeadFields {
+  const f = lead.formFields;
+  const money = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
+  const lines = ['Wallet WCCM — AI Mortgage Strategy Advisor lead'];
+  if (f.purchasePrice) lines.push(`Purchase price: ${money(f.purchasePrice)}`);
+  if (f.downPayment != null) lines.push(`Down payment: ${money(f.downPayment)}`);
+  if (f.loanPurpose) lines.push(`Purpose: ${f.loanPurpose}`);
+  if (f.occupancy) lines.push(`Occupancy: ${f.occupancy}`);
+  if (f.employmentType) lines.push(`Employment: ${f.employmentType}`);
+  if (f.incomeDocPath) lines.push(`Income docs: ${f.incomeDocPath}`);
+  if (f.city || f.state) lines.push(`Location: ${[f.city, f.state].filter(Boolean).join(', ')}`);
+  if (f.county) lines.push(`County: ${f.county}`);
+  if (f.preferredContactTime) lines.push(`Preferred time: ${f.preferredContactTime}`);
+  if (f.preferredLanguage) lines.push(`Preferred language: ${f.preferredLanguage}`);
+  if (lead.cashToCloseEstimate) lines.push(`Est. cash to close: ${money(lead.cashToCloseEstimate.estimatedCashToClose)}`);
+  if (lead.loanPaths.length) lines.push(`Possible paths: ${lead.loanPaths.map((p) => p.name).join(', ')}`);
+  if (lead.missingFields.required.length) lines.push(`Missing: ${lead.missingFields.required.join(', ')}`);
+  if (lead.originalMessage) lines.push(`Message: ${lead.originalMessage}`);
+  lines.push(`Source: ${lead.sourcePage}`);
+  return { name: f.name ?? '', email: f.email ?? '', phone: f.phone ?? '', message: lines.join('\n') };
+}
+
+/** POST a lead to the CRM proxy. Best-effort — never throws. */
+export async function submitCrmLead(fields: CrmLeadFields): Promise<LeadResult> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(CRM_LEAD_ENDPOINT, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(fields),
+      signal: controller.signal,
+    });
+    return res.ok
+      ? { ok: true, adapter: 'gr-crm' }
+      : { ok: false, adapter: 'gr-crm', error: `HTTP ${res.status}` };
+  } catch (e) {
+    return { ok: false, adapter: 'gr-crm', error: String(e) };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export function createGrCrmAdapter(): LeadSubmissionAdapter {
+  return {
+    name: 'gr-crm',
+    async submit(lead) {
+      return submitCrmLead(crmFieldsFromLead(lead));
+    },
+  };
+}
+
 /**
  * The adapter the app uses today: submit via Netlify Forms (→ email
- * notification, configured in the Netlify dashboard). If that POST fails
- * (e.g. local dev, or Netlify not reachable), fall back to the local/log
- * adapter so a lead is never silently lost.
+ * notification) AND forward to the GR CRM (best-effort, in parallel). If the
+ * Netlify POST fails (e.g. local dev), fall back to the local/log adapter so a
+ * lead is never silently lost. The CRM delivery never blocks the borrower's
+ * confirmation.
  */
 export function createDefaultAdapter(): LeadSubmissionAdapter {
   const primary = createNetlifyFormsAdapter();
   const fallback = createLocalLogAdapter();
+  const crm = createGrCrmAdapter();
   return {
-    name: 'netlify-forms+local',
+    name: 'netlify-forms+gr-crm+local',
     async submit(lead) {
+      // CRM is additive/best-effort and runs in parallel with the email path.
+      const crmPromise = crm.submit(lead).catch(() => undefined);
       const r = await primary.submit(lead);
+      await crmPromise;
       if (r.ok) return r;
       const fb = await fallback.submit(lead);
       return { ...fb, error: r.error ?? fb.error };

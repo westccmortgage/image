@@ -111,7 +111,12 @@ export {
   createAriveAdapter,
   createGoogleSheetAdapter,
   createBrokerDashboardAdapter,
+  createGrCrmAdapter,
+  submitCrmLead,
+  crmFieldsFromLead,
+  CRM_LEAD_ENDPOINT,
 } from './leadAdapter';
+export type { CrmLeadFields } from './leadAdapter';
 export type {
   LeadSubmission,
   LeadSubmissionAdapter,

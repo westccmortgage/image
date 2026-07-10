@@ -36,6 +36,7 @@ import {
   buildDocumentReviewPayload,
   submitDocumentReview,
   toSubmittedMetas,
+  submitCrmLead,
   DOCUMENT_CATEGORIES,
   FIELD_BY_KEY,
 } from './scenario';
@@ -318,6 +319,18 @@ export function SmartAdvisor() {
         { id: nextId(), role: 'ai', lines: [tr('docSuccess')] },
         ...(res.dev ? [{ id: nextId(), role: 'system' as Role, lines: [tr('docDevMode')] }] : []),
       ]);
+      // Capture this intentional broker-review submission in the CRM too
+      // (best-effort; never blocks the borrower). Token stays server-side.
+      const docLines = [
+        'Wallet WCCM — Document Review submitted',
+        ...metas.map((d) => `• ${d.name} — ${d.category || 'other'}`),
+        note ? `Note: ${note}` : '',
+        merged.purchasePrice ? `Purchase price: $${merged.purchasePrice.toLocaleString('en-US')}` : '',
+        merged.city || merged.state ? `Location: ${[merged.city, merged.state].filter(Boolean).join(', ')}` : '',
+        dc.preferredContactTime ? `Preferred time: ${dc.preferredContactTime}` : '',
+        dc.preferredLanguage ? `Preferred language: ${dc.preferredLanguage}` : '',
+      ].filter(Boolean);
+      void submitCrmLead({ name: dc.name, email: dc.email, phone: dc.phone, message: docLines.join('\n') });
     }
     return res;
   }
