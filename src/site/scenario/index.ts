@@ -20,6 +20,7 @@ export {
 } from './profile';
 export { buildCompactProfile } from './selectors';
 export type { CompactProfile, CompactFact } from './selectors';
+export { fieldLabel, fieldQuestion, fieldOptionLabel } from './fieldsI18n';
 export { nextQuestions, nextBestQuestion } from './questionEngine';
 export type { NextQuestionOptions } from './questionEngine';
 export {

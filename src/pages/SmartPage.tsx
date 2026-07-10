@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { SmartAdvisor } from '../site/SmartAdvisor';
 import { PHONE, PHONE_HREF } from '../site/walletWccm';
+import { t, readInitialLanguage, persistLanguage } from '../site/i18n';
+import type { Language } from '../site/scenario';
 
 type Theme = 'light' | 'dark';
 
@@ -23,6 +25,9 @@ function initialTheme(): Theme {
  */
 export function SmartPage() {
   const [theme, setTheme] = useState<Theme>(initialTheme);
+  // Language is owned at the page level so the nav + advisor localize together.
+  // Initial value resolves synchronously (explicit pref → ?lang → browser → en).
+  const [lang, setLang] = useState<Language>(readInitialLanguage);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -32,6 +37,15 @@ export function SmartPage() {
       /* ignore */
     }
   }, [theme]);
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  function changeLang(next: Language) {
+    persistLanguage(next);
+    setLang(next);
+  }
 
   return (
     <div className="sm-page" id="top">
@@ -47,20 +61,20 @@ export function SmartPage() {
           <button
             type="button"
             className="sm-toggle"
-            onClick={() => setTheme((t) => (t === 'light' ? 'dark' : 'light'))}
-            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-            title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            onClick={() => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))}
+            aria-label={t(lang, theme === 'light' ? 'themeDark' : 'themeLight')}
+            title={t(lang, theme === 'light' ? 'themeDark' : 'themeLight')}
           >
             {theme === 'light' ? '☾' : '☀'}
           </button>
           <a className="sm-btn sm-btn-ghost sm-btn-sm" href={PHONE_HREF}>
-            Talk to a Broker
+            {t(lang, 'talkBroker')}
           </a>
         </div>
       </header>
 
       <main className="sm-shell">
-        <SmartAdvisor />
+        <SmartAdvisor lang={lang} onLangChange={changeLang} />
       </main>
 
       <footer className="sm-footer">
