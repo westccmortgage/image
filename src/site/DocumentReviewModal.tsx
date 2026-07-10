@@ -107,7 +107,7 @@ export function DocumentReviewModal({ lang, profile, onClose, onSubmit }: Props)
 
   return (
     <div className="sm-modal-overlay" onClick={onClose}>
-      <div className="sm-modal sm-docmodal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={tr('docModalTitle')}>
+      <div className="sm-modal sm-docmodal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={tr('docModalTitle')}>
         <div className="sm-modal-head">
           <span>{tr('docModalTitle')}</span>
           <button type="button" className="sm-x" onClick={onClose} aria-label={tr('close')}>×</button>

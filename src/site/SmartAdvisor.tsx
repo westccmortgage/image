@@ -369,7 +369,12 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
   }
 
   function paperclip() {
+    speech.stop(); // never leave the mic listening behind an open modal
     setDocModalOpen(true);
+  }
+  function openReview() {
+    speech.stop();
+    setReviewOpen(true);
   }
 
   async function submitReview(e: React.FormEvent) {
@@ -457,7 +462,7 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
           <div className="sm-panel-h">
             <span>{tr('console')}</span>
             <div className="sm-console-tools">
-              <div className="sm-langsel" role="group" aria-label="Language">
+              <div className="sm-langsel" role="group" aria-label={tr('languageLabel')}>
                 {LANGUAGES.map((l) => (
                   <button
                     key={l.code}
@@ -614,8 +619,8 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
       {/* ---------- CTAs (only after value is provided) ---------- */}
       {hasValue && (
         <section className="sm-cta">
-          <button type="button" className="sm-btn sm-btn-primary" onClick={() => setReviewOpen(true)}>{tr('prepareSummary')}</button>
-          <button type="button" className="sm-btn sm-btn-soft" onClick={() => setReviewOpen(true)}>{tr('sendScenario')}</button>
+          <button type="button" className="sm-btn sm-btn-primary" onClick={openReview}>{tr('prepareSummary')}</button>
+          <button type="button" className="sm-btn sm-btn-soft" onClick={openReview}>{tr('sendScenario')}</button>
           <a className="sm-btn sm-btn-ghost" href={PHONE_HREF}>{tr('talkBroker')}</a>
         </section>
       )}
@@ -631,7 +636,7 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
       {/* ---------- Full profile drawer / bottom sheet ---------- */}
       {drawerOpen && (
         <div className="sm-drawer-overlay" onClick={() => setDrawerOpen(false)}>
-          <div className="sm-drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={tr('profileTitle')}>
+          <div className="sm-drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={tr('profileTitle')}>
             <div className="sm-drawer-head">
               <span>{tr('profileTitle')} · {pct}% {tr('complete')}</span>
               <button type="button" className="sm-x" onClick={() => setDrawerOpen(false)} aria-label={tr('close')}>×</button>
@@ -724,7 +729,7 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
       {/* ---------- Strategy Review Request modal ---------- */}
       {reviewOpen && (
         <div className="sm-modal-overlay" onClick={() => setReviewOpen(false)}>
-          <div className="sm-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={tr('reviewTitle')}>
+          <div className="sm-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={tr('reviewTitle')}>
             <div className="sm-modal-head">
               <span>{tr('reviewTitle')}</span>
               <button type="button" className="sm-x" onClick={() => setReviewOpen(false)} aria-label={tr('close')}>×</button>

@@ -138,7 +138,8 @@ export type UIKey =
   | 'perMonth'
   | 'snapshotHeader'
   | 'snapshotReadyPrompt'
-  | 'programNote';
+  | 'programNote'
+  | 'languageLabel';
 
 type Dict = Record<UIKey, string>;
 
@@ -275,6 +276,7 @@ const en: Dict = {
   aiStrategy: 'AI Strategy',
   contactTimePlaceholder: 'e.g. weekday afternoons',
   perMonth: '/mo',
+  languageLabel: 'Language',
   snapshotHeader: 'Loan Strategy Snapshot',
   snapshotReadyPrompt:
     'When you’re ready, I can prepare a personalized strategy summary for a licensed broker to review.',
@@ -415,6 +417,7 @@ const ru: Dict = {
   aiStrategy: 'ИИ-стратегия',
   contactTimePlaceholder: 'напр. будни после обеда',
   perMonth: '/мес',
+  languageLabel: 'Язык',
   snapshotHeader: 'Обзор кредитной стратегии',
   snapshotReadyPrompt:
     'Когда будете готовы, я подготовлю персональную сводку по стратегии для проверки лицензированным брокером.',
@@ -555,6 +558,7 @@ const es: Dict = {
   aiStrategy: 'Estrategia con IA',
   contactTimePlaceholder: 'p. ej. tardes entre semana',
   perMonth: '/mes',
+  languageLabel: 'Idioma',
   snapshotHeader: 'Resumen de estrategia de préstamo',
   snapshotReadyPrompt:
     'Cuando esté listo, puedo preparar un resumen de estrategia personalizado para que lo revise un corredor con licencia.',
@@ -692,6 +696,7 @@ const zh: Dict = {
   aiStrategy: 'AI 策略',
   contactTimePlaceholder: '例如工作日下午',
   perMonth: '/月',
+  languageLabel: '语言',
   snapshotHeader: '贷款策略概览',
   snapshotReadyPrompt: '当您准备好后，我可以准备一份个性化的策略摘要，供持牌经纪人审阅。',
   programNote: '* 按假定的规划利率估算以供比较 — 并非报价利率。仅为可能的方案，需符合贷方指南并经经纪人审阅。',

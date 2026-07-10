@@ -122,9 +122,11 @@ export function useSpeech(params: {
       setStatus((s) => (s === 'listening' ? 'idle' : s));
     };
     recRef.current = rec;
+    // Set 'listening' BEFORE start() so a synchronously-fired permission error
+    // (onerror → 'denied') wins instead of being overwritten back to 'listening'.
+    setStatus('listening');
     try {
       rec.start();
-      setStatus('listening');
     } catch {
       recRef.current = null;
       setStatus('idle');
