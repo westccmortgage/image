@@ -418,3 +418,167 @@ a { color: inherit; }
 /* ---- embed route ---- */
 .ww-embed { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 20px; background: radial-gradient(900px 500px at 80% 0%, var(--aurora-1), transparent 55%), var(--bg); }
 .ww-embed-note { text-align: center; font-family: var(--mono); font-size: 11px; color: var(--faint); margin: 0; }
+
+/* =========================================================================
+   AI Mortgage Strategy Advisor — v2 chrome (hero copy, language selector,
+   compact profile, drawer/bottom-sheet, review modal, program cards).
+   ========================================================================= */
+
+/* hero subtitle + demo/live tag */
+.sm-sub { font-size: 15px; line-height: 1.55; color: var(--muted); margin: 0; max-width: 62ch; }
+.sm-tag.is-example { color: var(--warn); }
+.sm-tag.is-live { color: var(--good); }
+
+/* console header tools: language selector + start over */
+.sm-console-tools { display: flex; align-items: center; gap: 10px; }
+.sm-langsel { display: inline-flex; border: 1px solid var(--brd); border-radius: 9px; overflow: hidden; }
+.sm-lang { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; padding: 5px 9px; background: transparent; color: var(--muted); border: none; cursor: pointer; transition: all 0.15s; }
+.sm-lang + .sm-lang { border-left: 1px solid var(--brd); }
+.sm-lang:hover { color: var(--ink); }
+.sm-lang.is-active { background: var(--grad); color: var(--on-accent); }
+.sm-startover { font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; padding: 6px 10px; background: transparent; color: var(--muted); border: 1px solid var(--brd); border-radius: 9px; cursor: pointer; transition: all 0.15s; }
+.sm-startover:hover { color: var(--bad); border-color: var(--bad-brd); }
+
+/* local-mode banner */
+.sm-mode.is-local { font-size: 12px; line-height: 1.4; color: var(--warn); background: var(--warn-bg); border: 1px solid var(--warn-brd); border-radius: 10px; padding: 8px 12px; }
+
+/* system / placeholder chat line (mic + doc placeholders) */
+.sm-system { align-self: center; text-align: center; max-width: 96%; background: transparent; border: 1px dashed var(--brd); color: var(--muted); font-size: 13px; }
+
+/* compliance micro-line under composer */
+.sm-compliance { font-size: 11px; line-height: 1.5; color: var(--faint); margin: 0; }
+
+/* input-row icon buttons (paperclip / mic — placeholders) */
+.sm-iconbtn { flex: 0 0 auto; width: 44px; min-height: 68px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; background: var(--input-bg); border: 1px solid var(--brd); border-radius: 14px; cursor: pointer; opacity: 0.72; transition: all 0.15s; }
+.sm-iconbtn:hover { opacity: 1; border-color: var(--brd-strong); }
+
+/* soft secondary button */
+.sm-btn-soft { background: var(--accent-tint); color: var(--cyan); border-color: var(--accent-brd); }
+.sm-btn-soft:hover { background: var(--chip-bg); }
+
+/* ---- compact profile card (desktop side) ---- */
+.sm-profile-compact { display: flex; flex-direction: column; gap: 12px; }
+.sm-pc-head { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.sm-pc-head b { color: var(--cyan); font-size: 12px; }
+.sm-pc-facts { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.sm-pc-facts li { display: flex; justify-content: space-between; gap: 12px; font-size: 13.5px; }
+.sm-pc-facts li span { color: var(--muted); }
+.sm-pc-facts li b { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.sm-pc-next { border-top: 1px solid var(--brd); padding-top: 10px; }
+.sm-pc-next > span, .sm-pc-missing > span { display: block; font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); margin-bottom: 6px; }
+.sm-pc-next p { margin: 0; font-size: 14px; font-weight: 600; line-height: 1.4; }
+.sm-badgelist { display: flex; flex-wrap: wrap; gap: 6px; }
+.sm-badgelist em { font-style: normal; font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--cyan); border: 1px solid var(--accent-brd); border-radius: 6px; padding: 3px 8px; }
+.sm-badgelist.is-soft em { color: var(--muted); border-color: var(--brd); }
+.sm-pc-btn { margin-top: 2px; width: 100%; }
+
+/* ---- mobile sticky profile bar ---- */
+.sm-mobilebar { display: none; }
+@media (max-width: 939px) {
+  .sm-side { display: none; }
+  .sm-mobilebar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    position: fixed; left: 10px; right: 10px; bottom: 10px; z-index: 40;
+    padding: 12px 14px; border-radius: 14px; cursor: pointer; text-align: left;
+    background: var(--panel-2); border: 1px solid var(--brd-strong);
+    box-shadow: var(--shadow); backdrop-filter: blur(14px);
+  }
+  .sm-mb-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .sm-mb-info b { font-size: 13px; }
+  .sm-mb-info small { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sm-mb-btn { flex: 0 0 auto; font-family: var(--mono); font-size: 11px; color: var(--on-accent); background: var(--grad); border-radius: 9px; padding: 8px 12px; }
+  .sm-shell { padding-bottom: 84px; }
+}
+
+/* ---- drawer / bottom sheet ---- */
+.sm-drawer-overlay, .sm-modal-overlay {
+  position: fixed; inset: 0; z-index: 60; background: rgba(6, 10, 22, 0.55);
+  backdrop-filter: blur(3px); display: flex;
+}
+.sm-drawer-overlay { justify-content: flex-end; }
+.sm-modal-overlay { align-items: center; justify-content: center; padding: 16px; }
+.sm-drawer {
+  width: min(460px, 100%); height: 100%; overflow-y: auto;
+  background: var(--panel-2); border-left: 1px solid var(--brd);
+  padding: 18px; box-shadow: var(--shadow); animation: sm-slidein 0.22s ease;
+}
+@keyframes sm-slidein { from { transform: translateX(30px); opacity: 0.4; } to { transform: translateX(0); opacity: 1; } }
+.sm-drawer-head, .sm-modal-head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--muted); margin-bottom: 8px;
+}
+.sm-x { background: transparent; border: none; color: var(--muted); font-size: 24px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.sm-x:hover { color: var(--ink); }
+.sm-drawer-body { display: flex; flex-direction: column; }
+
+/* ---- review modal ---- */
+.sm-modal { width: min(440px, 100%); max-height: 90vh; overflow-y: auto; background: var(--panel-2); border: 1px solid var(--brd); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); animation: sm-slidein 0.2s ease; }
+.sm-modal-body { display: flex; flex-direction: column; gap: 12px; }
+.sm-review-intro { font-size: 14px; line-height: 1.5; color: var(--ink); margin: 0 0 4px; }
+.sm-modal-body .sm-btn { min-height: 52px; }
+@media (max-width: 620px) {
+  .sm-drawer-overlay { align-items: flex-end; }
+  .sm-drawer { width: 100%; height: auto; max-height: 86vh; border-left: none; border-top: 1px solid var(--brd); border-radius: 18px 18px 0 0; }
+}
+
+/* ---- program cards ---- */
+.sm-programs { display: grid; gap: 12px; }
+.sm-program { border: 1px solid var(--brd); border-radius: 13px; padding: 13px 14px; background: var(--ai-bubble); display: flex; flex-direction: column; gap: 7px; }
+.sm-prog-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.sm-prog-head b { font-size: 14.5px; letter-spacing: -0.01em; }
+.sm-prog-fit { flex: 0 0 auto; font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; border-radius: 6px; padding: 3px 8px; border: 1px solid var(--brd); color: var(--muted); }
+.sm-prog-fit.is-strong { color: var(--good); border-color: var(--warn-brd); background: rgba(26, 158, 95, 0.08); }
+.sm-prog-fit.is-ok { color: var(--cyan); border-color: var(--accent-brd); background: var(--accent-tint); }
+.sm-prog-fit.is-review { color: var(--warn); border-color: var(--warn-brd); background: var(--warn-bg); }
+.sm-prog-why { font-size: 13px; line-height: 1.5; color: var(--muted); margin: 0; }
+.sm-prog-meta { display: flex; flex-wrap: wrap; gap: 10px; font-family: var(--mono); font-size: 11.5px; color: var(--cyan); }
+.sm-prog-line { font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+.sm-prog-line em { font-style: normal; color: var(--ink); font-weight: 600; }
+.sm-prog-note { font-size: 11px; line-height: 1.5; color: var(--faint); margin: 10px 0 0; }
+
+/* footer fine print */
+.sm-footer p { margin: 0 auto; max-width: 900px; }
+.sm-footer-fine { margin-top: 10px !important; font-size: 10.5px; line-height: 1.6; text-transform: none; letter-spacing: 0; opacity: 0.85; }
+
+/* =========================================================================
+   Document Review flow — upload modal (bottom sheet on mobile) + chat event.
+   ========================================================================= */
+.sm-docmodal { display: flex; flex-direction: column; width: min(560px, 100%); max-height: 92vh; padding: 0; overflow: hidden; }
+.sm-docmodal .sm-modal-head { padding: 18px 18px 8px; }
+.sm-docmodal-body { flex: 1 1 auto; overflow-y: auto; padding: 4px 18px 12px; display: flex; flex-direction: column; gap: 12px; }
+.sm-docmodal-foot { flex: 0 0 auto; border-top: 1px solid var(--brd); padding: 14px 18px; background: var(--panel-2); }
+.sm-doc-submit { width: 100%; min-height: 52px; }
+.sm-doc-intro { font-size: 14px; line-height: 1.55; color: var(--ink); margin: 0; }
+.sm-doc-safety { font-size: 12.5px; line-height: 1.5; color: var(--warn); background: var(--warn-bg); border: 1px solid var(--warn-brd); border-radius: 10px; padding: 10px 12px; margin: 0; }
+.sm-doc-compliance, .sm-doc-reviewedby { font-size: 11px; line-height: 1.5; color: var(--faint); margin: 0; }
+.sm-hiddeninput { display: none; }
+.sm-doc-add { align-self: flex-start; }
+.sm-doc-errors { margin: 0; padding: 10px 12px 10px 28px; list-style: disc; background: var(--bad-bg); border: 1px solid var(--bad-brd); border-radius: 10px; color: var(--bad); font-size: 12.5px; line-height: 1.5; }
+.sm-doc-files { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.sm-doc-file { border: 1px solid var(--brd); border-radius: 11px; padding: 10px 12px; background: var(--ai-bubble); display: flex; flex-direction: column; gap: 8px; }
+.sm-doc-file-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.sm-doc-name { font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sm-doc-remove { flex: 0 0 auto; font-family: var(--mono); font-size: 11px; color: var(--bad); background: transparent; border: 1px solid var(--bad-brd); border-radius: 7px; padding: 4px 9px; cursor: pointer; }
+.sm-doc-file-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.sm-doc-type { flex: 1 1 200px; min-width: 0; padding: 9px 11px; font-size: 13.5px; font-family: inherit; color: var(--ink); background: var(--input-bg); border: 1px solid var(--brd); border-radius: 9px; }
+.sm-doc-type.is-empty { border-color: var(--warn-brd); }
+.sm-doc-type option { background: var(--bg-2); color: var(--ink); }
+.sm-doc-explain { flex: 0 0 auto; font-size: 11px; font-family: var(--mono); color: var(--faint); background: transparent; border: 1px dashed var(--brd); border-radius: 7px; padding: 6px 10px; cursor: not-allowed; opacity: 0.7; }
+.sm-doc-note span { font-size: 12.5px; color: var(--muted); }
+.sm-doc-contact { border-top: 1px solid var(--brd); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.sm-doc-contact-prompt { font-size: 13.5px; line-height: 1.5; color: var(--ink); font-weight: 600; margin: 0; }
+.sm-doc-failure { font-size: 13px; color: var(--bad); background: var(--bad-bg); border: 1px solid var(--bad-brd); border-radius: 10px; padding: 10px 12px; margin: 0; }
+
+/* chat event: document review submitted (not an ordinary attachment) */
+.sm-docevent { align-self: stretch; border: 1px solid var(--accent-brd); border-radius: 13px; padding: 12px 14px; background: var(--accent-tint); display: flex; flex-direction: column; gap: 7px; }
+.sm-docevent-h { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--cyan); }
+.sm-docevent ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.sm-docevent li { font-size: 13px; color: var(--ink); }
+.sm-docevent li b { font-weight: 700; }
+.sm-docevent-status { font-family: var(--mono); font-size: 11.5px; color: var(--good); }
+
+@media (max-width: 620px) {
+  .sm-docmodal { width: 100%; max-height: 94vh; border-radius: 18px 18px 0 0; }
+  .sm-modal-overlay { align-items: flex-end; padding: 0; }
+}

@@ -15,9 +15,11 @@ function initialTheme(): Theme {
 }
 
 /**
- * The unified Wallet WCCM smart site — one page where the AI console and the
- * live cash-to-close engine are the same machine. Supports a light ("Apple")
- * and a dark ("AI machine") theme via a toggle; the composition is identical.
+ * The unified Wallet WCCM smart site — the AI Mortgage Strategy Advisor. One
+ * page where the borrower describes their scenario in natural language and the
+ * advisor compares possible loan paths, estimates real cash to close with the
+ * deterministic engine, and prepares the scenario for broker review. Supports a
+ * light ("Apple") and dark ("AI machine") theme; the composition is identical.
  */
 export function SmartPage() {
   const [theme, setTheme] = useState<Theme>(initialTheme);
@@ -62,8 +64,17 @@ export function SmartPage() {
       </main>
 
       <footer className="sm-footer">
-        Wallet WCCM · AI Cash-to-Close Engine · Powered by West Coast Capital
-        Mortgage · NMLS ID 2775380 · <a href={PHONE_HREF}>{PHONE}</a>
+        <p>
+          Wallet WCCM · AI Mortgage Strategy Advisor · Powered by West Coast Capital
+          Mortgage · NMLS ID 2775380 · <a href={PHONE_HREF}>{PHONE}</a>
+        </p>
+        <p className="sm-footer-fine">
+          This is for educational and planning purposes only. It is not a mortgage
+          application, Loan Estimate, approval, or commitment to lend. Actual loan
+          terms, rates, APR, fees, mortgage insurance, reserve requirements,
+          documentation requirements, and program availability vary by lender,
+          borrower profile, property, market conditions, and closing date.
+        </p>
       </footer>
     </div>
   );

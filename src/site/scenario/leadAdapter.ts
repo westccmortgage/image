@@ -9,9 +9,9 @@ import type {
 
 // ---------------------------------------------------------------------------
 // Lead submission — structured object + a pluggable adapter interface so a
-// backend (email / Telegram / CRM / Arive-LOS / Google Sheet / webhook) can be
-// wired in later without touching the UI. No backend is connected yet, so the
-// default adapter stores locally and logs.
+// backend (secure webhook / email / CRM / Arive-LOS / Google Sheet / secure
+// broker dashboard) can be wired in later without touching the UI. No backend
+// is connected yet, so the default adapter stores locally and logs.
 // ---------------------------------------------------------------------------
 
 export interface LeadSubmission {
@@ -162,6 +162,10 @@ export function encodeNetlifyForm(
     name: f.name ?? '',
     phone: f.phone ?? '',
     email: f.email ?? '',
+    contact_time: f.preferredContactTime ?? '',
+    language: f.preferredLanguage ?? '',
+    loan_purpose: f.loanPurpose ?? '',
+    county: f.county ?? '',
     purchase_price: f.purchasePrice != null ? String(f.purchasePrice) : '',
     down_payment: f.downPayment != null ? String(f.downPayment) : '',
     state: f.state ?? '',
@@ -212,12 +216,11 @@ export function createNetlifyFormsAdapter(opts?: {
   };
 }
 
-/** Placeholder adapters — implement when the backend is chosen. */
+// Placeholder adapters — implement when the backend is chosen. Approved
+// delivery channels: secure webhook, email, CRM, Arive / LOS, secure broker
+// dashboard, Google Sheet.
 export function createEmailAdapter(): LeadSubmissionAdapter {
   return notConfigured('email');
-}
-export function createTelegramAdapter(): LeadSubmissionAdapter {
-  return notConfigured('telegram');
 }
 export function createCrmAdapter(): LeadSubmissionAdapter {
   return notConfigured('crm');
@@ -227,6 +230,9 @@ export function createAriveAdapter(): LeadSubmissionAdapter {
 }
 export function createGoogleSheetAdapter(): LeadSubmissionAdapter {
   return notConfigured('google-sheet');
+}
+export function createBrokerDashboardAdapter(): LeadSubmissionAdapter {
+  return notConfigured('broker-dashboard');
 }
 
 function notConfigured(name: string): LeadSubmissionAdapter {

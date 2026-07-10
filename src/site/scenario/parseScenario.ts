@@ -1,3 +1,4 @@
+import { resolveLoanLimitArea } from './location';
 import type {
   BorrowerGoal,
   EmploymentType,
@@ -30,6 +31,19 @@ const US_STATES: Record<string, string> = {
   az: 'Arizona',
   colorado: 'Colorado',
   co: 'Colorado',
+};
+
+/** Canonical state name → two-letter USPS code. */
+const STATE_CODE: Record<string, string> = {
+  California: 'CA',
+  Texas: 'TX',
+  Florida: 'FL',
+  'New York': 'NY',
+  Washington: 'WA',
+  Oregon: 'OR',
+  Nevada: 'NV',
+  Arizona: 'AZ',
+  Colorado: 'CO',
 };
 
 const MAGNITUDE: Record<string, number> = {
@@ -121,14 +135,26 @@ export function parseScenario(text: string): ScenarioProfile {
     }
   }
 
+  // --- loan purpose ---
+  if (/\b(refinance|refi|cash.?out|rate.?and.?term)\b/.test(lower)) profile.loanPurpose = 'refinance';
+  else if (/\b(buy|buying|purchase|purchasing|home|house|condo|property)\b/.test(lower))
+    profile.loanPurpose = 'purchase';
+
   // --- state ---
   for (const [needle, canonical] of Object.entries(US_STATES)) {
     const re = new RegExp(`(^|[^a-z])${needle}([^a-z]|$)`, 'i');
     if (re.test(lower)) {
       profile.state = canonical;
+      profile.stateCode = STATE_CODE[canonical];
       break;
     }
   }
+
+  // --- city ("City, ST" or "City, State") — used for reliable county lookup ---
+  const cityMatch = text.match(
+    /([A-Z][a-zA-Z.'-]+(?:\s+[A-Z][a-zA-Z.'-]+){0,2}),\s*(?:[A-Z]{2}\b|California|Texas|Florida|Washington|Oregon|Nevada|Arizona|Colorado|New York)/,
+  );
+  if (cityMatch) profile.city = cityMatch[1].trim();
 
   // --- occupancy ---
   if (/\b(primary|owner.occupied|live in|main home)\b/.test(lower)) profile.occupancy = 'primary';
@@ -204,8 +230,21 @@ export function parseScenario(text: string): ScenarioProfile {
   // --- ZIP / county (avoid money digits) ---
   const zip = text.match(/\b(\d{5})\b/);
   if (zip && !isPartOfMoney(text, zip.index ?? 0)) profile.zipOrCounty = zip[1];
-  const county = lower.match(/([a-z][a-z\s]{2,}?)\s+county/);
+  const county = lower.match(/([a-z][a-z .'-]{2,}?)\s+county\b/);
   if (county && !profile.zipOrCounty) profile.zipOrCounty = `${county[1].trim()} County`;
+
+  // Resolve the loan-limit area conservatively — only set `county` when it is
+  // reliably known (explicit "X County" or a curated city). A city we can't map
+  // (e.g. "Santa Clarita") is never guessed onto the wrong county.
+  if (profile.city || profile.zipOrCounty) {
+    const area = resolveLoanLimitArea({
+      city: profile.city,
+      zipOrCounty: profile.zipOrCounty,
+      state: profile.state,
+    });
+    if (area.county) profile.county = area.county;
+    profile.countyConfidence = area.confidence;
+  }
 
   // --- contact (only if explicitly present) ---
   const email = text.match(/[\w.+-]+@[\w-]+\.[\w.-]+/);
