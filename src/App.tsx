@@ -1,22 +1,21 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { AdvisorPage } from './pages/AdvisorPage';
+import { SmartPage } from './pages/SmartPage';
 import { EmbedPage } from './pages/EmbedPage';
-import { StrategyPage } from './pages/StrategyPage';
 
 /**
- * Wallet WCCM standalone site routes.
- *   /        → full AI Cash-to-Close Advisor
+ * Wallet WCCM — one unified smart site.
+ *   /        → the AI Cash-to-Close engine (console + live numbers + intake)
  *   /embed   → compact embeddable widget
- * Legacy aliases keep the module's documented tool routes working.
+ * Legacy paths redirect into the unified experience.
  */
 export function App() {
   return (
     <Routes>
-      <Route path="/" element={<AdvisorPage />} />
-      <Route path="/strategy" element={<StrategyPage />} />
+      <Route path="/" element={<SmartPage />} />
+      <Route path="/strategy" element={<SmartPage />} />
+      <Route path="/tools/cash-to-close" element={<SmartPage />} />
+      <Route path="/calculators/cash-to-close" element={<SmartPage />} />
       <Route path="/embed" element={<EmbedPage />} />
-      <Route path="/tools/cash-to-close" element={<AdvisorPage />} />
-      <Route path="/calculators/cash-to-close" element={<AdvisorPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
