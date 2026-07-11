@@ -243,7 +243,7 @@ a { color: inherit; }
 /* The stream grows to fill the card so greeting/chips sit up top and the
    composer is pinned to the bottom, with no large blank gap. */
 .sm-stream { display: flex; flex-direction: column; gap: 10px; flex: 1 1 auto; min-height: 200px; max-height: 480px; overflow-y: auto; }
-.sm-msg { border-radius: 13px; padding: 12px 14px; max-width: 92%; font-size: 14.5px; line-height: 1.5; }
+.sm-msg { border-radius: 13px; padding: 12px 14px; max-width: 92%; font-size: 14.5px; line-height: 1.5; overflow-wrap: anywhere; word-break: break-word; }
 .sm-msg p { margin: 0 0 6px; }
 .sm-msg p:last-child { margin-bottom: 0; }
 .sm-ai { align-self: flex-start; background: var(--ai-bubble); border: 1px solid var(--brd); border-bottom-left-radius: 4px; }
@@ -272,8 +272,21 @@ a { color: inherit; }
 }
 .sm-input::placeholder { color: var(--faint); }
 .sm-input:focus { border-color: var(--brd-strong); box-shadow: 0 0 0 3px var(--focus-ring); }
+/* The composer is a textarea so long / dictated messages stay fully visible
+   (a single-line input scrolls the text out of view as you speak). It grows
+   with the content up to a cap, then scrolls internally. */
+.sm-input-ta {
+  resize: none;
+  overflow-y: auto;
+  max-height: 168px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  field-sizing: content; /* auto-grow in supporting browsers; rows=1 is the floor */
+}
 /* The main "describe your scenario" bar is a touch larger than other inputs. */
 .sm-inputrow .sm-input { min-height: 68px; font-size: 17px; padding: 20px 22px; border-radius: 16px; }
+/* Icon + send buttons align to the TOP of the growing textarea, not stretch. */
+.sm-inputrow { align-items: flex-start; }
 /* Send matches the taller input and sits flush at the right of the bottom bar. */
 .sm-inputrow .sm-btn { flex: 0 0 auto; min-height: 68px; padding-inline: 32px; border-radius: 16px; font-size: 16px; }
 .sm-contact .sm-btn { flex: 0 0 auto; min-height: 54px; border-radius: 14px; }

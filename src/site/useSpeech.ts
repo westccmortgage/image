@@ -100,11 +100,15 @@ export function useSpeech(params: {
       let interim = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const r = e.results[i];
-        const tr = r?.[0]?.transcript ?? '';
-        if (r?.isFinal) finalRef.current += tr;
-        else interim += tr;
+        const raw = (r?.[0]?.transcript ?? '').trim();
+        if (!raw) continue;
+        // Separate segments (spoken with pauses) with a space so recognized
+        // phrases stay readable instead of mashing together ("wordAnother").
+        if (r?.isFinal) finalRef.current = finalRef.current ? `${finalRef.current} ${raw}` : raw;
+        else interim = interim ? `${interim} ${raw}` : raw;
       }
-      setText(mergeTranscript(baseRef.current, finalRef.current + interim));
+      const combined = interim ? `${finalRef.current} ${interim}`.trim() : finalRef.current;
+      setText(mergeTranscript(baseRef.current, combined));
     };
     rec.onerror = (e) => {
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed') setStatus('denied');

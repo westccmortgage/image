@@ -1,6 +1,11 @@
 export * from './types';
 export * from './fields';
-export { parseScenario } from './parseScenario';
+export {
+  parseScenario,
+  isLikelyPercent,
+  MIN_PLAUSIBLE_PRICE,
+  MIN_PLAUSIBLE_DOWN,
+} from './parseScenario';
 export {
   mergeProfile,
   deriveScenario,

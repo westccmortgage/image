@@ -56,11 +56,25 @@ const MAGNITUDE: Record<string, number> = {
   billion: 1_000_000_000,
 };
 
+// Plausibility floors. A home price of "$400" or a down payment of "$20" is
+// never real — those are almost always a percentage said aloud ("put 20 down"),
+// a stray number, or a spoken-number the parser could not fully assemble. We
+// leave the field EMPTY so the advisor asks for it, rather than committing a
+// nonsensical scenario the whole tool (and the AI) then reasons from.
+export const MIN_PLAUSIBLE_PRICE = 20_000;
+export const MIN_PLAUSIBLE_DOWN = 1_000;
+
+/** A bare 1–2 digit amount in a down-payment context is a percent, not dollars. */
+export function isLikelyPercent(value: number, hadDollarSign: boolean): boolean {
+  return !hadDollarSign && value > 0 && value <= 100;
+}
+
 interface MoneyHit {
   value: number;
   start: number;
   end: number;
   context: string;
+  hadDollarSign: boolean;
 }
 
 const MONEY_RE =
@@ -83,7 +97,7 @@ function findMoney(text: string): MoneyHit[] {
     const start = match.index ?? 0;
     const end = start + match[0].length;
     const context = text.slice(Math.max(0, start - 18), end + 18).toLowerCase();
-    hits.push({ value, start, end, context });
+    hits.push({ value, start, end, context, hadDollarSign: match[0].includes('$') });
   }
   return hits;
 }
@@ -103,15 +117,36 @@ function classifyMoney(hits: MoneyHit[], profile: ScenarioProfile) {
     else if (isPrice && isDown) priceHits.push(h); // "buy ... with cash" → treat as price
     else unknown.push(h);
   }
-  if (priceHits.length) profile.purchasePrice = priceHits[0].value;
-  if (downHits.length) profile.downPayment = downHits[0].value;
 
-  // Resolve leftover amounts by magnitude when a slot is still open.
+  // A down-payment amount that reads like a percentage ("put 20 down", "20 down")
+  // becomes downPaymentPercent, never a literal $20. Dollar amounts must clear a
+  // plausibility floor before we commit them.
+  for (const h of downHits) {
+    if (isLikelyPercent(h.value, h.hadDollarSign)) {
+      if (profile.downPaymentPercent == null) profile.downPaymentPercent = h.value;
+    } else if (h.value >= MIN_PLAUSIBLE_DOWN && profile.downPayment == null) {
+      profile.downPayment = h.value;
+    }
+  }
+  for (const h of priceHits) {
+    if (h.value >= MIN_PLAUSIBLE_PRICE && profile.purchasePrice == null) {
+      profile.purchasePrice = h.value;
+    }
+  }
+
+  // Resolve leftover amounts by magnitude when a slot is still open — but only
+  // when they are plausible. Never let a stray small number become a home price.
   const open = unknown.sort((a, b) => b.value - a.value);
   for (const h of open) {
-    if (profile.purchasePrice == null) profile.purchasePrice = h.value;
-    else if (profile.downPayment == null && h.value < (profile.purchasePrice ?? Infinity))
+    if (profile.purchasePrice == null && h.value >= MIN_PLAUSIBLE_PRICE) {
+      profile.purchasePrice = h.value;
+    } else if (
+      profile.downPayment == null &&
+      h.value >= MIN_PLAUSIBLE_DOWN &&
+      h.value < (profile.purchasePrice ?? Infinity)
+    ) {
       profile.downPayment = h.value;
+    }
   }
 }
 
@@ -123,16 +158,37 @@ export function parseScenario(text: string): ScenarioProfile {
   // --- money (price / down) ---
   classifyMoney(findMoney(text), profile);
 
-  // --- percent down ---
-  const pct = lower.match(/(\d{1,2}(?:\.\d+)?)\s?%[^.]{0,12}?(down|dp)|(down|dp)[^.]{0,12}?(\d{1,2}(?:\.\d+)?)\s?%/);
+  // --- percent down --- accept "%", "percent", "pct", and common RU/ES/ZH words
+  const PCT = '(?:%|percent|pct|процент\\w*|por\\s?ciento|por\\s?cent|百分)';
+  const pct = lower.match(
+    new RegExp(
+      `(\\d{1,2}(?:\\.\\d+)?)\\s?${PCT}[^.]{0,14}?(down|dp|put)|(down|dp|put)[^.]{0,14}?(\\d{1,2}(?:\\.\\d+)?)\\s?${PCT}`,
+    ),
+  );
   if (pct) {
     const num = parseFloat(pct[1] ?? pct[4]);
-    if (Number.isFinite(num)) {
-      profile.downPaymentPercent = num;
-      if (profile.purchasePrice && profile.downPayment == null) {
-        profile.downPayment = Math.round((profile.purchasePrice * num) / 100);
-      }
+    if (Number.isFinite(num) && num > 0 && num <= 100) profile.downPaymentPercent = num;
+  }
+
+  // Bare "put 20 down" / "20 down" with no %, no $ — a 1–2 digit amount tied to
+  // down-payment phrasing is a percentage (a $20 down payment is never real).
+  if (profile.downPaymentPercent == null) {
+    const bare =
+      lower.match(/\bput(?:ting)?\s+(\d{1,2})(?:\s+down)?\b/) ||
+      lower.match(/\b(\d{1,2})\s+(?:percent\s+)?down\b/) ||
+      lower.match(/\bdown\s+(?:payment\s+)?(?:of\s+)?(\d{1,2})\b/);
+    if (bare) {
+      const idx = bare.index ?? 0;
+      const hadDollar = lower[Math.max(0, idx - 1)] === '$' || /\$\s?\d/.test(bare[0]);
+      const n = parseInt(bare[1], 10);
+      if (!hadDollar && n > 0 && n <= 100) profile.downPaymentPercent = n;
     }
+  }
+
+  // A known percent + a known price yields the dollar down payment (whether the
+  // percent came from the phrasing above or from a "put 20 down" style amount).
+  if (profile.downPaymentPercent != null && profile.purchasePrice && profile.downPayment == null) {
+    profile.downPayment = Math.round((profile.purchasePrice * profile.downPaymentPercent) / 100);
   }
 
   // --- loan purpose ---
