@@ -95,7 +95,51 @@ export type UIKey =
   | 'catMortgageStatement'
   | 'catInsuranceQuote'
   | 'catTitleEscrow'
-  | 'catOther';
+  | 'catOther'
+  // --- multilingual UX phase ---
+  | 'composerPlaceholder'
+  | 'onboardingGreeting'
+  | 'onboardingExample'
+  | 'chipBuying'
+  | 'chipRefi'
+  | 'chipSelfEmployed'
+  | 'chipInvestment'
+  | 'chipCashToClose'
+  | 'chipStarterBuying'
+  | 'chipStarterRefi'
+  | 'chipStarterSelfEmployed'
+  | 'chipStarterInvestment'
+  | 'chipStarterCashToClose'
+  | 'trustLine'
+  | 'profileWaiting'
+  | 'micStart'
+  | 'micStop'
+  | 'micListening'
+  | 'micDenied'
+  | 'micUnsupported'
+  | 'attachAria'
+  | 'themeLight'
+  | 'themeDark'
+  | 'profileDetails'
+  | 'missingInformation'
+  | 'adjustNumbers'
+  | 'purchasePriceLabel'
+  | 'stateLabel'
+  | 'loanTypeLabel'
+  | 'showFullBreakdown'
+  | 'downPaymentComparison'
+  | 'addPriceAndDown'
+  | 'nothingCritical'
+  | 'loanAmountLabel'
+  | 'countyLabel'
+  | 'importantDisclosures'
+  | 'aiStrategy'
+  | 'contactTimePlaceholder'
+  | 'perMonth'
+  | 'snapshotHeader'
+  | 'snapshotReadyPrompt'
+  | 'programNote'
+  | 'languageLabel';
 
 type Dict = Record<UIKey, string>;
 
@@ -166,7 +210,7 @@ const en: Dict = {
   docSubmittedStatus: 'Submitted for broker review',
   docEventTitle: 'Document Review Submitted',
   docSuccess:
-    'Documents received. Your documents have been submitted to West Coast Capital Mortgage for broker review. A licensed mortgage professional will review them and contact you directly. Please make sure your phone number, email, preferred contact time, and preferred language are correct.',
+    'Documents received. Your documents have been submitted to West Coast Capital Mortgage Inc. for broker review. A licensed mortgage professional will review them and contact you directly. Please make sure your phone number, email, preferred contact time, and preferred language are correct.',
   docFailure:
     'We could not submit your documents yet. Please try again or contact the broker directly.',
   docDevMode: 'Development mode — documents were not actually delivered.',
@@ -191,6 +235,53 @@ const en: Dict = {
   catInsuranceQuote: 'Insurance Quote',
   catTitleEscrow: 'Title / Escrow Estimate',
   catOther: 'Other Mortgage Document',
+  composerPlaceholder: 'Tell me what you want to buy, refinance, or understand…',
+  onboardingGreeting:
+    'Welcome. Tell me what you are trying to accomplish. You can describe a purchase, refinance, self-employed income, investment property, or cash-to-close question in your own words.',
+  onboardingExample:
+    'Example: I want to buy a $2M home in California. I’m self-employed and have $400k down.',
+  chipBuying: 'Buying a home',
+  chipRefi: 'Refinancing',
+  chipSelfEmployed: 'Self-employed',
+  chipInvestment: 'Investment property',
+  chipCashToClose: 'Cash needed to close',
+  chipStarterBuying: 'I want to buy a home and understand which loan options fit me.',
+  chipStarterRefi: 'I want to refinance my mortgage and see if it makes sense.',
+  chipStarterSelfEmployed: 'I’m self-employed and want to know how I can qualify.',
+  chipStarterInvestment: 'I’m looking at an investment property and want to compare loan paths.',
+  chipStarterCashToClose: 'I want to understand how much cash I really need to close.',
+  trustLine: 'No credit pull. No obligation. No application required.',
+  profileWaiting: 'Waiting for your first details…',
+  micStart: 'Start voice input',
+  micStop: 'Tap to stop listening',
+  micListening: 'Listening…',
+  micDenied: 'Microphone access was denied.',
+  micUnsupported: 'Voice input is not supported in this browser.',
+  attachAria: 'Upload documents for broker review',
+  themeLight: 'Switch to light mode',
+  themeDark: 'Switch to dark mode',
+  profileDetails: 'Profile details',
+  missingInformation: 'Missing information',
+  adjustNumbers: 'Adjust numbers',
+  purchasePriceLabel: 'Purchase price',
+  stateLabel: 'State',
+  loanTypeLabel: 'Loan type',
+  showFullBreakdown: 'Show full breakdown',
+  downPaymentComparison: 'Down-payment comparison',
+  addPriceAndDown: 'Add a purchase price and down payment and I’ll compute your exact cash to close.',
+  nothingCritical: 'Nothing critical outstanding.',
+  loanAmountLabel: 'Loan amount',
+  countyLabel: 'County',
+  importantDisclosures: 'Important disclosures',
+  aiStrategy: 'AI Strategy',
+  contactTimePlaceholder: 'e.g. weekday afternoons',
+  perMonth: '/mo',
+  languageLabel: 'Language',
+  snapshotHeader: 'Loan Strategy Snapshot',
+  snapshotReadyPrompt:
+    'When you’re ready, I can prepare a personalized strategy summary for a licensed broker to review.',
+  programNote:
+    '* Estimated at an assumed planning rate for comparison — not a quoted rate. Possible paths only, subject to lender guidelines and broker review.',
 };
 
 const ru: Dict = {
@@ -260,7 +351,7 @@ const ru: Dict = {
   docSubmittedStatus: 'Отправлено на ревью брокеру',
   docEventTitle: 'Документы отправлены на ревью',
   docSuccess:
-    'Документы получены. Ваши документы отправлены в West Coast Capital Mortgage для ревью лицензированным mortgage broker. С вами свяжутся напрямую. Пожалуйста, проверьте, что телефон, email, удобное время связи и предпочитаемый язык указаны правильно.',
+    'Документы получены. Ваши документы отправлены в West Coast Capital Mortgage Inc. для ревью лицензированным mortgage broker. С вами свяжутся напрямую. Пожалуйста, проверьте, что телефон, email, удобное время связи и предпочитаемый язык указаны правильно.',
   docFailure:
     'Не удалось отправить ваши документы. Пожалуйста, попробуйте снова или свяжитесь с брокером напрямую.',
   docDevMode: 'Режим разработки — документы фактически не были отправлены.',
@@ -285,6 +376,53 @@ const ru: Dict = {
   catInsuranceQuote: 'Предложение по страхованию',
   catTitleEscrow: 'Оценка Title / Escrow',
   catOther: 'Другой ипотечный документ',
+  composerPlaceholder: 'Расскажите, что вы хотите купить, рефинансировать или понять…',
+  onboardingGreeting:
+    'Добро пожаловать. Расскажите, какую задачу вы хотите решить. Вы можете своими словами описать покупку, рефинансирование, доход от собственного бизнеса, инвестиционную недвижимость или вопрос о сумме, необходимой для закрытия сделки.',
+  onboardingExample:
+    'Пример: Я хочу купить дом за $2 млн в Калифорнии. Я работаю на себя и могу внести $400 тыс.',
+  chipBuying: 'Покупка дома',
+  chipRefi: 'Рефинансирование',
+  chipSelfEmployed: 'Работаю на себя',
+  chipInvestment: 'Инвестиционная недвижимость',
+  chipCashToClose: 'Сумма для закрытия сделки',
+  chipStarterBuying: 'Я хочу купить дом и понять, какие варианты кредита мне подходят.',
+  chipStarterRefi: 'Я хочу рефинансировать ипотеку и понять, есть ли в этом смысл.',
+  chipStarterSelfEmployed: 'Я работаю на себя и хочу узнать, как я могу получить одобрение.',
+  chipStarterInvestment: 'Я рассматриваю инвестиционную недвижимость и хочу сравнить варианты кредита.',
+  chipStarterCashToClose: 'Я хочу понять, сколько денег мне действительно нужно для закрытия сделки.',
+  trustLine: 'Без проверки кредитной истории. Без обязательств. Заявка не требуется.',
+  profileWaiting: 'Ожидаю первые данные о вашей ситуации…',
+  micStart: 'Начать голосовой ввод',
+  micStop: 'Нажмите, чтобы остановить',
+  micListening: 'Слушаю…',
+  micDenied: 'Доступ к микрофону запрещён.',
+  micUnsupported: 'Голосовой ввод не поддерживается в этом браузере.',
+  attachAria: 'Загрузить документы для проверки брокером',
+  themeLight: 'Переключить на светлую тему',
+  themeDark: 'Переключить на тёмную тему',
+  profileDetails: 'Детали профиля',
+  missingInformation: 'Недостающая информация',
+  adjustNumbers: 'Изменить цифры',
+  purchasePriceLabel: 'Цена покупки',
+  stateLabel: 'Штат',
+  loanTypeLabel: 'Тип кредита',
+  showFullBreakdown: 'Показать полную разбивку',
+  downPaymentComparison: 'Сравнение первоначального взноса',
+  addPriceAndDown: 'Укажите цену покупки и первоначальный взнос, и я рассчитаю точную сумму для закрытия сделки.',
+  nothingCritical: 'Ничего критичного не осталось.',
+  loanAmountLabel: 'Сумма кредита',
+  countyLabel: 'Округ',
+  importantDisclosures: 'Важные оговорки',
+  aiStrategy: 'ИИ-стратегия',
+  contactTimePlaceholder: 'напр. будни после обеда',
+  perMonth: '/мес',
+  languageLabel: 'Язык',
+  snapshotHeader: 'Обзор кредитной стратегии',
+  snapshotReadyPrompt:
+    'Когда будете готовы, я подготовлю персональную сводку по стратегии для проверки лицензированным брокером.',
+  programNote:
+    '* Оценка по условной планировочной ставке для сравнения — не котировка. Только возможные варианты, при условии соблюдения требований кредитора и проверки брокером.',
 };
 
 const es: Dict = {
@@ -354,7 +492,7 @@ const es: Dict = {
   docSubmittedStatus: 'Enviado para revisión del corredor',
   docEventTitle: 'Documentos enviados para revisión',
   docSuccess:
-    'Documentos recibidos. Sus documentos se enviaron a West Coast Capital Mortgage para revisión del corredor. Un profesional hipotecario con licencia los revisará y lo contactará directamente. Verifique que su teléfono, correo, horario de contacto e idioma preferido sean correctos.',
+    'Documentos recibidos. Sus documentos se enviaron a West Coast Capital Mortgage Inc. para revisión del corredor. Un profesional hipotecario con licencia los revisará y lo contactará directamente. Verifique que su teléfono, correo, horario de contacto e idioma preferido sean correctos.',
   docFailure:
     'No pudimos enviar sus documentos todavía. Inténtelo de nuevo o contacte al corredor directamente.',
   docDevMode: 'Modo de desarrollo — los documentos no se enviaron realmente.',
@@ -379,6 +517,53 @@ const es: Dict = {
   catInsuranceQuote: 'Cotización de seguro',
   catTitleEscrow: 'Estimación de Title / Escrow',
   catOther: 'Otro documento hipotecario',
+  composerPlaceholder: 'Cuénteme qué quiere comprar, refinanciar o entender…',
+  onboardingGreeting:
+    'Bienvenido. Cuénteme qué quiere lograr. Puede describir con sus propias palabras una compra, refinanciamiento, ingresos por trabajo independiente, una propiedad de inversión o una pregunta sobre el dinero necesario para el cierre.',
+  onboardingExample:
+    'Ejemplo: Quiero comprar una casa de $2 millones en California. Trabajo por cuenta propia y tengo $400 mil para el enganche.',
+  chipBuying: 'Comprar una vivienda',
+  chipRefi: 'Refinanciar',
+  chipSelfEmployed: 'Trabajo por cuenta propia',
+  chipInvestment: 'Propiedad de inversión',
+  chipCashToClose: 'Dinero necesario para el cierre',
+  chipStarterBuying: 'Quiero comprar una vivienda y entender qué opciones de préstamo me convienen.',
+  chipStarterRefi: 'Quiero refinanciar mi hipoteca y ver si me conviene.',
+  chipStarterSelfEmployed: 'Trabajo por cuenta propia y quiero saber cómo puedo calificar.',
+  chipStarterInvestment: 'Estoy considerando una propiedad de inversión y quiero comparar opciones de préstamo.',
+  chipStarterCashToClose: 'Quiero entender cuánto dinero necesito realmente para el cierre.',
+  trustLine: 'Sin consulta de crédito. Sin obligación. No se requiere una solicitud.',
+  profileWaiting: 'Esperando los primeros detalles…',
+  micStart: 'Iniciar entrada de voz',
+  micStop: 'Toque para dejar de escuchar',
+  micListening: 'Escuchando…',
+  micDenied: 'Se denegó el acceso al micrófono.',
+  micUnsupported: 'La entrada de voz no es compatible con este navegador.',
+  attachAria: 'Subir documentos para revisión del corredor',
+  themeLight: 'Cambiar a modo claro',
+  themeDark: 'Cambiar a modo oscuro',
+  profileDetails: 'Detalles del perfil',
+  missingInformation: 'Información faltante',
+  adjustNumbers: 'Ajustar cifras',
+  purchasePriceLabel: 'Precio de compra',
+  stateLabel: 'Estado',
+  loanTypeLabel: 'Tipo de préstamo',
+  showFullBreakdown: 'Ver desglose completo',
+  downPaymentComparison: 'Comparación de enganche',
+  addPriceAndDown: 'Indique el precio de compra y el enganche y calcularé el efectivo exacto para cerrar.',
+  nothingCritical: 'No falta nada crítico.',
+  loanAmountLabel: 'Monto del préstamo',
+  countyLabel: 'Condado',
+  importantDisclosures: 'Divulgaciones importantes',
+  aiStrategy: 'Estrategia con IA',
+  contactTimePlaceholder: 'p. ej. tardes entre semana',
+  perMonth: '/mes',
+  languageLabel: 'Idioma',
+  snapshotHeader: 'Resumen de estrategia de préstamo',
+  snapshotReadyPrompt:
+    'Cuando esté listo, puedo preparar un resumen de estrategia personalizado para que lo revise un corredor con licencia.',
+  programNote:
+    '* Estimado a una tasa de planificación supuesta para comparar — no es una tasa cotizada. Solo opciones posibles, sujetas a las pautas del prestamista y a revisión del corredor.',
 };
 
 const zh: Dict = {
@@ -447,7 +632,7 @@ const zh: Dict = {
   docSubmittedStatus: '已提交经纪人审阅',
   docEventTitle: '文件已提交审阅',
   docSuccess:
-    '文件已收到。您的文件已提交至 West Coast Capital Mortgage 供经纪人审阅。持牌房贷专业人士将审阅并直接与您联系。请确认您的电话、电子邮件、首选联系时间和首选语言正确无误。',
+    '文件已收到。您的文件已提交至 West Coast Capital Mortgage Inc. 供经纪人审阅。持牌房贷专业人士将审阅并直接与您联系。请确认您的电话、电子邮件、首选联系时间和首选语言正确无误。',
   docFailure: '暂时无法提交您的文件。请重试或直接联系经纪人。',
   docDevMode: '开发模式 — 文件实际上尚未发送。',
   docTypeLabel: '文件类型',
@@ -471,10 +656,117 @@ const zh: Dict = {
   catInsuranceQuote: '保险报价',
   catTitleEscrow: '产权 / 托管估算',
   catOther: '其他房贷文件',
+  composerPlaceholder: '请告诉我您想购买、再融资或了解什么……',
+  onboardingGreeting:
+    '欢迎。请告诉我您希望解决什么问题。您可以用自己的话描述购房、再融资、自雇收入、投资房产，或成交所需现金方面的问题。',
+  onboardingExample: '示例：我想在加州购买一套价值 200 万美元的房产。我是自雇人士，可支付 40 万美元首付。',
+  chipBuying: '购买房屋',
+  chipRefi: '再融资',
+  chipSelfEmployed: '自雇人士',
+  chipInvestment: '投资房产',
+  chipCashToClose: '成交所需现金',
+  chipStarterBuying: '我想购买房屋，并了解哪些贷款方案可能适合我。',
+  chipStarterRefi: '我想为我的房贷再融资，看看是否划算。',
+  chipStarterSelfEmployed: '我是自雇人士，想了解我如何才能获得贷款资格。',
+  chipStarterInvestment: '我在考虑投资房产，想比较可能的贷款方案。',
+  chipStarterCashToClose: '我想了解成交实际需要多少现金。',
+  trustLine: '无需查询信用。无任何义务。无需提交贷款申请。',
+  profileWaiting: '等待您提供初步信息……',
+  micStart: '开始语音输入',
+  micStop: '点击停止聆听',
+  micListening: '正在聆听……',
+  micDenied: '麦克风访问被拒绝。',
+  micUnsupported: '此浏览器不支持语音输入。',
+  attachAria: '上传文件供经纪人审阅',
+  themeLight: '切换到浅色模式',
+  themeDark: '切换到深色模式',
+  profileDetails: '档案详情',
+  missingInformation: '缺失信息',
+  adjustNumbers: '调整数字',
+  purchasePriceLabel: '购买价格',
+  stateLabel: '州',
+  loanTypeLabel: '贷款类型',
+  showFullBreakdown: '显示完整明细',
+  downPaymentComparison: '首付比较',
+  addPriceAndDown: '请填写购买价格和首付，我将计算出您确切的过户现金。',
+  nothingCritical: '没有关键的缺失项。',
+  loanAmountLabel: '贷款金额',
+  countyLabel: '县',
+  importantDisclosures: '重要披露',
+  aiStrategy: 'AI 策略',
+  contactTimePlaceholder: '例如工作日下午',
+  perMonth: '/月',
+  languageLabel: '语言',
+  snapshotHeader: '贷款策略概览',
+  snapshotReadyPrompt: '当您准备好后，我可以准备一份个性化的策略摘要，供持牌经纪人审阅。',
+  programNote: '* 按假定的规划利率估算以供比较 — 并非报价利率。仅为可能的方案，需符合贷方指南并经经纪人审阅。',
 };
 
 const DICTS: Record<Language, Dict> = { en, ru, es, zh };
 
 export function t(lang: Language, key: UIKey): string {
   return DICTS[lang][key] ?? DICTS.en[key];
+}
+
+// ---------------------------------------------------------------------------
+// Language initialization. Priority: explicit user selection (persisted UI
+// pref) → supported URL ?lang= → browser language → English. The preference is
+// a NON-SENSITIVE UI setting stored separately from any borrower scenario
+// (which is never persisted).
+// ---------------------------------------------------------------------------
+export const LANG_STORAGE_KEY = 'ww-lang';
+const CODES: Language[] = ['en', 'ru', 'es', 'zh'];
+
+/** Map a BCP-47 locale (e.g. "ru-RU", "zh-Hans") to a supported language. */
+export function normalizeLocale(loc: string | null | undefined): Language | null {
+  if (!loc) return null;
+  const l = loc.toLowerCase();
+  if (l.startsWith('ru')) return 'ru';
+  if (l.startsWith('es')) return 'es';
+  if (l.startsWith('zh')) return 'zh';
+  if (l.startsWith('en')) return 'en';
+  return null;
+}
+
+export function detectInitialLanguage(opts: {
+  stored?: string | null;
+  url?: string | null;
+  navigator?: string | null;
+}): Language {
+  const storedExact = opts.stored && (CODES as string[]).includes(opts.stored) ? (opts.stored as Language) : null;
+  return storedExact ?? normalizeLocale(opts.stored) ?? normalizeLocale(opts.url) ?? normalizeLocale(opts.navigator) ?? 'en';
+}
+
+/** Resolve the initial language from storage / URL / browser at load time. */
+export function readInitialLanguage(): Language {
+  if (typeof window === 'undefined') return 'en';
+  let stored: string | null = null;
+  try {
+    stored = window.localStorage.getItem(LANG_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+  let url: string | null = null;
+  try {
+    url = new URLSearchParams(window.location.search).get('lang');
+  } catch {
+    /* ignore */
+  }
+  const nav = typeof navigator !== 'undefined' && navigator.language ? navigator.language : null;
+  return detectInitialLanguage({ stored, url, navigator: nav });
+}
+
+/** Remember the explicit language choice (non-sensitive UI preference). */
+export function persistLanguage(lang: Language): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(LANG_STORAGE_KEY, lang);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Web Speech API recognition locale for a language. */
+export function recognitionLangFor(lang: Language): string {
+  return { en: 'en-US', ru: 'ru-RU', es: 'es-US', zh: 'zh-CN' }[lang];
 }

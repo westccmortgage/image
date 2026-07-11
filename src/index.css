@@ -226,16 +226,23 @@ a { color: inherit; }
 .sm-mt { margin-top: 12px; }
 
 /* ---- main grid ---- */
+/* One intentionally composed unit: advisor ≈60%, profile ≈40%, both starting on
+   the same top baseline in the same grid row. */
 .sm-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
 @media (min-width: 940px) {
-  .sm-main { grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); }
+  .sm-main { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); align-items: start; }
   .sm-side { position: sticky; top: 78px; }
+  /* Empty advisor card stays visually comparable to the profile card and keeps
+     the composer anchored at the bottom. */
+  .sm-console { min-height: 520px; }
 }
 .sm-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 
 /* ---- console ---- */
 .sm-console { display: flex; flex-direction: column; gap: 14px; }
-.sm-stream { display: flex; flex-direction: column; gap: 10px; max-height: 460px; overflow-y: auto; }
+/* The stream grows to fill the card so greeting/chips sit up top and the
+   composer is pinned to the bottom, with no large blank gap. */
+.sm-stream { display: flex; flex-direction: column; gap: 10px; flex: 1 1 auto; min-height: 200px; max-height: 480px; overflow-y: auto; }
 .sm-msg { border-radius: 13px; padding: 12px 14px; max-width: 92%; font-size: 14.5px; line-height: 1.5; }
 .sm-msg p { margin: 0 0 6px; }
 .sm-msg p:last-child { margin-bottom: 0; }
@@ -539,6 +546,7 @@ a { color: inherit; }
 
 /* footer fine print */
 .sm-footer p { margin: 0 auto; max-width: 900px; }
+.sm-footer-license { margin-top: 6px !important; font-size: 11px; letter-spacing: 0.01em; color: var(--muted); }
 .sm-footer-fine { margin-top: 10px !important; font-size: 10.5px; line-height: 1.6; text-transform: none; letter-spacing: 0; opacity: 0.85; }
 
 /* =========================================================================
@@ -582,3 +590,54 @@ a { color: inherit; }
   .sm-docmodal { width: 100%; max-height: 94vh; border-radius: 18px 18px 0 0; }
   .sm-modal-overlay { align-items: flex-end; padding: 0; }
 }
+
+/* =========================================================================
+   Multilingual UX phase — onboarding, starter chips, trust line, working mic.
+   ========================================================================= */
+
+/* onboarding greeting + example (live-localized, not a stored chat message) */
+.sm-onboard p { margin: 0 0 8px; }
+.sm-onboard-eg { color: var(--muted); font-size: 13.5px; }
+
+/* starter quick-action chips (empty state) */
+.sm-starters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+
+/* trust / reassurance line — calm, distinct from the formal disclaimer */
+.sm-trust {
+  margin: 0; font-size: 13px; font-weight: 600; letter-spacing: -0.01em;
+  color: var(--good); display: flex; align-items: center; gap: 8px;
+}
+.sm-trust::before {
+  content: '✓'; font-size: 11px; width: 18px; height: 18px; flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: rgba(26, 158, 95, 0.14); color: var(--good);
+}
+:root[data-theme='dark'] .sm-trust::before { background: rgba(53, 230, 168, 0.16); }
+
+/* profile "waiting for first details" empty state (not a dominant 0%) */
+.sm-waiting { font-size: 14px; color: var(--muted); margin: 4px 0 0; line-height: 1.5; }
+
+/* microphone: listening indicator + error note + button state */
+.sm-listening {
+  display: inline-flex; align-items: center; gap: 8px; align-self: flex-start;
+  font-size: 12.5px; font-weight: 600; color: var(--cyan);
+  background: var(--accent-tint); border: 1px solid var(--accent-brd);
+  border-radius: 999px; padding: 6px 12px;
+}
+.sm-listening-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); box-shadow: 0 0 0 0 rgba(209, 60, 70, 0.5); animation: sm-mic-pulse 1.3s infinite; }
+@keyframes sm-mic-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(209, 60, 70, 0.5); }
+  70% { box-shadow: 0 0 0 8px rgba(209, 60, 70, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(209, 60, 70, 0); }
+}
+.sm-micnote { font-size: 12.5px; color: var(--warn); background: var(--warn-bg); border: 1px solid var(--warn-brd); border-radius: 10px; padding: 8px 12px; }
+.sm-micbtn.is-listening { border-color: var(--bad-brd); background: var(--bad-bg); box-shadow: 0 0 0 3px var(--bad-bg); }
+.sm-micbtn:focus-visible, .sm-iconbtn:focus-visible { outline: 2px solid var(--brd-strong); outline-offset: 2px; }
+
+/* mobile: safe-area insets so the sticky bar / composer clear the home bar */
+@media (max-width: 939px) {
+  .sm-mobilebar { bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
+  .sm-shell { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+  .sm-console { min-height: 0; }
+}
+.sm-docmodal-foot { padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }

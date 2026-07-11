@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { SmartAdvisor } from '../site/SmartAdvisor';
 import { PHONE, PHONE_HREF } from '../site/walletWccm';
+import { t, readInitialLanguage, persistLanguage } from '../site/i18n';
+import type { Language } from '../site/scenario';
+import { COMPANY, INDIVIDUAL, COMPANY_LICENSE, INDIVIDUAL_LICENSE } from '../site/licensing';
 
 type Theme = 'light' | 'dark';
 
@@ -23,6 +26,9 @@ function initialTheme(): Theme {
  */
 export function SmartPage() {
   const [theme, setTheme] = useState<Theme>(initialTheme);
+  // Language is owned at the page level so the nav + advisor localize together.
+  // Initial value resolves synchronously (explicit pref → ?lang → browser → en).
+  const [lang, setLang] = useState<Language>(readInitialLanguage);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -33,6 +39,15 @@ export function SmartPage() {
     }
   }, [theme]);
 
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  function changeLang(next: Language) {
+    persistLanguage(next);
+    setLang(next);
+  }
+
   return (
     <div className="sm-page" id="top">
       <header className="sm-nav">
@@ -40,33 +55,38 @@ export function SmartPage() {
           <span className="sm-brand-mark" aria-hidden="true" />
           <span className="sm-brand-text">
             WALLET <b>WCCM</b>
-            <small>Powered by West Coast Capital Mortgage</small>
+            <small>Powered by West Coast Capital Mortgage Inc.</small>
           </span>
         </a>
         <div className="sm-nav-actions">
           <button
             type="button"
             className="sm-toggle"
-            onClick={() => setTheme((t) => (t === 'light' ? 'dark' : 'light'))}
-            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-            title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            onClick={() => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))}
+            aria-label={t(lang, theme === 'light' ? 'themeDark' : 'themeLight')}
+            title={t(lang, theme === 'light' ? 'themeDark' : 'themeLight')}
           >
             {theme === 'light' ? '☾' : '☀'}
           </button>
           <a className="sm-btn sm-btn-ghost sm-btn-sm" href={PHONE_HREF}>
-            Talk to a Broker
+            {t(lang, 'talkBroker')}
           </a>
         </div>
       </header>
 
       <main className="sm-shell">
-        <SmartAdvisor />
+        <SmartAdvisor lang={lang} onLangChange={changeLang} />
       </main>
 
       <footer className="sm-footer">
         <p>
-          Wallet WCCM · AI Mortgage Strategy Advisor · Powered by West Coast Capital
-          Mortgage · NMLS ID 2775380 · <a href={PHONE_HREF}>{PHONE}</a>
+          Wallet WCCM · AI Mortgage Strategy Advisor · <a href={PHONE_HREF}>{PHONE}</a>
+        </p>
+        <p className="sm-footer-license">
+          {COMPANY.legalName} · {COMPANY_LICENSE}
+        </p>
+        <p className="sm-footer-license">
+          {INDIVIDUAL.name} · {INDIVIDUAL.title} · {INDIVIDUAL_LICENSE}
         </p>
         <p className="sm-footer-fine">
           This is for educational and planning purposes only. It is not a mortgage

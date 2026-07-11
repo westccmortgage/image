@@ -107,7 +107,7 @@ export function DocumentReviewModal({ lang, profile, onClose, onSubmit }: Props)
 
   return (
     <div className="sm-modal-overlay" onClick={onClose}>
-      <div className="sm-modal sm-docmodal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={tr('docModalTitle')}>
+      <div className="sm-modal sm-docmodal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={tr('docModalTitle')}>
         <div className="sm-modal-head">
           <span>{tr('docModalTitle')}</span>
           <button type="button" className="sm-x" onClick={onClose} aria-label={tr('close')}>×</button>
@@ -187,7 +187,7 @@ export function DocumentReviewModal({ lang, profile, onClose, onSubmit }: Props)
                 <input type="email" value={contact.email} onChange={(e) => setContact({ ...contact, email: e.target.value })} /></label>
               <div className="sm-row2">
                 <label className="sm-field"><span>{tr('contactTime')}</span>
-                  <input value={contact.preferredContactTime} onChange={(e) => setContact({ ...contact, preferredContactTime: e.target.value })} placeholder="e.g. weekday afternoons" /></label>
+                  <input value={contact.preferredContactTime} onChange={(e) => setContact({ ...contact, preferredContactTime: e.target.value })} placeholder={tr('contactTimePlaceholder')} /></label>
                 <label className="sm-field"><span>{tr('preferredLanguage')}</span>
                   <select value={contact.preferredLanguage} onChange={(e) => setContact({ ...contact, preferredLanguage: e.target.value as Language })}>
                     {LANGUAGES.map((l) => (<option key={l.code} value={l.code}>{l.label}</option>))}

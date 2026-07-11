@@ -20,6 +20,7 @@ export {
 } from './profile';
 export { buildCompactProfile } from './selectors';
 export type { CompactProfile, CompactFact } from './selectors';
+export { fieldLabel, fieldQuestion, fieldOptionLabel } from './fieldsI18n';
 export { nextQuestions, nextBestQuestion } from './questionEngine';
 export type { NextQuestionOptions } from './questionEngine';
 export {
@@ -111,7 +112,12 @@ export {
   createAriveAdapter,
   createGoogleSheetAdapter,
   createBrokerDashboardAdapter,
+  createGrCrmAdapter,
+  submitCrmLead,
+  crmFieldsFromLead,
+  CRM_LEAD_ENDPOINT,
 } from './leadAdapter';
+export type { CrmLeadFields } from './leadAdapter';
 export type {
   LeadSubmission,
   LeadSubmissionAdapter,

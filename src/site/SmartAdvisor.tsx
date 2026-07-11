@@ -16,6 +16,9 @@ import {
   isReadyForOptions,
   nextQuestions,
   buildCompactProfile,
+  fieldLabel,
+  fieldQuestion,
+  fieldOptionLabel,
   hasFullNumbers,
   matchLoanPrograms,
   compareDownPaymentOptions,
@@ -36,6 +39,7 @@ import {
   buildDocumentReviewPayload,
   submitDocumentReview,
   toSubmittedMetas,
+  submitCrmLead,
   DOCUMENT_CATEGORIES,
   FIELD_BY_KEY,
 } from './scenario';
@@ -45,7 +49,16 @@ import type {
 } from './scenario';
 import { DocumentReviewModal } from './DocumentReviewModal';
 import { t, LANGUAGES } from './i18n';
+import { useSpeech } from './useSpeech';
 import { PHONE_HREF } from './walletWccm';
+
+const CHIPS: { label: 'chipBuying' | 'chipRefi' | 'chipSelfEmployed' | 'chipInvestment' | 'chipCashToClose'; starter: 'chipStarterBuying' | 'chipStarterRefi' | 'chipStarterSelfEmployed' | 'chipStarterInvestment' | 'chipStarterCashToClose' }[] = [
+  { label: 'chipBuying', starter: 'chipStarterBuying' },
+  { label: 'chipRefi', starter: 'chipStarterRefi' },
+  { label: 'chipSelfEmployed', starter: 'chipStarterSelfEmployed' },
+  { label: 'chipInvestment', starter: 'chipStarterInvestment' },
+  { label: 'chipCashToClose', starter: 'chipStarterCashToClose' },
+];
 
 type Role = 'ai' | 'user' | 'system' | 'event';
 interface Msg { id: number; role: Role; lines: string[]; docEvent?: SubmittedDocMeta[] }
@@ -93,26 +106,23 @@ function newlyCaptured(prev: ScenarioProfile, next: ScenarioProfile): FieldKey[]
     return has(b) && (!has(a) || a !== b);
   });
 }
-function valueDisplay(key: FieldKey, p: ScenarioProfile): string {
+function valueDisplay(lang: Language, key: FieldKey, p: ScenarioProfile): string {
   const v = p[key];
   if (v == null || v === '') return '';
   if (key === 'purchasePrice' || key === 'downPayment' || key === 'reserves') return formatMoney(Number(v));
   const def = FIELD_BY_KEY[key];
-  if (def?.kind === 'choice') return labelForValue(key, String(v));
+  if (def?.kind === 'choice') return fieldOptionLabel(lang, key, String(v));
   return String(v);
 }
 
 const hasBothOf = hasFullNumbers;
 const hasValueOf = (p: ScenarioProfile) => !!(p.purchasePrice || p.downPayment != null);
 
-export function SmartAdvisor() {
+export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangChange: (l: Language) => void }) {
   const idRef = useRef(1);
   const nextId = () => idRef.current++;
 
-  const [lang, setLang] = useState<Language>('en');
-  const [messages, setMessages] = useState<Msg[]>(() => [
-    { id: nextId(), role: 'ai', lines: [t('en', 'heroTitle'), 'e.g. “$2M home in California, self-employed, $400k down.”'] },
-  ]);
+  const [messages, setMessages] = useState<Msg[]>([]);
   const [profile, setProfile] = useState<ScenarioProfile>(readInitialProfile);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [text, setText] = useState('');
@@ -121,16 +131,29 @@ export function SmartAdvisor() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [docModalOpen, setDocModalOpen] = useState(false);
-  const [contact, setContact] = useState({ name: '', phone: '', email: '', time: '', language: 'en' as Language });
+  const [contact, setContact] = useState({ name: '', phone: '', email: '', time: '', language: lang });
   const [result, setResult] = useState<{ ok: boolean } | null>(null);
   const firstMsgRef = useRef('');
   const parsedFirstRef = useRef<ScenarioProfile>({});
-  const sessionIdRef = useRef(`s_${idRef.current}_${messages[0]?.id ?? 0}`);
+  const sessionIdRef = useRef(`s_${idRef.current}`);
+  const textRef = useRef('');
+  textRef.current = text;
+
+  // Working microphone (Web Speech API). Status/error is UI state, never chat.
+  const speech = useSpeech({ lang, getText: () => textRef.current, setText });
 
   // Session hygiene: never hydrate a saved scenario; clear any legacy keys.
   useEffect(() => {
     clearAdvisorState();
   }, []);
+
+  /** Change language: stop the mic, then bubble up (page persists the pref). */
+  function changeLang(next: Language) {
+    speech.stop();
+    onLangChange(next);
+  }
+
+  const conversationStarted = messages.some((m) => m.role === 'user');
 
   const both = hasBothOf(profile);
   const hasValue = hasValueOf(profile);
@@ -140,7 +163,7 @@ export function SmartAdvisor() {
   const takeaway = useMemo(() => generateAiTakeaway(calc, { loanType: input.loanType }), [calc, input.loanType]);
   const programs = useMemo(() => matchLoanPrograms(profile), [profile]);
   const derived = useMemo(() => deriveScenario(profile), [profile]);
-  const compact = useMemo(() => buildCompactProfile(profile), [profile]);
+  const compact = useMemo(() => buildCompactProfile(profile, lang), [profile, lang]);
   const pct = compact.pct;
   const focus = questions[0];
   const tr = (k: Parameters<typeof t>[1]) => t(lang, k);
@@ -156,16 +179,16 @@ export function SmartAdvisor() {
   const pushSystem = (line: string) => setMessages((m) => [...m, { id: nextId(), role: 'system', lines: [line] }]);
 
   function snapshotLines(p: ScenarioProfile, c: ReturnType<typeof calculateCashToClose>, isBoth: boolean): string[] {
-    const lines = ['◈ Loan Strategy Snapshot'];
+    const lines = [`◈ ${tr('snapshotHeader')}`];
     if (isBoth) {
       lines.push(
-        `You're looking at roughly ${formatMoney(c.totalCashToClose)} to close — about ${formatMoney(c.additionalFundsNeeded)} above your ${formatMoney(c.downPayment)} down payment (estimated, subject to lender guidelines).`,
+        `${formatMoney(c.totalCashToClose)} · +${formatMoney(c.additionalFundsNeeded)} > ${formatMoney(c.downPayment)} (est.)`,
       );
     }
     for (const pr of matchLoanPrograms(p).slice(0, 3)) {
       lines.push(`• ${pr.name} — ${pr.fit.toLowerCase()}. ${pr.why}`);
     }
-    lines.push('When you’re ready, I can prepare a personalized strategy summary for a licensed broker to review.');
+    lines.push(tr('snapshotReadyPrompt'));
     return lines;
   }
 
@@ -176,7 +199,10 @@ export function SmartAdvisor() {
     const activeInput = isBoth ? toInput(next) : defaultScenario;
     const c = calculateCashToClose(activeInput);
     const ready = isReadyForOptions(next);
-    const nq = nextQuestions(next, { max: 1 })[0] ?? null;
+    const rawNq = nextQuestions(next, { max: 1 })[0] ?? null;
+    // Localize the question prompt so both the composer and the local-mode chat
+    // ask in the selected language.
+    const nq = rawNq ? { ...rawNq, prompt: fieldQuestion(lang, rawNq.field) } : null;
     setQuestions(nq ? [nq] : []);
 
     const capturedText = captured.map((k) => humanCaptured(k, next, labelForValue)).filter(Boolean);
@@ -214,7 +240,7 @@ export function SmartAdvisor() {
         userMessage: userText,
         language: lang,
         profile: next,
-        missingFields: missingRequired(next).map((k) => FIELD_BY_KEY[k].label),
+        missingFields: missingRequired(next).map((k) => fieldLabel(lang, k)),
         nextQuestions: nq ? [nq.prompt] : [],
         possibleLoanPaths: buildProgramSummaries(nextPrograms),
         cashToCloseEstimate: {
@@ -258,6 +284,7 @@ export function SmartAdvisor() {
   }
 
   function startOver() {
+    speech.stop();
     clearAdvisorState();
     setProfile({});
     setQuestions([]);
@@ -270,8 +297,15 @@ export function SmartAdvisor() {
     firstMsgRef.current = '';
     parsedFirstRef.current = {};
     idRef.current = 1;
-    // Resetting messages clears any Document Review events from this session.
-    setMessages([{ id: nextId(), role: 'ai', lines: [t(lang, 'heroTitle'), 'e.g. “$2M home in California, self-employed, $400k down.”'] }]);
+    // Empty the stream → the localized onboarding shows again, and any Document
+    // Review events / stale mic notes from this session are cleared.
+    setMessages([]);
+  }
+
+  /** A quick-action chip inserts a localized starter phrase — it does NOT send. */
+  function handleChipStarter(starterKey: Parameters<typeof t>[1]) {
+    speech.clearError();
+    setText(tr(starterKey));
   }
 
   /** Assemble the payload, route it through the adapter, and — only on success —
@@ -302,7 +336,7 @@ export function SmartAdvisor() {
           }
         : null,
       advisorSummary: isBoth ? generateAiTakeaway(c, { loanType: mInput.loanType }).bullets : undefined,
-      missingFields: missingRequired(merged).map((k) => FIELD_BY_KEY[k].label),
+      missingFields: missingRequired(merged).map((k) => fieldLabel(lang, k)),
       files,
       note,
       sourcePage: '/',
@@ -318,12 +352,29 @@ export function SmartAdvisor() {
         { id: nextId(), role: 'ai', lines: [tr('docSuccess')] },
         ...(res.dev ? [{ id: nextId(), role: 'system' as Role, lines: [tr('docDevMode')] }] : []),
       ]);
+      // Capture this intentional broker-review submission in the CRM too
+      // (best-effort; never blocks the borrower). Token stays server-side.
+      const docLines = [
+        'Wallet WCCM — Document Review submitted',
+        ...metas.map((d) => `• ${d.name} — ${d.category || 'other'}`),
+        note ? `Note: ${note}` : '',
+        merged.purchasePrice ? `Purchase price: $${merged.purchasePrice.toLocaleString('en-US')}` : '',
+        merged.city || merged.state ? `Location: ${[merged.city, merged.state].filter(Boolean).join(', ')}` : '',
+        dc.preferredContactTime ? `Preferred time: ${dc.preferredContactTime}` : '',
+        dc.preferredLanguage ? `Preferred language: ${dc.preferredLanguage}` : '',
+      ].filter(Boolean);
+      void submitCrmLead({ name: dc.name, email: dc.email, phone: dc.phone, message: docLines.join('\n') });
     }
     return res;
   }
 
   function paperclip() {
+    speech.stop(); // never leave the mic listening behind an open modal
     setDocModalOpen(true);
+  }
+  function openReview() {
+    speech.stop();
+    setReviewOpen(true);
   }
 
   async function submitReview(e: React.FormEvent) {
@@ -349,14 +400,11 @@ export function SmartAdvisor() {
     setTimeout(() => setReviewOpen(false), 1400);
   }
 
-  function mic() {
-    pushSystem(tr('micSoon'));
-  }
 
   const patchNumbers = (patch: Partial<ScenarioProfile>) => setProfile((p) => mergeProfile(p, patch));
 
   const completed = (Object.keys(FIELD_BY_KEY) as FieldKey[]).filter(
-    (k) => FIELD_BY_KEY[k].importance !== 'contact' && valueDisplay(k, profile),
+    (k) => FIELD_BY_KEY[k].importance !== 'contact' && valueDisplay(lang, k, profile),
   );
   const stillNeeded = missingRequired(profile);
   const helpful = missingHelpful(profile);
@@ -414,13 +462,14 @@ export function SmartAdvisor() {
           <div className="sm-panel-h">
             <span>{tr('console')}</span>
             <div className="sm-console-tools">
-              <div className="sm-langsel" role="group" aria-label="Language">
+              <div className="sm-langsel" role="group" aria-label={tr('languageLabel')}>
                 {LANGUAGES.map((l) => (
                   <button
                     key={l.code}
                     type="button"
                     className={`sm-lang ${lang === l.code ? 'is-active' : ''}`}
-                    onClick={() => setLang(l.code)}
+                    aria-pressed={lang === l.code}
+                    onClick={() => changeLang(l.code)}
                   >
                     {l.label}
                   </button>
@@ -433,6 +482,20 @@ export function SmartAdvisor() {
           {mode === 'local' && <div className="sm-mode is-local">{tr('localMode')}</div>}
 
           <div className="sm-stream" ref={streamRef}>
+            {!conversationStarted && (
+              <>
+                <div className="sm-msg sm-ai sm-onboard">
+                  <p>{tr('onboardingGreeting')}</p>
+                  <p className="sm-onboard-eg">{tr('onboardingExample')}</p>
+                </div>
+                <div className="sm-starters">
+                  {CHIPS.map((c) => (
+                    <button key={c.label} type="button" className="sm-chip"
+                      onClick={() => handleChipStarter(c.starter)}>{tr(c.label)}</button>
+                  ))}
+                </div>
+              </>
+            )}
             {messages.map((m) => (
               m.role === 'event' && m.docEvent ? (
                 <div key={m.id} className="sm-docevent">
@@ -464,18 +527,36 @@ export function SmartAdvisor() {
               <div className="sm-chips">
                 {focus.options.map((o) => (
                   <button key={o.value} type="button" className="sm-chip"
-                    onClick={() => handleChip(focus.field, o.value, o.label)}>{o.label}</button>
+                    onClick={() => handleChip(focus.field, o.value, fieldOptionLabel(lang, focus.field, o.value))}>{fieldOptionLabel(lang, focus.field, o.value)}</button>
                 ))}
               </div>
             ) : null}
+            {speech.listening && (
+              <div className="sm-listening" aria-live="polite">
+                <span className="sm-listening-dot" aria-hidden="true" /> {tr('micListening')}
+              </div>
+            )}
+            {(speech.status === 'denied' || speech.status === 'unsupported') && (
+              <div className="sm-micnote" role="status">
+                {tr(speech.status === 'denied' ? 'micDenied' : 'micUnsupported')}
+              </div>
+            )}
             <form className="sm-inputrow" onSubmit={(e) => { e.preventDefault(); handleText(); }}>
-              <button type="button" className="sm-iconbtn" onClick={paperclip} title={tr('docUploadCta')} aria-label={tr('docModalTitle')}>📎</button>
-              <button type="button" className="sm-iconbtn" onClick={mic} title={tr('micSoon')} aria-label="Voice input (coming soon)">🎙️</button>
+              <button type="button" className="sm-iconbtn" onClick={paperclip} title={tr('docUploadCta')} aria-label={tr('attachAria')}>📎</button>
+              <button
+                type="button"
+                className={`sm-iconbtn sm-micbtn ${speech.listening ? 'is-listening' : ''}`}
+                onClick={speech.toggle}
+                title={tr(speech.listening ? 'micStop' : 'micStart')}
+                aria-label={tr(speech.listening ? 'micStop' : 'micStart')}
+                aria-pressed={speech.listening}
+              >🎙️</button>
               <input className="sm-input" value={text} onChange={(e) => setText(e.target.value)}
-                placeholder={focus ? focus.prompt : tr('describePlaceholder')} />
+                placeholder={focus ? fieldQuestion(lang, focus.field) : tr('composerPlaceholder')} />
               <button className="sm-btn sm-btn-primary" type="submit">{tr('send')}</button>
             </form>
           </div>
+          <p className="sm-trust">{tr('trustLine')}</p>
           <p className="sm-compliance">{tr('complianceShort')}</p>
         </section>
 
@@ -484,11 +565,11 @@ export function SmartAdvisor() {
           <div className="sm-panel sm-profile-compact">
             <div className="sm-pc-head">
               <span>{tr('profileTitle')}</span>
-              <b>{pct}% {tr('complete')}</b>
+              {pct > 0 && <b>{pct}% {tr('complete')}</b>}
             </div>
-            <div className="sm-bar"><span style={{ width: `${pct}%` }} /></div>
+            {pct > 0 && <div className="sm-bar"><span style={{ width: `${pct}%` }} /></div>}
             {compact.facts.length === 0 ? (
-              <p className="sm-empty">{tr('nothingYet')}</p>
+              <p className="sm-waiting">{tr('profileWaiting')}</p>
             ) : (
               <ul className="sm-pc-facts">
                 {compact.facts.map((f) => (
@@ -530,7 +611,7 @@ export function SmartAdvisor() {
       {/* ---------- strategy takeaway (only once the numbers are the user's) ---------- */}
       {both && (
         <section className="sm-panel sm-wide">
-          <div className="sm-panel-h"><span>AI Strategy</span><span className="sm-beta">beta</span></div>
+          <div className="sm-panel-h"><span>{tr('aiStrategy')}</span><span className="sm-beta">beta</span></div>
           <ul className="sm-bullets">{takeaway.bullets.map((b, i) => (<li key={i}>{b}</li>))}</ul>
         </section>
       )}
@@ -538,8 +619,8 @@ export function SmartAdvisor() {
       {/* ---------- CTAs (only after value is provided) ---------- */}
       {hasValue && (
         <section className="sm-cta">
-          <button type="button" className="sm-btn sm-btn-primary" onClick={() => setReviewOpen(true)}>{tr('prepareSummary')}</button>
-          <button type="button" className="sm-btn sm-btn-soft" onClick={() => setReviewOpen(true)}>{tr('sendScenario')}</button>
+          <button type="button" className="sm-btn sm-btn-primary" onClick={openReview}>{tr('prepareSummary')}</button>
+          <button type="button" className="sm-btn sm-btn-soft" onClick={openReview}>{tr('sendScenario')}</button>
           <a className="sm-btn sm-btn-ghost" href={PHONE_HREF}>{tr('talkBroker')}</a>
         </section>
       )}
@@ -547,7 +628,7 @@ export function SmartAdvisor() {
       {/* ---------- full-disclosure accordion ---------- */}
       <section className="sm-panel sm-wide">
         <details className="sm-acc">
-          <summary>Important disclosures</summary>
+          <summary>{tr('importantDisclosures')}</summary>
           <p className="sm-fineprint sm-mt">{COMPLIANCE_DISCLAIMER}</p>
         </details>
       </section>
@@ -555,7 +636,7 @@ export function SmartAdvisor() {
       {/* ---------- Full profile drawer / bottom sheet ---------- */}
       {drawerOpen && (
         <div className="sm-drawer-overlay" onClick={() => setDrawerOpen(false)}>
-          <div className="sm-drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={tr('profileTitle')}>
+          <div className="sm-drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={tr('profileTitle')}>
             <div className="sm-drawer-head">
               <span>{tr('profileTitle')} · {pct}% {tr('complete')}</span>
               <button type="button" className="sm-x" onClick={() => setDrawerOpen(false)} aria-label={tr('close')}>×</button>
@@ -563,30 +644,30 @@ export function SmartAdvisor() {
             <div className="sm-drawer-body">
               {/* profile details */}
               <details className="sm-acc" open>
-                <summary>Profile details</summary>
+                <summary>{tr('profileDetails')}</summary>
                 <ul className="sm-list sm-mt">
                   {completed.map((k) => (
-                    <li key={k}><span>{FIELD_BY_KEY[k].label}</span><b>{valueDisplay(k, profile)}</b></li>
+                    <li key={k}><span>{fieldLabel(lang, k)}</span><b>{valueDisplay(lang, k, profile)}</b></li>
                   ))}
-                  {countyText && (<li><span>County</span><b>{countyText}</b></li>)}
-                  {derived.loanAmount != null && (<li><span>Loan amount</span><b>{formatMoney(derived.loanAmount)}</b></li>)}
+                  {countyText && (<li><span>{tr('countyLabel')}</span><b>{countyText}</b></li>)}
+                  {derived.loanAmount != null && (<li><span>{tr('loanAmountLabel')}</span><b>{formatMoney(derived.loanAmount)}</b></li>)}
                   {derived.ltv != null && (<li><span>LTV</span><b>{derived.ltv.toFixed(1)}%</b></li>)}
-                  {completed.length === 0 && derived.loanAmount == null && (<li><span>{tr('nothingYet')}</span><b /></li>)}
+                  {completed.length === 0 && derived.loanAmount == null && (<li><span>{tr('profileWaiting')}</span><b /></li>)}
                 </ul>
               </details>
 
               {/* missing information */}
               <details className="sm-acc" open>
-                <summary>Missing information</summary>
+                <summary>{tr('missingInformation')}</summary>
                 {stillNeeded.length > 0 && (<>
                   <div className="sm-sec sm-mt">{tr('stillNeeded')}</div>
-                  <div className="sm-badgelist">{stillNeeded.map((k) => (<em key={k}>{FIELD_BY_KEY[k].label}</em>))}</div>
+                  <div className="sm-badgelist">{stillNeeded.map((k) => (<em key={k}>{fieldLabel(lang, k)}</em>))}</div>
                 </>)}
                 {helpful.length > 0 && (<>
                   <div className="sm-sec sm-mt">{tr('helpful')}</div>
-                  <div className="sm-badgelist is-soft">{helpful.map((k) => (<em key={k}>{FIELD_BY_KEY[k].label}</em>))}</div>
+                  <div className="sm-badgelist is-soft">{helpful.map((k) => (<em key={k}>{fieldLabel(lang, k)}</em>))}</div>
                 </>)}
-                {stillNeeded.length === 0 && helpful.length === 0 && (<p className="sm-mt">Nothing critical outstanding.</p>)}
+                {stillNeeded.length === 0 && helpful.length === 0 && (<p className="sm-mt">{tr('nothingCritical')}</p>)}
               </details>
 
               {/* cash-to-close estimate */}
@@ -603,24 +684,24 @@ export function SmartAdvisor() {
                         </div>
                       ))}
                       <div className="sm-frow is-total">
-                        <span className="op">=</span><span className="fl">Estimated cash to close</span>
+                        <span className="op">=</span><span className="fl">{tr('cashToClose')}</span>
                         <span className="fa">{formatMoney(calc.totalCashToClose)}</span>
                       </div>
                     </div>
-                    <details className="sm-acc"><summary>Adjust numbers</summary>
+                    <details className="sm-acc"><summary>{tr('adjustNumbers')}</summary>
                       <div className="sm-row2 sm-mt">
-                        <label className="sm-field"><span>Purchase price</span>
+                        <label className="sm-field"><span>{tr('purchasePriceLabel')}</span>
                           <input type="number" step={1000} value={input.purchasePrice}
                             onChange={(e) => patchNumbers({ purchasePrice: Number(e.target.value) })} /></label>
-                        <label className="sm-field"><span>Down payment</span>
+                        <label className="sm-field"><span>{tr('downPayment')}</span>
                           <input type="number" step={1000} value={input.downPayment}
                             onChange={(e) => patchNumbers({ downPayment: Number(e.target.value) })} /></label>
                       </div>
                     </details>
-                    <details className="sm-acc"><summary>Show full breakdown</summary>
+                    <details className="sm-acc"><summary>{tr('showFullBreakdown')}</summary>
                       <div className="ctc-root sm-mt"><CostBreakdown result={calc} /></div>
                     </details>
-                    <details className="sm-acc"><summary>Down-payment comparison</summary>
+                    <details className="sm-acc"><summary>{tr('downPaymentComparison')}</summary>
                       <div className="ctc-root sm-report sm-mt">
                         <ScenarioComparison scenarios={scenarios}
                           highlightPercent={[10, 15, 20, 25].find((p) => Math.abs(calc.downPaymentPercent - p) < 0.5)} />
@@ -628,7 +709,7 @@ export function SmartAdvisor() {
                     </details>
                   </>
                 ) : (
-                  <p className="sm-mt">Add a purchase price and down payment and I’ll compute your exact cash to close.</p>
+                  <p className="sm-mt">{tr('addPriceAndDown')}</p>
                 )}
               </details>
 
@@ -638,7 +719,7 @@ export function SmartAdvisor() {
                 <div className="sm-programs sm-mt">
                   {programs.map((pr) => (<ProgramCard key={pr.id} p={pr} tr={tr} />))}
                 </div>
-                <p className="sm-prog-note">* Estimated at an assumed planning rate for comparison — not a quoted rate. Possible paths only, subject to lender guidelines and broker review.</p>
+                <p className="sm-prog-note">{tr('programNote')}</p>
               </details>
             </div>
           </div>
@@ -648,7 +729,7 @@ export function SmartAdvisor() {
       {/* ---------- Strategy Review Request modal ---------- */}
       {reviewOpen && (
         <div className="sm-modal-overlay" onClick={() => setReviewOpen(false)}>
-          <div className="sm-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={tr('reviewTitle')}>
+          <div className="sm-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={tr('reviewTitle')}>
             <div className="sm-modal-head">
               <span>{tr('reviewTitle')}</span>
               <button type="button" className="sm-x" onClick={() => setReviewOpen(false)} aria-label={tr('close')}>×</button>
@@ -668,7 +749,7 @@ export function SmartAdvisor() {
                   <input required type="email" value={contact.email} onChange={(e) => setContact({ ...contact, email: e.target.value })} /></label>
                 <div className="sm-row2">
                   <label className="sm-field"><span>{tr('contactTime')}</span>
-                    <input value={contact.time} onChange={(e) => setContact({ ...contact, time: e.target.value })} placeholder="e.g. weekday afternoons" /></label>
+                    <input value={contact.time} onChange={(e) => setContact({ ...contact, time: e.target.value })} placeholder={tr('contactTimePlaceholder')} /></label>
                   <label className="sm-field"><span>{tr('preferredLanguage')}</span>
                     <select value={contact.language} onChange={(e) => setContact({ ...contact, language: e.target.value as Language })}>
                       {LANGUAGES.map((l) => (<option key={l.code} value={l.code}>{l.label}</option>))}
@@ -706,7 +787,7 @@ function ProgramCard({ p, tr }: { p: LoanProgramMatch; tr: (k: Parameters<typeof
       </div>
       <p className="sm-prog-why">{p.why}</p>
       <div className="sm-prog-meta">
-        {p.paymentEstimate != null && (<span>{tr('estPayment')}: {formatMoney(p.paymentEstimate)}/mo*</span>)}
+        {p.paymentEstimate != null && (<span>{tr('estPayment')}: {formatMoney(p.paymentEstimate)}{tr('perMonth')}*</span>)}
         {p.cashToCloseEstimate != null && (<span>{tr('estCashToClose')}: {formatMoney(p.cashToCloseEstimate)}*</span>)}
       </div>
       {p.missing.length > 0 && (
