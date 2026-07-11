@@ -811,11 +811,21 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
 function ProgramCard({ p, tr }: { p: LoanProgramMatch; tr: (k: Parameters<typeof t>[1]) => string }) {
   const fitClass = p.fit.startsWith('Possible strong') ? 'is-strong'
     : p.fit.startsWith('Possible') ? 'is-ok' : 'is-review';
+  const dataKey: Parameters<typeof t>[1] =
+    p.dataStatus === 'verified_current' ? 'dataVerifiedCurrent'
+    : p.dataStatus === 'broker_review_required' ? 'dataBrokerReview'
+    : p.dataStatus === 'missing_pricing_data' ? 'dataMissingPricing'
+    : 'dataConfiguredAssumption';
+  const dataClass = p.dataStatus === 'verified_current' ? 'is-verified' : 'is-assumption';
   return (
     <div className="sm-program">
       <div className="sm-prog-head">
         <b>{p.name}</b>
         <span className={`sm-prog-fit ${fitClass}`}>{p.fit}</span>
+      </div>
+      <div className="sm-prog-data">
+        <span className={`sm-prog-datatag ${dataClass}`}>{tr(dataKey)}</span>
+        {p.effectiveDate && <span className="sm-prog-date">{p.effectiveDate}</span>}
       </div>
       <p className="sm-prog-why">{p.why}</p>
       <div className="sm-prog-meta">

@@ -41,6 +41,13 @@ export { resolveLoanLimitArea } from './location';
 export type { AreaResolution } from './location';
 export { matchLoanPrograms, PLANNING_RATE } from './loanPrograms';
 export {
+  hasVerifiedProgramData,
+  programDataStatusFor,
+  programEffectiveDate,
+  activeProgramDataSource,
+} from './programData';
+export type { ProgramDataSource, ConfiguredProgram } from './programData';
+export {
   parseBorrowerScenario,
   generateNextQuestions,
   calculateLTV,
