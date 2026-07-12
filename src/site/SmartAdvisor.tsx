@@ -222,7 +222,7 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
     const rawNq = nextQuestions(next, { max: 1 })[0] ?? null;
     // Localize the question prompt so both the composer and the local-mode chat
     // ask in the selected language.
-    const nq = rawNq ? { ...rawNq, prompt: fieldQuestion(lang, rawNq.field) } : null;
+    const nq = rawNq ? { ...rawNq, prompt: fieldQuestion(lang, rawNq.field, next.loanPurpose) } : null;
     setQuestions(nq ? [nq] : []);
 
     const capturedText = captured.map((k) => humanCaptured(k, next, labelForValue)).filter(Boolean);
@@ -260,7 +260,7 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
         userMessage: userText,
         language: lang,
         profile: next,
-        missingFields: missingRequired(next).map((k) => fieldLabel(lang, k)),
+        missingFields: missingRequired(next).map((k) => fieldLabel(lang, k, next.loanPurpose)),
         nextQuestions: nq ? [nq.prompt] : [],
         possibleLoanPaths: buildProgramSummaries(nextPrograms),
         cashToCloseEstimate: {
@@ -356,7 +356,7 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
           }
         : null,
       advisorSummary: isBoth ? generateAiTakeaway(c, { loanType: mInput.loanType }).bullets : undefined,
-      missingFields: missingRequired(merged).map((k) => fieldLabel(lang, k)),
+      missingFields: missingRequired(merged).map((k) => fieldLabel(lang, k, merged.loanPurpose)),
       files,
       note,
       sourcePage: '/',
@@ -583,7 +583,7 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
                   }
                 }}
                 rows={1}
-                placeholder={focus ? fieldQuestion(lang, focus.field) : tr('composerPlaceholder')}
+                placeholder={focus ? fieldQuestion(lang, focus.field, profile.loanPurpose) : tr('composerPlaceholder')}
               />
               <button className="sm-btn sm-btn-primary" type="submit">{tr('send')}</button>
             </form>
@@ -679,7 +679,7 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
                 <summary>{tr('profileDetails')}</summary>
                 <ul className="sm-list sm-mt">
                   {completed.map((k) => (
-                    <li key={k}><span>{fieldLabel(lang, k)}</span><b>{valueDisplay(lang, k, profile)}</b></li>
+                    <li key={k}><span>{fieldLabel(lang, k, profile.loanPurpose)}</span><b>{valueDisplay(lang, k, profile)}</b></li>
                   ))}
                   {countyText && (<li><span>{tr('countyLabel')}</span><b>{countyText}</b></li>)}
                   {derived.loanAmount != null && (<li><span>{tr('loanAmountLabel')}</span><b>{formatMoney(derived.loanAmount)}</b></li>)}
@@ -693,11 +693,11 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
                 <summary>{tr('missingInformation')}</summary>
                 {stillNeeded.length > 0 && (<>
                   <div className="sm-sec sm-mt">{tr('stillNeeded')}</div>
-                  <div className="sm-badgelist">{stillNeeded.map((k) => (<em key={k}>{fieldLabel(lang, k)}</em>))}</div>
+                  <div className="sm-badgelist">{stillNeeded.map((k) => (<em key={k}>{fieldLabel(lang, k, profile.loanPurpose)}</em>))}</div>
                 </>)}
                 {helpful.length > 0 && (<>
                   <div className="sm-sec sm-mt">{tr('helpful')}</div>
-                  <div className="sm-badgelist is-soft">{helpful.map((k) => (<em key={k}>{fieldLabel(lang, k)}</em>))}</div>
+                  <div className="sm-badgelist is-soft">{helpful.map((k) => (<em key={k}>{fieldLabel(lang, k, profile.loanPurpose)}</em>))}</div>
                 </>)}
                 {stillNeeded.length === 0 && helpful.length === 0 && (<p className="sm-mt">{tr('nothingCritical')}</p>)}
               </details>
