@@ -1,5 +1,5 @@
 import { FIELD_BY_KEY, labelForValue } from './fields';
-import type { FieldKey, Language } from './types';
+import type { FieldKey, Language, LoanPurpose } from './types';
 
 // ---------------------------------------------------------------------------
 // Localized field labels, questions, and choice-option labels. English falls
@@ -105,11 +105,34 @@ const zh: Overrides = {
 
 const OVERRIDES: Record<Language, Overrides> = { en: {}, ru, es, zh };
 
-export function fieldLabel(lang: Language, key: FieldKey): string {
-  return OVERRIDES[lang][key]?.label ?? FIELD_BY_KEY[key]?.label ?? String(key);
+// Refinance framing: there is no "purchase price" — it's the home's estimated
+// value — and no down payment at all. These override the purchase-oriented text
+// when loanPurpose is 'refinance'.
+const REFI: Record<Language, Overrides> = {
+  en: {
+    purchasePrice: { label: 'Estimated home value', question: "What's your home's estimated value?" },
+  },
+  ru: {
+    purchasePrice: { label: 'Оценочная стоимость жилья', question: 'Какова оценочная стоимость вашего жилья?' },
+  },
+  es: {
+    purchasePrice: { label: 'Valor estimado de la vivienda', question: '¿Cuál es el valor estimado de su vivienda?' },
+  },
+  zh: {
+    purchasePrice: { label: '房屋估计价值', question: '您房屋的估计价值是多少？' },
+  },
+};
+
+function textFor(lang: Language, key: FieldKey, purpose?: LoanPurpose): FieldText | undefined {
+  if (purpose === 'refinance' && REFI[lang][key]) return REFI[lang][key];
+  return OVERRIDES[lang][key];
 }
-export function fieldQuestion(lang: Language, key: FieldKey): string {
-  return OVERRIDES[lang][key]?.question ?? FIELD_BY_KEY[key]?.question ?? '';
+
+export function fieldLabel(lang: Language, key: FieldKey, purpose?: LoanPurpose): string {
+  return textFor(lang, key, purpose)?.label ?? FIELD_BY_KEY[key]?.label ?? String(key);
+}
+export function fieldQuestion(lang: Language, key: FieldKey, purpose?: LoanPurpose): string {
+  return textFor(lang, key, purpose)?.question ?? FIELD_BY_KEY[key]?.question ?? '';
 }
 export function fieldOptionLabel(lang: Language, key: FieldKey, value: string): string {
   return OVERRIDES[lang][key]?.options?.[value] ?? labelForValue(key, value);

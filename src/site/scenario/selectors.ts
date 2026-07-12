@@ -37,9 +37,10 @@ function displayValue(lang: Language, key: FieldKey, p: ScenarioProfile): string
 
 /** Build the bounded compact profile used by the side card & mobile drawer. */
 export function buildCompactProfile(p: ScenarioProfile, lang: Language = 'en'): CompactProfile {
+  const purpose = p.loanPurpose;
   const facts: CompactFact[] = (Object.keys(FIELD_BY_KEY) as FieldKey[])
     .filter((k) => FIELD_BY_KEY[k].importance !== 'contact')
-    .map((k) => ({ key: k, label: fieldLabel(lang, k), value: displayValue(lang, k, p) }))
+    .map((k) => ({ key: k, label: fieldLabel(lang, k, purpose), value: displayValue(lang, k, p) }))
     .filter((f) => f.value);
 
   const d = deriveScenario(p);
@@ -51,7 +52,7 @@ export function buildCompactProfile(p: ScenarioProfile, lang: Language = 'en'): 
   return {
     pct: completionPercent(p),
     facts: facts.slice(0, MAX_FACTS),
-    nextQuestion: nq ? fieldQuestion(lang, nq.field) : null,
-    criticalMissing: missingRequired(p).slice(0, MAX_MISSING).map((k) => fieldLabel(lang, k)),
+    nextQuestion: nq ? fieldQuestion(lang, nq.field, purpose) : null,
+    criticalMissing: missingRequired(p).slice(0, MAX_MISSING).map((k) => fieldLabel(lang, k, purpose)),
   };
 }

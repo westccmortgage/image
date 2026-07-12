@@ -41,31 +41,38 @@ export function hasValue(p: ScenarioProfile, key: FieldKey): boolean {
   return v !== undefined && v !== null && v !== '';
 }
 
+/** A refinance has no down payment — it's never asked for or "missing". */
+function notApplicable(p: ScenarioProfile, key: FieldKey): boolean {
+  return p.loanPurpose === 'refinance' && key === 'downPayment';
+}
+
 /** Required non-contact fields still missing (in ask-priority order). */
 export function missingRequired(p: ScenarioProfile): FieldKey[] {
-  return REQUIRED.filter((f) => !hasValue(p, f.key))
+  return REQUIRED.filter((f) => !hasValue(p, f.key) && !notApplicable(p, f.key))
     .sort((a, b) => a.priority - b.priority)
     .map((f) => f.key);
 }
 
 /** Helpful (optional) fields still missing. */
 export function missingHelpful(p: ScenarioProfile): FieldKey[] {
-  return HELPFUL.filter((f) => !hasValue(p, f.key))
+  return HELPFUL.filter((f) => !hasValue(p, f.key) && !notApplicable(p, f.key))
     .sort((a, b) => a.priority - b.priority)
     .map((f) => f.key);
 }
 
 /** Blocking required fields still missing — gate the initial loan-path options. */
 export function missingBlocking(p: ScenarioProfile): FieldKey[] {
-  return NON_CONTACT.filter((f) => f.blocking && !hasValue(p, f.key))
+  return NON_CONTACT.filter((f) => f.blocking && !hasValue(p, f.key) && !notApplicable(p, f.key))
     .sort((a, b) => a.priority - b.priority)
     .map((f) => f.key);
 }
 
-/** Completion percent over required + helpful (contact excluded). */
+/** Completion percent over required + helpful (contact + N/A fields excluded). */
 export function completionPercent(p: ScenarioProfile): number {
-  const total = NON_CONTACT.length;
-  const done = NON_CONTACT.filter((f) => hasValue(p, f.key)).length;
+  const applicable = NON_CONTACT.filter((f) => !notApplicable(p, f.key));
+  const total = applicable.length;
+  if (total === 0) return 0;
+  const done = applicable.filter((f) => hasValue(p, f.key)).length;
   return Math.round((done / total) * 100);
 }
 
