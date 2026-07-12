@@ -41,6 +41,8 @@
   --chip-brd: rgba(10, 132, 255, 0.3);
   --accent-brd: rgba(10, 132, 255, 0.4);
   --accent-tint: rgba(10, 132, 255, 0.10);
+  /* Very pale ghosted corporate wordmark — near-invisible, neutral navy-gray. */
+  --bgmark: rgba(20, 40, 90, 0.035);
   color-scheme: light;
 }
 :root[data-theme='dark'] {
@@ -79,6 +81,8 @@
   --chip-brd: rgba(55, 230, 255, 0.28);
   --accent-brd: rgba(55, 230, 255, 0.35);
   --accent-tint: rgba(55, 230, 255, 0.16);
+  /* Dark mode keeps the same faint ghosted wordmark, tuned for a dark ground. */
+  --bgmark: rgba(125, 170, 255, 0.035);
   color-scheme: dark;
 }
 
@@ -119,6 +123,18 @@ a { color: inherit; }
 }
 .sm-nav, .sm-shell, .sm-footer { position: relative; z-index: 1; }
 
+/* Decorative ghosted corporate wordmark, fixed behind all content. Non-
+   interactive, aria-hidden, and faint enough never to reduce text readability. */
+.sm-bgmark {
+  position: fixed; inset: 0; z-index: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 4vw;
+  font-family: var(--sans); font-weight: 800; text-transform: uppercase;
+  font-size: clamp(2.4rem, 11vw, 11rem); line-height: 0.9; letter-spacing: -0.02em;
+  text-align: center; color: var(--bgmark);
+  pointer-events: none; user-select: none; overflow: hidden;
+}
+
 /* ---- nav ---- */
 .sm-nav {
   display: flex; justify-content: space-between; align-items: center; gap: 16px;
@@ -134,7 +150,9 @@ a { color: inherit; }
   transition: all 0.15s; backdrop-filter: blur(8px);
 }
 .sm-toggle:hover { border-color: var(--brd-strong); color: var(--cyan); }
-.sm-brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; }
+.sm-brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; border-radius: 10px; transition: opacity 0.15s ease; }
+.sm-brand:hover { opacity: 0.82; }
+.sm-brand:focus-visible { outline: 2px solid var(--brd-strong); outline-offset: 4px; }
 .sm-brand-mark {
   width: 30px; height: 30px; border-radius: 9px; flex: 0 0 auto;
   background: var(--grad); box-shadow: 0 0 22px -3px var(--glow);
@@ -190,9 +208,15 @@ a { color: inherit; }
 .sm-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 12px 1px var(--glow); animation: sm-pulse 1.8s ease-in-out infinite; }
 @keyframes sm-pulse { 50% { opacity: 0.35; } }
 .sm-core {
-  font-size: clamp(1.7rem, 6vw, 3rem); line-height: 1.04; letter-spacing: -0.035em;
-  font-weight: 800; margin: 0; max-width: 18ch;
+  /* Smaller, proportionate corporate headline: ~34px mobile → ~54px desktop,
+     capped so it never dominates the first viewport. Wider max-width keeps it to
+     2–3 lines instead of a tall narrow column. */
+  font-size: clamp(2.1rem, 4.2vw, 3.4rem); line-height: 1.03; letter-spacing: -0.03em;
+  font-weight: 800; margin: 0; max-width: 800px;
   background: var(--headline-grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+@media (max-width: 620px) {
+  .sm-core { max-width: 22ch; } /* clean line breaks, no clipped words on mobile */
 }
 .sm-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .sm-card {
@@ -368,6 +392,10 @@ a { color: inherit; }
 .sm-report { display: grid; gap: 16px; }
 .sm-footer { border-top: 1px solid var(--brd); padding: 22px 20px 40px; text-align: center; font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.02em; color: var(--faint); }
 .sm-footer a { color: var(--cyan); text-decoration: none; }
+/* Understated corporate link — same tone as the license line, subtle hover. */
+.sm-footer-corp { color: inherit; text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.15s ease; }
+.sm-footer-corp:hover { border-bottom-color: currentColor; }
+.sm-footer-corp:focus-visible { outline: 2px solid var(--brd-strong); outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
   .sm-aurora, .sm-scan, .sm-dot { animation: none; }

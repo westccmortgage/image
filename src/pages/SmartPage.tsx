@@ -7,6 +7,9 @@ import { COMPANY, INDIVIDUAL, COMPANY_LICENSE, INDIVIDUAL_LICENSE } from '../sit
 
 type Theme = 'light' | 'dark';
 
+/** Approved corporate website (opens in a new tab to preserve the advisor session). */
+const CORPORATE_URL = 'https://westccmortgage.com';
+
 function initialTheme(): Theme {
   try {
     const saved = localStorage.getItem('ww-theme');
@@ -50,8 +53,17 @@ export function SmartPage() {
 
   return (
     <div className="sm-page" id="top">
+      {/* Decorative corporate wordmark, ghosted behind all content. */}
+      <div className="sm-bgmark" aria-hidden="true">WEST COAST CAPITAL MORTGAGE</div>
       <header className="sm-nav">
-        <a className="sm-brand" href="/" aria-label="Wallet WCCM home">
+        <a
+          className="sm-brand"
+          href={CORPORATE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Visit West Coast Capital Mortgage corporate website"
+          title="Visit West Coast Capital Mortgage"
+        >
           <span className="sm-brand-mark" aria-hidden="true" />
           <span className="sm-brand-text">
             WALLET <b>WCCM</b>
@@ -83,7 +95,16 @@ export function SmartPage() {
           Wallet WCCM · AI Mortgage Strategy Advisor · <a href={PHONE_HREF}>{PHONE}</a>
         </p>
         <p className="sm-footer-license">
-          {COMPANY.legalName} · {COMPANY_LICENSE}
+          <a
+            className="sm-footer-corp"
+            href={CORPORATE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Visit West Coast Capital Mortgage"
+          >
+            {COMPANY.legalName}
+          </a>{' '}
+          · {COMPANY_LICENSE}
         </p>
         <p className="sm-footer-license">
           {INDIVIDUAL.name} · {INDIVIDUAL.title} · {INDIVIDUAL_LICENSE}
