@@ -152,21 +152,31 @@ a { color: inherit; }
   transition: all 0.15s; backdrop-filter: blur(8px);
 }
 .sm-toggle:hover { border-color: var(--brd-strong); color: var(--cyan); }
-.sm-brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; border-radius: 10px; transition: opacity 0.15s ease; }
-.sm-brand:hover { opacity: 0.82; }
-.sm-brand:focus-visible { outline: 2px solid var(--brd-strong); outline-offset: 4px; }
-.sm-brand-mark {
-  width: 30px; height: 30px; border-radius: 9px; flex: 0 0 auto;
-  background: var(--grad); box-shadow: 0 0 22px -3px var(--glow);
-}
+/* Brand block — the logo is NOT a link; only the corporate name is clickable. */
+.sm-brand { display: inline-flex; align-items: center; gap: 12px; min-width: 0; }
+.sm-logo { height: 40px; width: auto; flex: 0 0 auto; display: block; }
 .sm-brand-text {
-  display: flex; flex-direction: column; line-height: 1;
+  display: flex; flex-direction: column; line-height: 1; min-width: 0;
   font-size: 1.05rem; font-weight: 700; letter-spacing: 0.02em; color: var(--ink);
 }
 .sm-brand-text b { font-weight: 800; }
 .sm-brand-text small {
   font-family: var(--mono); font-size: 8.5px; font-weight: 500;
   letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); margin-top: 6px;
+}
+/* Subtle, corporate hover: nudge right, darken, reveal a small arrow (~200ms). */
+.sm-corp-link {
+  color: var(--muted); text-decoration: none; display: inline-flex; align-items: center;
+  transition: color 0.2s ease, transform 0.2s ease; border-radius: 3px;
+}
+.sm-corp-link:hover, .sm-corp-link:focus-visible { color: var(--ink); transform: translateX(3px); }
+.sm-corp-link:focus-visible { outline: 2px solid var(--brd-strong); outline-offset: 3px; }
+.sm-corp-arrow {
+  display: inline-block; max-width: 0; opacity: 0; overflow: hidden; margin-left: 0;
+  transition: max-width 0.2s ease, opacity 0.2s ease, margin-left 0.2s ease;
+}
+.sm-corp-link:hover .sm-corp-arrow, .sm-corp-link:focus-visible .sm-corp-arrow {
+  max-width: 1.2em; opacity: 1; margin-left: 4px;
 }
 
 /* ---- buttons ---- */
@@ -219,6 +229,9 @@ a { color: inherit; }
 }
 @media (max-width: 620px) {
   .sm-core { max-width: 22ch; } /* clean line breaks, no clipped words on mobile */
+  .sm-logo { height: 32px; } /* smaller but never hidden */
+  .sm-nav { padding: 12px 16px; gap: 10px; }
+  .sm-brand-text small { font-size: 8px; } /* keep the attribution from overflowing */
 }
 .sm-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .sm-card {
