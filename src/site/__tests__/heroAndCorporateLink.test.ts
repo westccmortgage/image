@@ -21,16 +21,29 @@ describe('hero headline', () => {
   });
 });
 
-describe('corporate header link', () => {
+describe('header logo + corporate link', () => {
   it('exposes the approved corporate URL only', () => {
     expect(page).toContain("const CORPORATE_URL = 'https://westccmortgage.com'");
   });
-  it('the brand anchor opens the corporate site in a new, safe tab', () => {
-    const brand = page.match(/<a\s+className="sm-brand"[\s\S]*?>/)?.[0] ?? '';
-    expect(brand).toContain('href={CORPORATE_URL}');
-    expect(brand).toContain('target="_blank"');
-    expect(brand).toContain('rel="noopener noreferrer"');
-    expect(brand).toMatch(/aria-label="Visit West Coast Capital Mortgage/);
+  it('the brand block is NOT a link (the logo itself is not clickable)', () => {
+    expect(page).toMatch(/<div className="sm-brand">/);
+    expect(page).not.toMatch(/<a[^>]*className="sm-brand"/);
+    // the logo is an inline svg, not wrapped in an anchor
+    expect(page).toContain('className="sm-logo"');
+  });
+  it('only the corporate company name is the clickable link, in a new safe tab', () => {
+    const link = page.match(/<a\s+className="sm-corp-link"[\s\S]*?>/)?.[0] ?? '';
+    expect(link).toContain('href={CORPORATE_URL}');
+    expect(link).toContain('target="_blank"');
+    expect(link).toContain('rel="noopener noreferrer"');
+    expect(link).toMatch(/aria-label="Visit West Coast Capital Mortgage/);
+    // "Powered by" precedes the link and stays plain text
+    expect(page).toMatch(/Powered by\{' '\}\s*<a\s+className="sm-corp-link"/);
+    expect(page).toContain('West Coast Capital Mortgage Inc.');
+  });
+  it('has the subtle hover motion (translateX + revealed arrow)', () => {
+    expect(css).toMatch(/\.sm-corp-link:hover[^{]*\{[^}]*translateX\(3px\)/);
+    expect(css).toContain('sm-corp-arrow');
   });
   it('does NOT point the brand at walletwccm.com, WCCI, CRM, or a staging route', () => {
     expect(page).not.toMatch(/walletwccm\.com/i);
