@@ -102,19 +102,26 @@ function findMoney(text: string): MoneyHit[] {
   return hits;
 }
 
-const PRICE_WORDS = /(price|home|house|buy|buying|purchase|property|value|worth|condo)/;
-const DOWN_WORDS = /(down|cash|put|bring|have|available|liquid)/;
+const PRICE_WORDS = /(price|home|house|buy|buying|purchase|purchasing|property|value|worth|condo|estate|place|listing|cost)/;
+// A down word must sit IMMEDIATELY next to the number — either right after
+// ("85k down", "300,000 down") or right before ("put 300k", "cash of 250k",
+// "have 250k", "saved 250k"). This prevents a separate "20% down" phrase from
+// mislabeling an adjacent PRICE as the down payment.
+const DOWN_AFTER = /^\s*(?:dollars?\s+)?(?:down|dp)\b/;
+const DOWN_BEFORE = /\b(?:put(?:ting)?|down\s*payment|dp|cash|bring(?:ing)?|have|having|available|liquid|saved?|deposit|contribut\w*)\s*(?:of\s*)?(?:is\s*)?$/;
 
-function classifyMoney(hits: MoneyHit[], profile: ScenarioProfile) {
+function classifyMoney(hits: MoneyHit[], profile: ScenarioProfile, text: string) {
+  const lower = text.toLowerCase();
   const priceHits: MoneyHit[] = [];
   const downHits: MoneyHit[] = [];
   const unknown: MoneyHit[] = [];
   for (const h of hits) {
-    const isDown = DOWN_WORDS.test(h.context);
-    const isPrice = PRICE_WORDS.test(h.context);
-    if (isDown && !isPrice) downHits.push(h);
-    else if (isPrice && !isDown) priceHits.push(h);
-    else if (isPrice && isDown) priceHits.push(h); // "buy ... with cash" → treat as price
+    const after = lower.slice(h.end, h.end + 12);
+    const before = lower.slice(Math.max(0, h.start - 18), h.start);
+    const isDown = DOWN_AFTER.test(after) || DOWN_BEFORE.test(before);
+    const nearPrice = PRICE_WORDS.test(before) || PRICE_WORDS.test(after);
+    if (isDown) downHits.push(h);
+    else if (nearPrice) priceHits.push(h);
     else unknown.push(h);
   }
 
@@ -156,7 +163,7 @@ export function parseScenario(text: string): ScenarioProfile {
   const lower = ` ${text.toLowerCase()} `;
 
   // --- money (price / down) ---
-  classifyMoney(findMoney(text), profile);
+  classifyMoney(findMoney(text), profile, text);
 
   // Spoken price with "million" dropped: "home around 1.4" → $1.4M. A bare small
   // DECIMAL in a price context almost always means millions (nobody buys a $1.40
@@ -173,14 +180,24 @@ export function parseScenario(text: string): ScenarioProfile {
 
   // --- percent down --- accept "%", "percent", "pct", and common RU/ES/ZH words
   const PCT = '(?:%|percent|pct|процент\\w*|por\\s?ciento|por\\s?cent|百分)';
+  // Down anchor incl. multilingual: enganche/inicial (ES), взнос/первоначальн (RU),
+  // 首付/首期/頭期 (ZH).
+  const DP = '(?:down|dp|put|enganche|inicial|pie|взнос|первоначальн\\w*|首付|首期|頭期)';
   const pct = lower.match(
     new RegExp(
-      `(\\d{1,2}(?:\\.\\d+)?)\\s?${PCT}[^.]{0,14}?(down|dp|put)|(down|dp|put)[^.]{0,14}?(\\d{1,2}(?:\\.\\d+)?)\\s?${PCT}`,
+      `(\\d{1,2}(?:\\.\\d+)?)\\s?${PCT}[^.]{0,16}?${DP}|${DP}[^.]{0,16}?(\\d{1,2}(?:\\.\\d+)?)\\s?${PCT}`,
     ),
   );
   if (pct) {
-    const num = parseFloat(pct[1] ?? pct[4]);
+    const num = parseFloat(pct[1] ?? pct[2]);
     if (Number.isFinite(num) && num > 0 && num <= 100) profile.downPaymentPercent = num;
+  }
+
+  // Explicit zero-down ("0 down", "zero down", "no money down") → $0 down / 100% LTV.
+  if (profile.downPayment == null && profile.downPaymentPercent == null &&
+      /\b(?:0|zero|no)\s*(?:%|percent|money)?\s*down\b/.test(lower)) {
+    profile.downPayment = 0;
+    profile.downPaymentPercent = 0;
   }
 
   // Bare "put 20 down" / "20 down" with no %, no $ — a 1–2 digit amount tied to
@@ -204,9 +221,11 @@ export function parseScenario(text: string): ScenarioProfile {
     profile.downPayment = Math.round((profile.purchasePrice * profile.downPaymentPercent) / 100);
   }
 
-  // --- loan purpose ---
-  if (/\b(refinance|refi|cash.?out|rate.?and.?term)\b/.test(lower)) profile.loanPurpose = 'refinance';
-  else if (/\b(buy|buying|purchase|purchasing|home|house|condo|property)\b/.test(lower))
+  // --- loan purpose --- refinance wins; purchase requires a BUY VERB, not just a
+  // noun like "home"/"house" (so a later "home worth $4M" can't flip a refi to a
+  // purchase and re-trigger the down-payment question).
+  if (/\b(refinance|refi|refinancing|cash.?out|rate.?and.?term)\b/.test(lower)) profile.loanPurpose = 'refinance';
+  else if (/\b(buy|buying|bought|purchase|purchasing|first.?time buyer)\b/.test(lower))
     profile.loanPurpose = 'purchase';
 
   // --- state ---
@@ -296,11 +315,34 @@ export function parseScenario(text: string): ScenarioProfile {
     }
   }
 
-  // --- ZIP / county (avoid money digits) ---
+  // Bare-integer money in explicit price/down phrasing ("down payment 50000",
+  // "price 750000") — MONEY_RE only matches $/comma/suffix forms, so capture a
+  // 4–8 digit amount that is unambiguously tied to a price or down-payment word.
+  if (profile.downPayment == null) {
+    const m = lower.match(/\b(?:down\s*payment|down|put|cash|saved?|deposit)\s*(?:of\s*|is\s*)?\$?(\d{4,8})\b(?!\s?%)/);
+    if (m) {
+      const v = parseInt(m[1], 10);
+      if (v >= MIN_PLAUSIBLE_DOWN) profile.downPayment = v;
+    }
+  }
+  if (profile.purchasePrice == null) {
+    const m = lower.match(/\b(?:price|home|house|value|worth|purchase|cost)\D{0,6}\$?(\d{4,8})\b(?!\s?%)/);
+    if (m) {
+      const v = parseInt(m[1], 10);
+      if (v >= MIN_PLAUSIBLE_PRICE) profile.purchasePrice = v;
+    }
+  }
+
+  // --- ZIP / county (avoid money digits and amounts in a price/down context) ---
   const zip = text.match(/\b(\d{5})\b/);
-  if (zip && !isPartOfMoney(text, zip.index ?? 0)) profile.zipOrCounty = zip[1];
+  if (zip) {
+    const idx = zip.index ?? 0;
+    const zBefore = text.slice(Math.max(0, idx - 16), idx).toLowerCase();
+    const moneyCtx = /\$|\b(?:down|payment|cash|put|price|worth|value|saved?|deposit|reserve)\s*$/.test(zBefore);
+    if (!isPartOfMoney(text, idx) && !moneyCtx) profile.zipOrCounty = zip[1];
+  }
   const county = lower.match(/([a-z][a-z .'-]{2,}?)\s+county\b/);
-  if (county && !profile.zipOrCounty) profile.zipOrCounty = `${county[1].trim()} County`;
+  if (county && !profile.zipOrCounty) profile.zipOrCounty = `${titleCase(county[1].trim())} County`;
 
   // Resolve the loan-limit area conservatively — only set `county` when it is
   // reliably known (explicit "X County" or a curated city). A city we can't map
@@ -324,8 +366,15 @@ export function parseScenario(text: string): ScenarioProfile {
   return profile;
 }
 
+/** Title-case a lowercased place name ("los angeles" → "Los Angeles"). */
+function titleCase(s: string): string {
+  return s.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+}
+
 function isPartOfMoney(text: string, index: number): boolean {
   const before = text.slice(Math.max(0, index - 2), index);
-  const after = text.slice(index + 5, index + 8).toLowerCase();
+  // Only a comma FOLLOWED BY DIGITS is a thousands separator ("90,000"); a
+  // trailing comma ("90210, price") is punctuation, not money.
+  const after = text.slice(index + 5, index + 8).toLowerCase().replace(/^,(?!\d)/, '');
   return before.includes('$') || /^(k|m|,)/.test(after);
 }

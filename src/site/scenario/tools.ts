@@ -110,7 +110,8 @@ export function profileToEngineInput(p: ScenarioProfile): CashToCloseInput {
     const price = p.purchasePrice;
     const loanAmount = Math.max(0, price - p.downPayment);
 
-    input.lenderFees = [
+    // An all-cash purchase (no loan) has no lender fees at all.
+    input.lenderFees = loanAmount <= 0 ? [] : [
       {
         label: 'Origination fee',
         amount: roundCents(loanAmount * PLANNING.originationRateOfLoan),
