@@ -19,6 +19,12 @@ export function mergeProfile(
   if (next.purchasePrice && next.downPaymentPercent && next.downPayment == null) {
     next.downPayment = Math.round((next.purchasePrice * next.downPaymentPercent) / 100);
   }
+  // An established refinance intent is not downgraded to "purchase" by a later
+  // message that merely mentions a home/house (belt-and-suspenders with the
+  // verb-only purchase detection in the parser).
+  if (base.loanPurpose === 'refinance' && patch.loanPurpose === 'purchase') {
+    next.loanPurpose = 'refinance';
+  }
   return next;
 }
 
