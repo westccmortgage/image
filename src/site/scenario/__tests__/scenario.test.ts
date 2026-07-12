@@ -45,6 +45,36 @@ describe('1. natural language fills the Scenario Profile', () => {
     expect(q.purchasePrice).toBe(1_000_000);
     expect(q.downPayment).toBe(200_000);
   });
+  it('reads the word "percent" as a percentage', () => {
+    const q = parseScenario('buying a $1,000,000 house, putting 20 percent down');
+    expect(q.downPaymentPercent).toBe(20);
+    expect(q.downPayment).toBe(200_000);
+  });
+  it('never commits an implausible tiny home price or down payment', () => {
+    // "$400" home and "$20" down are nonsense — leave them empty so the
+    // advisor asks, instead of reasoning from a fake scenario.
+    const q = parseScenario('a $400 home with $20 down');
+    expect(q.purchasePrice).toBeUndefined();
+    expect(q.downPayment).toBeUndefined();
+  });
+  it('treats a bare small down-payment amount as a percent, not dollars', () => {
+    const q = parseScenario('$800,000 home, put 20 down');
+    expect(q.purchasePrice).toBe(800_000);
+    expect(q.downPaymentPercent).toBe(20);
+    expect(q.downPayment).toBe(160_000);
+  });
+  it('reads a comma-grouped amount with no $ or "thousand" (e.g. spoken "300,000")', () => {
+    const q = parseScenario('I want to put like maybe 300,000 down');
+    expect(q.downPayment).toBe(300_000);
+  });
+  it('reads a spoken price with "million" dropped ("home around 1.4" → $1.4M)', () => {
+    const q = parseScenario('To buy a home around 1.4');
+    expect(q.purchasePrice).toBe(1_400_000);
+  });
+  it('does not misread "a 2 bedroom home" as a $2M price', () => {
+    const q = parseScenario('a 2 bedroom home');
+    expect(q.purchasePrice).toBeUndefined();
+  });
 });
 
 describe('2. missing required fields are identified', () => {

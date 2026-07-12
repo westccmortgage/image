@@ -139,6 +139,10 @@ export type UIKey =
   | 'snapshotHeader'
   | 'snapshotReadyPrompt'
   | 'programNote'
+  | 'dataVerifiedCurrent'
+  | 'dataConfiguredAssumption'
+  | 'dataBrokerReview'
+  | 'dataMissingPricing'
   | 'languageLabel';
 
 type Dict = Record<UIKey, string>;
@@ -282,6 +286,10 @@ const en: Dict = {
     'When you’re ready, I can prepare a personalized strategy summary for a licensed broker to review.',
   programNote:
     '* Estimated at an assumed planning rate for comparison — not a quoted rate. Possible paths only, subject to lender guidelines and broker review.',
+  dataVerifiedCurrent: 'Verified current',
+  dataConfiguredAssumption: 'Planning assumption',
+  dataBrokerReview: 'Needs broker review',
+  dataMissingPricing: 'Pricing not available yet',
 };
 
 const ru: Dict = {
@@ -423,6 +431,10 @@ const ru: Dict = {
     'Когда будете готовы, я подготовлю персональную сводку по стратегии для проверки лицензированным брокером.',
   programNote:
     '* Оценка по условной планировочной ставке для сравнения — не котировка. Только возможные варианты, при условии соблюдения требований кредитора и проверки брокером.',
+  dataVerifiedCurrent: 'Проверенные актуальные данные',
+  dataConfiguredAssumption: 'Плановое допущение',
+  dataBrokerReview: 'Требуется проверка брокером',
+  dataMissingPricing: 'Ценообразование пока недоступно',
 };
 
 const es: Dict = {
@@ -564,6 +576,10 @@ const es: Dict = {
     'Cuando esté listo, puedo preparar un resumen de estrategia personalizado para que lo revise un corredor con licencia.',
   programNote:
     '* Estimado a una tasa de planificación supuesta para comparar — no es una tasa cotizada. Solo opciones posibles, sujetas a las pautas del prestamista y a revisión del corredor.',
+  dataVerifiedCurrent: 'Datos actuales verificados',
+  dataConfiguredAssumption: 'Supuesto de planificación',
+  dataBrokerReview: 'Requiere revisión del corredor',
+  dataMissingPricing: 'Precios aún no disponibles',
 };
 
 const zh: Dict = {
@@ -700,6 +716,10 @@ const zh: Dict = {
   snapshotHeader: '贷款策略概览',
   snapshotReadyPrompt: '当您准备好后，我可以准备一份个性化的策略摘要，供持牌经纪人审阅。',
   programNote: '* 按假定的规划利率估算以供比较 — 并非报价利率。仅为可能的方案，需符合贷方指南并经经纪人审阅。',
+  dataVerifiedCurrent: '已核实的当前数据',
+  dataConfiguredAssumption: '规划假设',
+  dataBrokerReview: '需要经纪人审阅',
+  dataMissingPricing: '暂无定价数据',
 };
 
 const DICTS: Record<Language, Dict> = { en, ru, es, zh };

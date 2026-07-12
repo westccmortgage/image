@@ -136,6 +136,17 @@ export type FitLabel =
   | 'Likely not a fit';
 
 /**
+ * Honesty about where a program path's data comes from. Until a verified live
+ * pricing/program source is connected, everything is a configured planning
+ * assumption that a licensed broker must verify — never "today's best rate".
+ */
+export type ProgramDataStatus =
+  | 'verified_current'
+  | 'configured_assumption'
+  | 'broker_review_required'
+  | 'missing_pricing_data';
+
+/**
  * A compared loan path. Numbers come only from deterministic calculators; every
  * qualitative field uses cautious, non-committal language.
  */
@@ -154,6 +165,10 @@ export interface LoanProgramMatch {
   cashToCloseEstimate: number | null;
   documentation: string[];
   risks: string[];
+  /** Where this path's guidance comes from (see ProgramDataStatus). */
+  dataStatus: ProgramDataStatus;
+  /** Effective/last-verified date when verified current data exists, else null. */
+  effectiveDate: string | null;
 }
 
 export interface CashToCloseEstimate {

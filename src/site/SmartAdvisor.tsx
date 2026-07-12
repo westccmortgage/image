@@ -40,6 +40,9 @@ import {
   submitDocumentReview,
   toSubmittedMetas,
   submitCrmLead,
+  isLikelyPercent,
+  MIN_PLAUSIBLE_PRICE,
+  MIN_PLAUSIBLE_DOWN,
   DOCUMENT_CATEGORIES,
   FIELD_BY_KEY,
 } from './scenario';
@@ -71,24 +74,41 @@ const CAT_LABEL_KEY: Record<string, Parameters<typeof t>[1]> = Object.fromEntrie
 );
 const catLabelKey = (v: string): Parameters<typeof t>[1] => CAT_LABEL_KEY[v] ?? 'catOther';
 
-function numberFromText(text: string): number | null {
+function numberFromText(text: string): { value: number; hadDollarSign: boolean } | null {
+  const hadDollarSign = text.includes('$');
   const m = text.replace(/\$/g, '').match(/([\d,]+(?:\.\d+)?)\s*(k|mm|m|million|thousand)?/i);
   if (!m) return null;
   const base = parseFloat(m[1].replace(/,/g, ''));
   if (!Number.isFinite(base)) return null;
   const suf = m[2]?.toLowerCase();
   const mult = suf === 'k' || suf === 'thousand' ? 1_000 : suf ? 1_000_000 : 1;
-  return base * mult;
+  return { value: base * mult, hadDollarSign };
 }
-function coerceAnswer(q: Question, text: string): Partial<ScenarioProfile> {
+function coerceAnswer(q: Question, text: string, profile: ScenarioProfile): Partial<ScenarioProfile> {
   if (q.kind === 'choice' && q.options) {
     const val = matchChoiceValue(q.field, q.options, text);
     return val ? ({ [q.field]: val } as Partial<ScenarioProfile>) : {};
   }
   if (q.kind === 'money' || q.kind === 'number') {
-    const n = numberFromText(text);
-    if (n == null) return {};
-    return q.field === 'fico' ? { fico: Math.round(n) } : ({ [q.field]: n } as Partial<ScenarioProfile>);
+    const parsed = numberFromText(text);
+    if (parsed == null) return {};
+    const { value, hadDollarSign } = parsed;
+    if (q.field === 'fico') return { fico: Math.round(value) };
+    // A home price of "$400" or a "$20" down payment is never real — reject the
+    // implausible value so the advisor re-asks instead of committing nonsense.
+    if (q.field === 'purchasePrice') {
+      return value >= MIN_PLAUSIBLE_PRICE ? { purchasePrice: value } : {};
+    }
+    if (q.field === 'downPayment') {
+      // "20" (no $) in answer to the down-payment question means 20 percent.
+      if (isLikelyPercent(value, hadDollarSign)) {
+        const patch: Partial<ScenarioProfile> = { downPaymentPercent: value };
+        if (profile.purchasePrice) patch.downPayment = Math.round((profile.purchasePrice * value) / 100);
+        return patch;
+      }
+      return value >= MIN_PLAUSIBLE_DOWN ? { downPayment: value } : {};
+    }
+    return value > 0 ? ({ [q.field]: value } as Partial<ScenarioProfile>) : {};
   }
   if (/[?]|how much|what|why|when|which|can you|do i/i.test(text)) return {};
   return { [q.field]: text.trim() } as Partial<ScenarioProfile>;
@@ -275,7 +295,7 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
     const isFirst = !firstMsgRef.current;
     if (isFirst) { firstMsgRef.current = raw; parsedFirstRef.current = parseScenario(raw); }
     let patch = parseScenario(raw);
-    if (focus) patch = { ...patch, ...coerceAnswer(focus, raw) };
+    if (focus) patch = { ...patch, ...coerceAnswer(focus, raw, profile) };
     void respondTo(mergeProfile(profile, patch), profile, raw, isFirst);
   }
   function handleChip(field: FieldKey, value: string, label: string) {
@@ -551,8 +571,20 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
                 aria-label={tr(speech.listening ? 'micStop' : 'micStart')}
                 aria-pressed={speech.listening}
               >🎙️</button>
-              <input className="sm-input" value={text} onChange={(e) => setText(e.target.value)}
-                placeholder={focus ? fieldQuestion(lang, focus.field) : tr('composerPlaceholder')} />
+              <textarea
+                className="sm-input sm-input-ta"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => {
+                  // Enter sends; Shift+Enter inserts a newline (standard chat UX).
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleText();
+                  }
+                }}
+                rows={1}
+                placeholder={focus ? fieldQuestion(lang, focus.field) : tr('composerPlaceholder')}
+              />
               <button className="sm-btn sm-btn-primary" type="submit">{tr('send')}</button>
             </form>
           </div>
@@ -779,11 +811,21 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
 function ProgramCard({ p, tr }: { p: LoanProgramMatch; tr: (k: Parameters<typeof t>[1]) => string }) {
   const fitClass = p.fit.startsWith('Possible strong') ? 'is-strong'
     : p.fit.startsWith('Possible') ? 'is-ok' : 'is-review';
+  const dataKey: Parameters<typeof t>[1] =
+    p.dataStatus === 'verified_current' ? 'dataVerifiedCurrent'
+    : p.dataStatus === 'broker_review_required' ? 'dataBrokerReview'
+    : p.dataStatus === 'missing_pricing_data' ? 'dataMissingPricing'
+    : 'dataConfiguredAssumption';
+  const dataClass = p.dataStatus === 'verified_current' ? 'is-verified' : 'is-assumption';
   return (
     <div className="sm-program">
       <div className="sm-prog-head">
         <b>{p.name}</b>
         <span className={`sm-prog-fit ${fitClass}`}>{p.fit}</span>
+      </div>
+      <div className="sm-prog-data">
+        <span className={`sm-prog-datatag ${dataClass}`}>{tr(dataKey)}</span>
+        {p.effectiveDate && <span className="sm-prog-date">{p.effectiveDate}</span>}
       </div>
       <p className="sm-prog-why">{p.why}</p>
       <div className="sm-prog-meta">

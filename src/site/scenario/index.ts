@@ -1,6 +1,11 @@
 export * from './types';
 export * from './fields';
-export { parseScenario } from './parseScenario';
+export {
+  parseScenario,
+  isLikelyPercent,
+  MIN_PLAUSIBLE_PRICE,
+  MIN_PLAUSIBLE_DOWN,
+} from './parseScenario';
 export {
   mergeProfile,
   deriveScenario,
@@ -35,6 +40,13 @@ export type { AdvisorRequest, AdvisorResponse } from './advisor';
 export { resolveLoanLimitArea } from './location';
 export type { AreaResolution } from './location';
 export { matchLoanPrograms, PLANNING_RATE } from './loanPrograms';
+export {
+  hasVerifiedProgramData,
+  programDataStatusFor,
+  programEffectiveDate,
+  activeProgramDataSource,
+} from './programData';
+export type { ProgramDataSource, ConfiguredProgram } from './programData';
 export {
   parseBorrowerScenario,
   generateNextQuestions,

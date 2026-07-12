@@ -1,5 +1,6 @@
 import { calcMonthlyPI } from '../../module';
 import { deriveScenario } from './profile';
+import { programDataStatusFor, programEffectiveDate } from './programData';
 import type { FitLabel, LoanProgramMatch, ProgramCategory, ScenarioProfile } from './types';
 
 // ---------------------------------------------------------------------------
@@ -212,12 +213,17 @@ export function matchLoanPrograms(p: ScenarioProfile): LoanProgramMatch[] {
       ? Math.round(p.downPayment + loanAmount * PLANNING_CLOSING_RATE)
       : null;
 
+  const effectiveDate = programEffectiveDate();
   return drafts
     .map<LoanProgramMatch>((d) => ({
       ...d,
       fit: fitFromScore(d.score),
       paymentEstimate,
       cashToCloseEstimate,
+      // Honesty: with no verified pricing source connected, a path with open
+      // inputs needs broker review; otherwise it is a configured assumption.
+      dataStatus: programDataStatusFor(d.missing.length > 0),
+      effectiveDate,
     }))
     .filter((m) => m.fit !== 'Likely not a fit')
     .sort((a, b) => b.score - a.score);

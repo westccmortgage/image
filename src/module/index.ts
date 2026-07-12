@@ -1,8 +1,7 @@
 // ---------------------------------------------------------------------------
 // Public entry point for the AI Cash-to-Close Advisor module.
 //
-// Any host site (California Mortgage, West Coast Capital Mortgage, WCCI,
-// Before Jumbo Loan, future Florida / Key West sites) imports from here:
+// A host site (e.g. West Coast Capital Mortgage) imports from here:
 //
 //   import { CashToCloseAdvisor, CashToCloseWidget } from '<path>/module';
 //

@@ -1,10 +1,8 @@
 // ---------------------------------------------------------------------------
 // Brand / configuration contract.
 //
-// The advisor and widget accept an optional `config` prop so the SAME module
-// can be reused across California Mortgage, West Coast Capital Mortgage, WCCI,
-// Before Jumbo Loan, and future Florida / Key West / boutique sites — each with
-// its own name, CTAs, disclosures, and state focus.
+// The advisor and widget accept an optional `config` prop so the module can be
+// configured with a host site's own name, CTAs, disclosures, and state focus.
 // ---------------------------------------------------------------------------
 
 export interface BrandConfig {

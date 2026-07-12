@@ -54,6 +54,39 @@ export function compareDownPaymentOptions(input: CashToCloseInput): DownPaymentS
   return buildDownPaymentScenarios(input);
 }
 
+// ---------------------------------------------------------------------------
+// Planning-assumption constants. These are DISCLOSED estimates that SCALE with
+// the loan/price so fees never stay frozen at the demo example's fixed dollars
+// (see Section 8 of the product spec / the dynamic-scaling tests). They are not
+// lender quotes; the advisor must present them as configured planning
+// assumptions requiring broker verification. The verified "Example only"
+// scenario lives in defaultScenario and is intentionally NOT computed here.
+// ---------------------------------------------------------------------------
+export const PLANNING = {
+  originationRateOfLoan: 0.01, // origination ≈ 1.00% of loan amount
+  underwritingFee: 1_495, // flat, realistic regardless of loan size
+  processingFee: 995,
+  adminFee: 895,
+  // Discount points are OPTIONAL and never assumed — omitted from the estimate.
+  titleEscrowRateOfLoan: 0.0034, // title/escrow/endorsements ≈ 0.34% of loan
+  minTitleEscrow: 1_500,
+  flatThirdParty: [
+    { label: 'Appraisal', amount: 850 },
+    { label: 'Tax service / flood certification', amount: 250 },
+    { label: 'Notary / signing fee', amount: 200 },
+    { label: 'Recording service / courier', amount: 150 },
+    { label: 'Credit report', amount: 73.2 },
+  ],
+  governmentFlat: [
+    { label: 'Recording fees', amount: 125 },
+    { label: 'Government / transfer fee', amount: 75 },
+  ],
+  annualTaxRateOfPrice: 0.0125, // ~1.25% / yr — disclosed planning assumption
+  annualInsuranceRateOfPrice: 0.0025, // ~0.25% / yr — disclosed planning assumption
+  taxImpoundMonths: 7,
+  insuranceReserveMonths: 2,
+} as const;
+
 /** Bridge a conversational profile into the engine's input shape. */
 export function profileToEngineInput(p: ScenarioProfile): CashToCloseInput {
   const input: CashToCloseInput = { ...defaultScenario };
@@ -68,7 +101,64 @@ export function profileToEngineInput(p: ScenarioProfile): CashToCloseInput {
   if (p.occupancy === 'investment') input.occupancy = 'Investment Property';
   else if (p.occupancy === 'second') input.occupancy = 'Second Home';
   else input.occupancy = 'Primary Residence';
+
+  // Scale fees / taxes / insurance / prepaids from the ACTUAL loan so nothing
+  // stays frozen at the example's fixed values. Only do this when the borrower
+  // has supplied real price + down payment (otherwise the demo values stand for
+  // the "Example only" display).
+  if (p.purchasePrice && p.downPayment != null) {
+    const price = p.purchasePrice;
+    const loanAmount = Math.max(0, price - p.downPayment);
+
+    input.lenderFees = [
+      {
+        label: 'Origination fee',
+        amount: roundCents(loanAmount * PLANNING.originationRateOfLoan),
+        note: '≈ 1.00% of loan amount (planning estimate — not a quote)',
+      },
+      { label: 'Underwriting fee', amount: PLANNING.underwritingFee },
+      { label: 'Processing fee', amount: PLANNING.processingFee },
+      { label: 'Admin / application fee', amount: PLANNING.adminFee },
+    ];
+
+    const titleEscrow = Math.max(
+      PLANNING.minTitleEscrow,
+      roundCents(loanAmount * PLANNING.titleEscrowRateOfLoan),
+    );
+    input.thirdPartyFees = [
+      { label: 'Title / escrow / settlement (est.)', amount: titleEscrow, note: 'Estimated; varies by provider' },
+      ...PLANNING.flatThirdParty.map((f) => ({ ...f })),
+    ];
+    input.governmentFees = PLANNING.governmentFlat.map((f) => ({ ...f }));
+
+    const taxMonthly = roundCents((price * PLANNING.annualTaxRateOfPrice) / 12);
+    const insMonthly = roundCents((price * PLANNING.annualInsuranceRateOfPrice) / 12);
+    input.propertyTaxMonthly = taxMonthly;
+    input.hazardInsuranceMonthly = insMonthly;
+    input.otherPrepaids = [
+      {
+        label: "Homeowner's insurance premium (12 mo)",
+        amount: roundCents(insMonthly * 12),
+        note: 'First-year hazard premium paid at closing (estimated)',
+      },
+      {
+        label: 'Property tax reserves (impounds)',
+        amount: roundCents(taxMonthly * PLANNING.taxImpoundMonths),
+        note: `Initial escrow deposit (~${PLANNING.taxImpoundMonths} mo, estimated)`,
+      },
+      {
+        label: "Homeowner's insurance reserves (2 mo)",
+        amount: roundCents(insMonthly * PLANNING.insuranceReserveMonths),
+        note: 'Initial escrow deposit for insurance (estimated)',
+      },
+    ];
+  }
   return input;
+}
+
+/** Round to cents (avoids floating-point dust in displayed line items). */
+function roundCents(n: number): number {
+  return Math.round(n * 100) / 100;
 }
 
 export interface BrokerReviewSummary {
