@@ -44,7 +44,7 @@ export default async (req) => {
     email: String(body.email || '').slice(0, 200),
     phone: String(body.phone || '').slice(0, 60),
     message: String(body.message || '').slice(0, 5000),
-    source: 'wwccm.com',
+    source: 'walletwccm.com',
     sourceProduct: 'wwccm',
     sourceExperience: 'ai_mortgage_strategy_advisor',
     leadType,

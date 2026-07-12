@@ -11,7 +11,8 @@ import { LICENSE_LINE } from './licensing';
 
 export const PHONE = '310-686-5053';
 export const PHONE_HREF = 'tel:3106865053';
-export const SITE_URL = 'https://wwccm.com';
+// Canonical product domain (walletwccm.com). wwccm.com / wwccm.ai are alternates.
+export const SITE_URL = 'https://walletwccm.com';
 
 export const walletWccmConfig: Partial<BrandConfig> = {
   brandName: 'Wallet WCCM',
