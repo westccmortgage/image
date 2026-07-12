@@ -6,25 +6,27 @@
 /* -------- theme tokens -------- */
 :root,
 :root[data-theme='light'] {
-  --bg: #f4f6fb;
-  --bg-2: #eaeef6;
-  --grid: rgba(20, 40, 90, 0.045);
-  --aurora-1: rgba(10, 132, 255, 0.12);
-  --aurora-2: rgba(94, 92, 230, 0.10);
-  --nav-bg: rgba(255, 255, 255, 0.72);
-  --panel: rgba(255, 255, 255, 0.72);
-  --panel-2: rgba(255, 255, 255, 0.9);
-  --brd: rgba(20, 40, 90, 0.12);
-  --brd-strong: rgba(10, 132, 255, 0.55);
-  --shadow: 0 20px 50px -34px rgba(20, 40, 90, 0.35);
+  /* Barely-blue, almost-white institutional wash (~2x lighter than before). */
+  --bg: #fafcff;
+  --bg-2: #f4f7fd;
+  --grid: rgba(20, 40, 90, 0.028);
+  --aurora-1: rgba(27, 79, 176, 0.06);
+  --aurora-2: rgba(94, 92, 230, 0.05);
+  --nav-bg: rgba(255, 255, 255, 0.74);
+  --panel: rgba(255, 255, 255, 0.74);
+  --panel-2: rgba(255, 255, 255, 0.92);
+  --brd: rgba(20, 40, 90, 0.11);
+  /* Deeper, grounded corporate blue (not neon, not navy-black). */
+  --brd-strong: rgba(27, 79, 176, 0.5);
+  --shadow: 0 20px 50px -34px rgba(20, 40, 90, 0.3);
   --ink: #1d1d1f;
   --muted: #6e6e73;
   --faint: #a1a1a8;
-  --cyan: #0a84ff;
+  --cyan: #1b4fb0;
   --violet: #5e5ce6;
-  --grad: linear-gradient(105deg, #0a84ff, #5e5ce6);
+  --grad: linear-gradient(105deg, #1b4fb0, #2a56bd);
   --on-accent: #ffffff;
-  --glow: rgba(10, 132, 255, 0.32);
+  --glow: rgba(27, 79, 176, 0.26);
   --headline-grad: linear-gradient(180deg, #1d1d1f, #3f4a63);
   --good: #1a9e5f;
   --warn: #c8820a;
@@ -34,15 +36,15 @@
   --bad-bg: rgba(209, 60, 70, 0.09);
   --bad-brd: rgba(209, 60, 70, 0.32);
   --wi-ink: #ffffff;
-  --ai-bubble: rgba(20, 40, 90, 0.055);
-  --input-bg: rgba(255, 255, 255, 0.9);
-  --focus-ring: rgba(10, 132, 255, 0.16);
-  --chip-bg: rgba(10, 132, 255, 0.07);
-  --chip-brd: rgba(10, 132, 255, 0.3);
-  --accent-brd: rgba(10, 132, 255, 0.4);
-  --accent-tint: rgba(10, 132, 255, 0.10);
+  --ai-bubble: rgba(20, 40, 90, 0.05);
+  --input-bg: rgba(255, 255, 255, 0.92);
+  --focus-ring: rgba(27, 79, 176, 0.18);
+  --chip-bg: rgba(27, 79, 176, 0.07);
+  --chip-brd: rgba(27, 79, 176, 0.28);
+  --accent-brd: rgba(27, 79, 176, 0.38);
+  --accent-tint: rgba(27, 79, 176, 0.10);
   /* Very pale ghosted corporate wordmark — near-invisible, neutral navy-gray. */
-  --bgmark: rgba(20, 40, 90, 0.035);
+  --bgmark: rgba(20, 40, 90, 0.032);
   color-scheme: light;
 }
 :root[data-theme='dark'] {
