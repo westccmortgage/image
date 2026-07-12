@@ -63,6 +63,18 @@ describe('1. natural language fills the Scenario Profile', () => {
     expect(q.downPaymentPercent).toBe(20);
     expect(q.downPayment).toBe(160_000);
   });
+  it('reads a comma-grouped amount with no $ or "thousand" (e.g. spoken "300,000")', () => {
+    const q = parseScenario('I want to put like maybe 300,000 down');
+    expect(q.downPayment).toBe(300_000);
+  });
+  it('reads a spoken price with "million" dropped ("home around 1.4" → $1.4M)', () => {
+    const q = parseScenario('To buy a home around 1.4');
+    expect(q.purchasePrice).toBe(1_400_000);
+  });
+  it('does not misread "a 2 bedroom home" as a $2M price', () => {
+    const q = parseScenario('a 2 bedroom home');
+    expect(q.purchasePrice).toBeUndefined();
+  });
 });
 
 describe('2. missing required fields are identified', () => {

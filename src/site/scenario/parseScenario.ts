@@ -78,7 +78,7 @@ interface MoneyHit {
 }
 
 const MONEY_RE =
-  /\$\s?[\d,]+(?:\.\d+)?\s?(?:k|m|mm|million|thousand|billion|b)?|\b[\d,]+(?:\.\d+)?\s?(?:k|m|mm|million|thousand|billion|b)\b/gi;
+  /\$\s?[\d,]+(?:\.\d+)?\s?(?:k|m|mm|million|thousand|billion|b)?|\b[\d,]+(?:\.\d+)?\s?(?:k|m|mm|million|thousand|billion|b)\b|\b\d{1,3}(?:,\d{3})+(?:\.\d+)?\b/gi;
 
 function toNumber(raw: string): number | null {
   const m = raw.toLowerCase().match(/([\d,]+(?:\.\d+)?)\s?(k|mm|m|million|thousand|billion|b)?/);
@@ -157,6 +157,19 @@ export function parseScenario(text: string): ScenarioProfile {
 
   // --- money (price / down) ---
   classifyMoney(findMoney(text), profile);
+
+  // Spoken price with "million" dropped: "home around 1.4" → $1.4M. A bare small
+  // DECIMAL in a price context almost always means millions (nobody buys a $1.40
+  // home). Requiring a decimal avoids misreading "a 2 bedroom home" as $2M.
+  if (profile.purchasePrice == null) {
+    const m = lower.match(
+      /(?:price|home|house|buy|buying|purchase|property|value|worth|condo|around|about)\D{0,12}?(\d{1,2}\.\d{1,2})\b(?!\s?(?:%|percent|k\b|thousand|bed|bath|br\b|acre|year|yr))/,
+    );
+    if (m) {
+      const v = parseFloat(m[1]);
+      if (v >= 0.3 && v <= 30) profile.purchasePrice = Math.round(v * 1_000_000);
+    }
+  }
 
   // --- percent down --- accept "%", "percent", "pct", and common RU/ES/ZH words
   const PCT = '(?:%|percent|pct|процент\\w*|por\\s?ciento|por\\s?cent|百分)';
