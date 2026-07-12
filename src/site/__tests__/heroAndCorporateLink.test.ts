@@ -1,11 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'fs'; // typed via src/test-shims.d.ts
 import { t } from '../i18n';
 
-const read = (rel: string) => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf8');
-const page = read('../../pages/SmartPage.tsx');
-const css = read('../../index.css');
+// Paths are relative to the repo root (vitest's cwd).
+const page = readFileSync('src/pages/SmartPage.tsx', 'utf8');
+const css = readFileSync('src/index.css', 'utf8');
 
 describe('hero headline', () => {
   it('keeps the exact approved (plural) wording', () => {
