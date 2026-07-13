@@ -102,6 +102,19 @@ export function hasFullNumbers(p: ScenarioProfile): boolean {
   return hasValue(p, 'purchasePrice') && hasValue(p, 'downPayment');
 }
 
+/**
+ * Enough core information to offer a planning strategy summary — price + down,
+ * a location, occupancy, and an income/employment signal. Not every optional
+ * field is required (FICO, reserves, exact goal remain optional).
+ */
+export function isStrategyReady(p: ScenarioProfile): boolean {
+  const hasNumbers = hasValue(p, 'purchasePrice') && hasValue(p, 'downPayment');
+  const hasLocation = hasValue(p, 'state') || hasValue(p, 'stateCode') || hasValue(p, 'zipOrCounty');
+  const hasOccupancy = hasValue(p, 'occupancy');
+  const hasIncome = hasValue(p, 'employmentType') || hasValue(p, 'incomeDocPath');
+  return hasNumbers && hasLocation && hasOccupancy && hasIncome;
+}
+
 export const CONTACT_FIELDS: FieldKey[] = ['name', 'phone', 'email'];
 
 export function missingContact(p: ScenarioProfile): FieldKey[] {

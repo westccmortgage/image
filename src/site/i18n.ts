@@ -17,6 +17,22 @@ export type UIKey =
   | 'productName'
   | 'heroTitle'
   | 'heroSubtitle'
+  | 'heroTitleMobile'
+  | 'heroLineMobile'
+  | 'onboardingGreetingMobile'
+  | 'chipBuyingShort'
+  | 'chipRefiShort'
+  | 'chipSelfEmployedShort'
+  | 'chipInvestmentShort'
+  | 'summaryOffer'
+  | 'summaryViewCta'
+  | 'summaryContinueCta'
+  | 'summaryTitle'
+  | 'summaryMonthlyPayment'
+  | 'summaryPlanningNote'
+  | 'summaryEstDate'
+  | 'adjustScenario'
+  | 'continueChat'
   | 'exampleOnly'
   | 'liveYourScenario'
   | 'downPayment'
@@ -149,9 +165,8 @@ type Dict = Record<UIKey, string>;
 
 const en: Dict = {
   productName: 'AI Mortgage Strategy Advisor',
-  heroTitle: 'Describe your mortgage scenario. The advisor will compare possible loan paths.',
-  heroSubtitle:
-    'Tell us what you want to buy, how you earn income, and how much cash you have. The advisor will help identify possible financing strategies, estimate real cash needed to close, and prepare the scenario for broker review.',
+  heroTitle: 'Describe your mortgage situation.',
+  heroSubtitle: 'Explore possible loan paths, estimated payments, and cash needed to close.',
   exampleOnly: 'Example only — describe your scenario to update.',
   liveYourScenario: 'Live — your scenario',
   downPayment: 'Down payment',
@@ -166,6 +181,24 @@ const en: Dict = {
   complete: 'complete',
   viewFullProfile: 'View full profile',
   openProfile: 'Open profile',
+  heroTitleMobile: 'AI Mortgage Strategy Advisor',
+  heroLineMobile: 'Tell me what you are trying to buy, refinance, or understand.',
+  onboardingGreetingMobile: 'Welcome. Tell me what you are trying to accomplish.',
+  chipBuyingShort: 'Buying',
+  chipRefiShort: 'Refinancing',
+  chipSelfEmployedShort: 'Self-employed',
+  chipInvestmentShort: 'Investment',
+  summaryOffer:
+    'Would you like to see your strategy summary with the estimated payment, cash needed to close, and possible loan paths?',
+  summaryViewCta: 'View my summary',
+  summaryContinueCta: 'Continue discussing',
+  summaryTitle: 'Your mortgage strategy summary',
+  summaryMonthlyPayment: 'Estimated monthly housing payment',
+  summaryPlanningNote:
+    'Planning estimate only. Current pricing and program availability require broker review. Not a Loan Estimate or an application.',
+  summaryEstDate: 'Estimate prepared',
+  adjustScenario: 'Adjust my scenario',
+  continueChat: 'Continue chat',
   completed: 'Known',
   stillNeeded: 'Critical missing',
   helpful: 'Helpful',
@@ -294,9 +327,9 @@ const en: Dict = {
 
 const ru: Dict = {
   productName: 'ИИ-советник по ипотечной стратегии',
-  heroTitle: 'Опишите свою ипотечную ситуацию. Советник сравнит возможные варианты кредита.',
+  heroTitle: 'Опишите свою ипотечную ситуацию.',
   heroSubtitle:
-    'Расскажите, что вы хотите купить, как вы получаете доход и сколько у вас средств. Советник поможет определить возможные стратегии финансирования, оценить реальную сумму для закрытия сделки и подготовить сценарий для проверки брокером.',
+    'Узнайте возможные варианты кредита, ориентировочный платёж и сумму для закрытия сделки.',
   exampleOnly: 'Только пример — опишите свою ситуацию, чтобы обновить.',
   liveYourScenario: 'Актуально — ваш сценарий',
   downPayment: 'Первоначальный взнос',
@@ -311,6 +344,24 @@ const ru: Dict = {
   complete: 'заполнено',
   viewFullProfile: 'Смотреть весь профиль',
   openProfile: 'Открыть профиль',
+  heroTitleMobile: 'ИИ-советник по ипотечной стратегии',
+  heroLineMobile: 'Расскажите, что вы хотите купить, рефинансировать или понять.',
+  onboardingGreetingMobile: 'Добро пожаловать. Расскажите, какую задачу вы хотите решить.',
+  chipBuyingShort: 'Покупка',
+  chipRefiShort: 'Рефинансирование',
+  chipSelfEmployedShort: 'Работаю на себя',
+  chipInvestmentShort: 'Инвестиции',
+  summaryOffer:
+    'Хотите посмотреть итог вашей стратегии с ориентировочным платежом, суммой для закрытия сделки и возможными вариантами кредита?',
+  summaryViewCta: 'Показать итог',
+  summaryContinueCta: 'Продолжить обсуждение',
+  summaryTitle: 'Итог вашей ипотечной стратегии',
+  summaryMonthlyPayment: 'Ориентировочный ежемесячный платёж',
+  summaryPlanningNote:
+    'Только плановая оценка. Текущие ставки и доступность программ требуют проверки брокером. Это не Loan Estimate и не заявка.',
+  summaryEstDate: 'Оценка подготовлена',
+  adjustScenario: 'Изменить сценарий',
+  continueChat: 'Продолжить чат',
   completed: 'Известно',
   stillNeeded: 'Не хватает',
   helpful: 'Полезно',
@@ -439,9 +490,9 @@ const ru: Dict = {
 
 const es: Dict = {
   productName: 'Asesor de Estrategia Hipotecaria con IA',
-  heroTitle: 'Describe tu escenario hipotecario. El asesor comparará posibles opciones de préstamo.',
+  heroTitle: 'Describa su situación hipotecaria.',
   heroSubtitle:
-    'Cuéntanos qué quieres comprar, cómo generas ingresos y cuánto efectivo tienes. El asesor ayudará a identificar posibles estrategias de financiamiento, estimar el efectivo real para cerrar y preparar el escenario para revisión de un corredor.',
+    'Explore posibles opciones de préstamo, pagos estimados y el efectivo necesario para el cierre.',
   exampleOnly: 'Solo ejemplo — describe tu escenario para actualizar.',
   liveYourScenario: 'En vivo — tu escenario',
   downPayment: 'Enganche',
@@ -456,6 +507,24 @@ const es: Dict = {
   complete: 'completo',
   viewFullProfile: 'Ver perfil completo',
   openProfile: 'Abrir perfil',
+  heroTitleMobile: 'Asesor de Estrategia Hipotecaria con IA',
+  heroLineMobile: 'Cuénteme qué quiere comprar, refinanciar o entender.',
+  onboardingGreetingMobile: 'Bienvenido. Cuénteme qué quiere lograr.',
+  chipBuyingShort: 'Comprar',
+  chipRefiShort: 'Refinanciar',
+  chipSelfEmployedShort: 'Trabajo independiente',
+  chipInvestmentShort: 'Inversión',
+  summaryOffer:
+    '¿Quiere ver el resumen final de su estrategia con el pago estimado, el efectivo necesario para el cierre y las posibles opciones de préstamo?',
+  summaryViewCta: 'Ver mi resumen',
+  summaryContinueCta: 'Seguir conversando',
+  summaryTitle: 'Resumen de su estrategia hipotecaria',
+  summaryMonthlyPayment: 'Pago mensual estimado de la vivienda',
+  summaryPlanningNote:
+    'Solo estimación de planificación. Los precios y la disponibilidad de programas actuales requieren revisión del corredor. No es un Loan Estimate ni una solicitud.',
+  summaryEstDate: 'Estimación preparada',
+  adjustScenario: 'Ajustar mi escenario',
+  continueChat: 'Continuar el chat',
   completed: 'Conocido',
   stillNeeded: 'Falta crítico',
   helpful: 'Útil',
@@ -584,9 +653,8 @@ const es: Dict = {
 
 const zh: Dict = {
   productName: 'AI 房贷策略顾问',
-  heroTitle: '描述您的房贷情况，顾问将为您比较可能的贷款方案。',
-  heroSubtitle:
-    '告诉我们您想购买什么、您的收入方式以及您有多少现金。顾问将帮助识别可能的融资策略，估算真正需要的过户现金，并准备好方案供持牌经纪人审阅。',
+  heroTitle: '描述您的房贷情况。',
+  heroSubtitle: '了解可能的贷款方案、预计月供和成交所需现金。',
   exampleOnly: '仅为示例 — 描述您的情况以更新。',
   liveYourScenario: '实时 — 您的方案',
   downPayment: '首付',
@@ -601,6 +669,22 @@ const zh: Dict = {
   complete: '完成',
   viewFullProfile: '查看完整档案',
   openProfile: '打开档案',
+  heroTitleMobile: 'AI 抵押贷款策略顾问',
+  heroLineMobile: '请告诉我您想购买、再融资或了解什么。',
+  onboardingGreetingMobile: '欢迎。请告诉我您希望解决什么问题。',
+  chipBuyingShort: '购房',
+  chipRefiShort: '再融资',
+  chipSelfEmployedShort: '自雇',
+  chipInvestmentShort: '投资',
+  summaryOffer: '您想查看最终策略摘要吗？其中包括预计月供、成交所需现金和可能的贷款方案。',
+  summaryViewCta: '查看摘要',
+  summaryContinueCta: '继续讨论',
+  summaryTitle: '您的抵押贷款策略摘要',
+  summaryMonthlyPayment: '预计每月住房支出',
+  summaryPlanningNote: '仅为规划估算。当前定价和方案可用性需经经纪人审阅。这不是贷款估算书，也不是贷款申请。',
+  summaryEstDate: '估算生成时间',
+  adjustScenario: '调整我的方案',
+  continueChat: '继续聊天',
   completed: '已知',
   stillNeeded: '关键缺失',
   helpful: '有帮助',

@@ -77,10 +77,16 @@ export const companyFacts = {
     },
   } as Record<string, StateLicensing>,
 
-  // --- Domain / routes (owner confirmation required before any change) ---
-  // Do NOT change the canonical domain, redirects, sitemap hostnames, or
-  // structured-data hostnames until the owner explicitly confirms.
-  canonicalCorporateDomain: 'https://wwccm.com', // owner confirmation required
+  // --- Domains (owner-confirmed 2026-07-12) ---
+  // The advisor PRODUCT ("Wallet WCCM") is canonical at walletwccm.com — the one
+  // used in all ads, sitemap, canonical tags, OG, and structured data. The other
+  // domains stay live as alternates and should carry a canonical → walletwccm.com
+  // (ideally 301 to it via the Netlify primary-domain setting).
+  canonicalSiteDomain: 'https://walletwccm.com',
+  alternateSiteDomains: ['https://wwccm.com', 'https://wwccm.ai'] as string[],
+  // The licensed CORPORATE company site (the header brand link) — a distinct
+  // entity from the advisor product above.
+  canonicalCorporateDomain: 'https://westccmortgage.com',
   /** A verified secure-application route, only when one is explicitly approved. */
   secureApplicationUrl: undefined as string | undefined,
 

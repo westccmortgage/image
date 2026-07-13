@@ -121,7 +121,8 @@ export function SmartPage() {
 
       <footer className="sm-footer">
         <p>
-          Wallet WCCM · AI Mortgage Strategy Advisor · <a href={PHONE_HREF}>{PHONE}</a>
+          Wallet WCCM · AI Mortgage Strategy Advisor · <a href={PHONE_HREF}>{PHONE}</a> ·{' '}
+          <a href="/privacy.html">Privacy Policy</a>
         </p>
         <p className="sm-footer-license">
           <a

@@ -17,6 +17,7 @@ export {
   isReadyForOptions,
   hasProvidedValue,
   hasFullNumbers,
+  isStrategyReady,
   hasValue,
   CONTACT_FIELDS,
   ADVISOR_STORAGE_KEYS,

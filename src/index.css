@@ -489,6 +489,11 @@ a { color: inherit; }
 
 /* hero subtitle + demo/live tag */
 .sm-sub { font-size: 15px; line-height: 1.55; color: var(--muted); margin: 0; max-width: 62ch; }
+/* Dual desktop/mobile hero title + line — desktop shows the full headline; the
+   mobile product view swaps to the compact identity (see the 767px block). */
+.sm-h1-mobile, .sm-sub-mobile { display: none; }
+/* Send button shows a text label on desktop, a compact icon on mobile. */
+.sm-send-icon { display: none; }
 .sm-tag.is-example { color: var(--warn); }
 .sm-tag.is-live { color: var(--good); }
 
@@ -582,7 +587,85 @@ a { color: inherit; }
 .sm-modal-body .sm-btn { min-height: 52px; }
 @media (max-width: 620px) {
   .sm-drawer-overlay { align-items: flex-end; }
-  .sm-drawer { width: 100%; height: auto; max-height: 86vh; border-left: none; border-top: 1px solid var(--brd); border-radius: 18px 18px 0 0; }
+  .sm-drawer { width: 100%; height: auto; max-height: 86dvh; border-left: none; border-top: 1px solid var(--brd); border-radius: 18px 18px 0 0; }
+}
+
+/* ---- strategy-summary offer card (in chat) ---- */
+.sm-offer { align-self: flex-start; max-width: 92%; border: 1px solid var(--accent-brd); background: var(--accent-tint); border-radius: 13px; padding: 12px 14px; }
+.sm-offer p { margin: 0 0 10px; font-size: 14px; line-height: 1.5; }
+.sm-offer-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---- strategy-summary sheet (mobile-first bottom sheet / desktop modal) ---- */
+.sm-summary-overlay { position: fixed; inset: 0; z-index: 70; background: rgba(6, 10, 22, 0.55); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.sm-summary {
+  width: min(520px, 100%); max-height: 90dvh; display: flex; flex-direction: column;
+  background: var(--panel-2); border: 1px solid var(--brd); border-radius: 16px;
+  box-shadow: var(--shadow); animation: sm-slidein 0.2s ease; overflow: hidden;
+}
+.sm-summary-head { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border-bottom: 1px solid var(--brd); font-family: var(--mono); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.sm-summary-body { padding: 16px 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+.sm-sum-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0; }
+.sm-sum-grid > div { display: flex; flex-direction: column; gap: 3px; }
+.sm-sum-grid dt { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 0; }
+.sm-sum-grid dd { margin: 0; font-size: 19px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.sm-sum-grid .is-key dd { color: var(--cyan); }
+.sm-sum-sec h4 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.sm-sum-paths { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13.5px; }
+.sm-sum-note { margin: 0; font-size: 12px; line-height: 1.5; color: var(--faint); border-top: 1px solid var(--brd); padding-top: 12px; }
+.sm-sum-date { margin: 0; font-family: var(--mono); font-size: 11px; color: var(--faint); }
+.sm-summary-actions { display: flex; flex-direction: column; gap: 8px; padding: 14px 18px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--brd); }
+.sm-summary-actions .sm-btn { min-height: 50px; }
+
+/* ============ MOBILE PRODUCT VIEW (≤767px) — conversation-first ============ */
+@media (max-width: 767px) {
+  /* Compact identity: hide the big desktop headline + paragraph; show the
+     compact mobile title + short line. Exactly one H1 is preserved. */
+  .sm-h1-desktop, .sm-sub-desktop { display: none; }
+  .sm-h1-mobile { display: inline; }
+  .sm-sub-mobile { display: block; }
+  .sm-core { font-size: 1.4rem; line-height: 1.15; letter-spacing: -0.01em; max-width: 100%; }
+  .sm-sub-mobile { font-size: 13.5px; line-height: 1.45; }
+  .sm-hero { gap: 8px; padding-top: 2px; }
+  .sm-kicker { font-size: 10px; letter-spacing: 0.1em; }
+
+  /* Hide the empty calculation cards, the example-only tag, and the long
+     onboarding example from the first mobile view. */
+  .sm-cards, .sm-tag { display: none; }
+  .sm-onboard-eg { display: none; }
+
+  /* Bring the composer up; the chat is the product. */
+  .sm-console { padding: 12px; }
+  .sm-stream { max-height: none; min-height: 120px; }
+  /* Console header (title + language toggle + start over) may wrap on narrow
+     screens so the language switch never hides behind Start over. */
+  .sm-panel-h { flex-wrap: wrap; row-gap: 8px; }
+
+  /* Composer: [attach][mic][flexible input][compact send] — the input is the
+     dominant flexible element (min-width:0) so it never wraps one letter/line. */
+  .sm-inputrow { gap: 8px; align-items: flex-end; }
+  .sm-inputrow .sm-iconbtn { width: 42px; min-height: 48px; font-size: 17px; border-radius: 12px; }
+  .sm-inputrow .sm-input { min-height: 48px; font-size: 16px; padding: 12px 14px; border-radius: 12px; min-width: 0; }
+  /* Compact icon-only Send on mobile — a fixed ~48px width guarantees the input
+     stays wide in every language (RU/ZH labels never squeeze it). */
+  .sm-inputrow .sm-sendbtn { min-height: 48px; width: 52px; padding: 0; border-radius: 12px; flex: 0 0 auto; font-size: 18px; }
+  .sm-send-label { display: none; }
+  .sm-send-icon { display: inline; }
+  .sm-trust { font-size: 12px; }
+  .sm-compliance { font-size: 10.5px; }
+
+  /* Compact sticky profile bar (~56px), safe-area aware, hidden while typing. */
+  .sm-mobilebar {
+    bottom: calc(8px + env(safe-area-inset-bottom)); padding: 10px 14px; min-height: 56px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+  .sm-mb-info b { font-size: 13px; }
+  .sm-mobilebar.is-hidden { transform: translateY(150%); opacity: 0; pointer-events: none; }
+  .sm-shell { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+
+  /* Summary as a full-height bottom sheet. */
+  .sm-summary-overlay { align-items: flex-end; padding: 0; }
+  .sm-summary { width: 100%; max-height: 92dvh; border-radius: 18px 18px 0 0; }
+  .sm-sum-grid dd { font-size: 18px; }
 }
 
 /* ---- program cards ---- */

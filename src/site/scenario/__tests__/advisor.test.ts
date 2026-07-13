@@ -27,8 +27,10 @@ describe('A. product is the AI Mortgage Strategy Advisor', () => {
     expect(walletWccmConfig.altLabel).toBe('AI Mortgage Strategy Advisor');
     expect(t('en', 'productName').toLowerCase()).not.toContain('cash-to-close engine');
   });
-  it('hero message is broad (compare loan paths), not only cash-to-close', () => {
-    expect(t('en', 'heroTitle').toLowerCase()).toContain('loan path');
+  it('hero message is broad (loan paths), not only cash-to-close', () => {
+    // The heading is short; the breadth ("loan paths") lives in the support line.
+    const hero = `${t('en', 'heroTitle')} ${t('en', 'heroSubtitle')}`.toLowerCase();
+    expect(hero).toContain('loan path');
   });
   it('responds in all four languages', () => {
     expect(LANGUAGES.map((l) => l.code)).toEqual(['en', 'ru', 'es', 'zh']);
