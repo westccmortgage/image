@@ -101,12 +101,16 @@ describe('mobile CSS', () => {
     expect(block).toContain('.sm-cards, .sm-tag { display: none; }');
     expect(block).toContain('.sm-h1-desktop, .sm-sub-desktop { display: none; }');
   });
-  it('the mobile composer keeps the input flexible (min-width:0) and a fixed compact send', () => {
+  it('the composer puts a full-width input on its own row with an action bar below', () => {
+    // Input is full width (column layout) so dictation is fully visible; the
+    // paperclip/mic/Send are on a separate action bar, never squeezing the input.
+    expect(css).toMatch(/\.sm-inputrow \{[^}]*flex-direction: column/);
+    expect(css).toMatch(/\.sm-inputrow \.sm-input \{[^}]*width: 100%/);
+    expect(css).toMatch(/\.sm-actions \{[^}]*display: flex/);
+    expect(css).toContain('.sm-actions-gap { flex: 1 1 auto; }');
+    // The input is tall on mobile so several dictated lines are visible.
     const block = css.match(/@media \(max-width: 767px\)[\s\S]*?\n}/)?.[0] ?? '';
-    expect(block).toMatch(/\.sm-inputrow \.sm-input \{[^}]*min-width: 0/);
-    // Send is icon-only + fixed width on mobile so RU/ZH labels never squeeze the input.
-    expect(block).toMatch(/\.sm-inputrow \.sm-sendbtn \{[^}]*width: 52px/);
-    expect(block).toContain('.sm-send-label { display: none; }');
+    expect(block).toMatch(/\.sm-inputrow \.sm-input \{[^}]*min-height: 84px/);
   });
   it('uses safe-area + dvh for the profile bar and summary sheet', () => {
     expect(css).toContain('env(safe-area-inset-bottom)');
