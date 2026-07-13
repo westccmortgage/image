@@ -211,7 +211,6 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
   const input = useMemo(() => toInput(profile), [profile]);
   const calc = useMemo(() => calculateCashToClose(both ? input : defaultScenario), [both, input]);
   const scenarios = useMemo(() => compareDownPaymentOptions(input), [input]);
-  const takeaway = useMemo(() => generateAiTakeaway(calc, { loanType: input.loanType }), [calc, input.loanType]);
   const programs = useMemo(() => matchLoanPrograms(profile), [profile]);
   const derived = useMemo(() => deriveScenario(profile), [profile]);
   const compact = useMemo(() => buildCompactProfile(profile, lang), [profile, lang]);
@@ -499,26 +498,8 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
         </h1>
         <p className="sm-sub sm-sub-desktop">{tr('heroSubtitle')}</p>
         <p className="sm-sub sm-sub-mobile">{tr('heroLineMobile')}</p>
-        <div className="sm-cards">
-          <div className="sm-card">
-            <span className="k">{tr('downPayment')}</span>
-            <span className="v">{both ? formatMoney(calc.downPayment) : '—'}</span>
-          </div>
-          <div className="sm-card is-key">
-            <span className="k">{tr('cashToClose')}</span>
-            <span className="v">{both ? formatMoney(calc.totalCashToClose) : '—'}</span>
-            <span className="sm-scan" aria-hidden="true" />
-          </div>
-          <div className="sm-card is-extra">
-            <span className="k">{tr('extraNeeded')}</span>
-            <span className="v">{both ? formatMoney(calc.additionalFundsNeeded) : '—'}</span>
-          </div>
-        </div>
-        <p className={`sm-tag ${both ? 'is-live' : 'is-example'}`}>
-          {both
-            ? `${tr('liveYourScenario')} · LTV ${calc.ltv.toFixed(1)}% · ${input.loanType}`
-            : tr('exampleOnly')}
-        </p>
+        {/* No empty numerical result cards here — results live in the Final
+            Strategy Summary (one authoritative source, desktop + mobile). */}
       </header>
 
       {/* ---------- main: console + compact profile ---------- */}
@@ -705,12 +686,8 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
       </button>
 
       {/* ---------- strategy takeaway (only once the numbers are the user's) ---------- */}
-      {both && (
-        <section className="sm-panel sm-wide">
-          <div className="sm-panel-h"><span>{tr('aiStrategy')}</span><span className="sm-beta">beta</span></div>
-          <ul className="sm-bullets">{takeaway.bullets.map((b, i) => (<li key={i}>{b}</li>))}</ul>
-        </section>
-      )}
+      {/* The automatic strategy bullets were removed — numeric results now live
+          only in the Final Strategy Summary (one authoritative source). */}
 
       {/* ---------- CTAs (only after value is provided) ---------- */}
       {hasValue && (

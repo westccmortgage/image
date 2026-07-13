@@ -165,9 +165,8 @@ type Dict = Record<UIKey, string>;
 
 const en: Dict = {
   productName: 'AI Mortgage Strategy Advisor',
-  heroTitle: 'Describe your mortgage scenario. The advisor will compare possible loan paths.',
-  heroSubtitle:
-    'Tell us what you want to buy, how you earn income, and how much cash you have. The advisor will help identify possible financing strategies, estimate real cash needed to close, and prepare the scenario for broker review.',
+  heroTitle: 'Describe your mortgage situation.',
+  heroSubtitle: 'Explore possible loan paths, estimated payments, and cash needed to close.',
   exampleOnly: 'Example only — describe your scenario to update.',
   liveYourScenario: 'Live — your scenario',
   downPayment: 'Down payment',
@@ -328,9 +327,9 @@ const en: Dict = {
 
 const ru: Dict = {
   productName: 'ИИ-советник по ипотечной стратегии',
-  heroTitle: 'Опишите свою ипотечную ситуацию. Советник сравнит возможные варианты кредита.',
+  heroTitle: 'Опишите свою ипотечную ситуацию.',
   heroSubtitle:
-    'Расскажите, что вы хотите купить, как вы получаете доход и сколько у вас средств. Советник поможет определить возможные стратегии финансирования, оценить реальную сумму для закрытия сделки и подготовить сценарий для проверки брокером.',
+    'Узнайте возможные варианты кредита, ориентировочный платёж и сумму для закрытия сделки.',
   exampleOnly: 'Только пример — опишите свою ситуацию, чтобы обновить.',
   liveYourScenario: 'Актуально — ваш сценарий',
   downPayment: 'Первоначальный взнос',
@@ -491,9 +490,9 @@ const ru: Dict = {
 
 const es: Dict = {
   productName: 'Asesor de Estrategia Hipotecaria con IA',
-  heroTitle: 'Describe tu escenario hipotecario. El asesor comparará posibles opciones de préstamo.',
+  heroTitle: 'Describa su situación hipotecaria.',
   heroSubtitle:
-    'Cuéntanos qué quieres comprar, cómo generas ingresos y cuánto efectivo tienes. El asesor ayudará a identificar posibles estrategias de financiamiento, estimar el efectivo real para cerrar y preparar el escenario para revisión de un corredor.',
+    'Explore posibles opciones de préstamo, pagos estimados y el efectivo necesario para el cierre.',
   exampleOnly: 'Solo ejemplo — describe tu escenario para actualizar.',
   liveYourScenario: 'En vivo — tu escenario',
   downPayment: 'Enganche',
@@ -654,9 +653,8 @@ const es: Dict = {
 
 const zh: Dict = {
   productName: 'AI 房贷策略顾问',
-  heroTitle: '描述您的房贷情况，顾问将为您比较可能的贷款方案。',
-  heroSubtitle:
-    '告诉我们您想购买什么、您的收入方式以及您有多少现金。顾问将帮助识别可能的融资策略，估算真正需要的过户现金，并准备好方案供持牌经纪人审阅。',
+  heroTitle: '描述您的房贷情况。',
+  heroSubtitle: '了解可能的贷款方案、预计月供和成交所需现金。',
   exampleOnly: '仅为示例 — 描述您的情况以更新。',
   liveYourScenario: '实时 — 您的方案',
   downPayment: '首付',

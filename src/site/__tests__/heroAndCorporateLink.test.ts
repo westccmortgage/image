@@ -7,9 +7,10 @@ const page = readFileSync('src/pages/SmartPage.tsx', 'utf8');
 const css = readFileSync('src/index.css', 'utf8');
 
 describe('hero headline', () => {
-  it('keeps the exact approved (plural) wording', () => {
-    expect(t('en', 'heroTitle')).toBe(
-      'Describe your mortgage scenario. The advisor will compare possible loan paths.',
+  it('uses the shorter approved desktop heading', () => {
+    expect(t('en', 'heroTitle')).toBe('Describe your mortgage situation.');
+    expect(t('en', 'heroSubtitle')).toBe(
+      'Explore possible loan paths, estimated payments, and cash needed to close.',
     );
   });
   it('uses the reduced responsive clamp() typography', () => {

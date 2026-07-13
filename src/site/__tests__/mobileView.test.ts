@@ -72,6 +72,29 @@ describe('mobile: source contract', () => {
   });
 });
 
+describe('desktop + mobile: no empty result cards; summary is the single source', () => {
+  it('the empty Down/Cash/Extra result cards are gone from the hero', () => {
+    expect(advisor).not.toContain('className="sm-cards"');
+    expect(advisor).not.toContain('className="sm-card"');
+    expect(advisor).not.toContain('className="sm-card is-key"');
+  });
+  it('the "Example only" tag is no longer rendered on the first screen', () => {
+    expect(advisor).not.toContain("tr('exampleOnly')");
+    expect(advisor).not.toContain('sm-tag');
+  });
+  it('there is exactly ONE strategy-summary sheet (shared by desktop + mobile)', () => {
+    const matches = advisor.match(/className="sm-summary"/g) ?? [];
+    expect(matches.length).toBe(1);
+  });
+  it('the summary numbers come from the deterministic engine (calc), not invented', () => {
+    // summary cash-to-close reads calc.totalCashToClose (deterministic engine)
+    expect(advisor).toContain('calc.totalCashToClose');
+    expect(advisor).toContain('calc.monthlyHousingPayment');
+    // unknowns stay em-dash, never fabricated
+    expect(advisor).toMatch(/both \? formatMoney\(calc\.totalCashToClose\) : '—'/);
+  });
+});
+
 describe('mobile CSS', () => {
   it('hides the empty calc cards and desktop headline on mobile', () => {
     const block = css.match(/@media \(max-width: 767px\)[\s\S]*?\n}/)?.[0] ?? '';
