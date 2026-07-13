@@ -599,16 +599,9 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
                 {tr(speech.status === 'denied' ? 'micDenied' : 'micUnsupported')}
               </div>
             )}
+            {/* Full-width input on its own row for maximum dictation visibility;
+                the paperclip + mic + Send live on a separate action bar below. */}
             <form className="sm-inputrow" onSubmit={(e) => { e.preventDefault(); handleText(); }}>
-              <button type="button" className="sm-iconbtn" onClick={paperclip} title={tr('docUploadCta')} aria-label={tr('attachAria')}>📎</button>
-              <button
-                type="button"
-                className={`sm-iconbtn sm-micbtn ${speech.listening ? 'is-listening' : ''}`}
-                onClick={speech.toggle}
-                title={tr(speech.listening ? 'micStop' : 'micStart')}
-                aria-label={tr(speech.listening ? 'micStop' : 'micStart')}
-                aria-pressed={speech.listening}
-              >🎙️</button>
               <textarea
                 className="sm-input sm-input-ta"
                 value={text}
@@ -625,10 +618,19 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
                 rows={1}
                 placeholder={focus ? fieldQuestion(lang, focus.field, profile.loanPurpose) : tr('composerPlaceholder')}
               />
-              <button className="sm-btn sm-btn-primary sm-sendbtn" type="submit" aria-label={tr('send')}>
-                <span className="sm-send-label">{tr('send')}</span>
-                <span className="sm-send-icon" aria-hidden="true">➤</span>
-              </button>
+              <div className="sm-actions">
+                <button type="button" className="sm-iconbtn" onClick={paperclip} title={tr('docUploadCta')} aria-label={tr('attachAria')}>📎</button>
+                <button
+                  type="button"
+                  className={`sm-iconbtn sm-micbtn ${speech.listening ? 'is-listening' : ''}`}
+                  onClick={speech.toggle}
+                  title={tr(speech.listening ? 'micStop' : 'micStart')}
+                  aria-label={tr(speech.listening ? 'micStop' : 'micStart')}
+                  aria-pressed={speech.listening}
+                >🎙️</button>
+                <span className="sm-actions-gap" aria-hidden="true" />
+                <button className="sm-btn sm-btn-primary sm-sendbtn" type="submit">{tr('send')}</button>
+              </div>
             </form>
           </div>
           <p className="sm-trust">{tr('trustLine')}</p>
