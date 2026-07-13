@@ -17,6 +17,22 @@ export type UIKey =
   | 'productName'
   | 'heroTitle'
   | 'heroSubtitle'
+  | 'heroTitleMobile'
+  | 'heroLineMobile'
+  | 'onboardingGreetingMobile'
+  | 'chipBuyingShort'
+  | 'chipRefiShort'
+  | 'chipSelfEmployedShort'
+  | 'chipInvestmentShort'
+  | 'summaryOffer'
+  | 'summaryViewCta'
+  | 'summaryContinueCta'
+  | 'summaryTitle'
+  | 'summaryMonthlyPayment'
+  | 'summaryPlanningNote'
+  | 'summaryEstDate'
+  | 'adjustScenario'
+  | 'continueChat'
   | 'exampleOnly'
   | 'liveYourScenario'
   | 'downPayment'
@@ -166,6 +182,24 @@ const en: Dict = {
   complete: 'complete',
   viewFullProfile: 'View full profile',
   openProfile: 'Open profile',
+  heroTitleMobile: 'AI Mortgage Strategy Advisor',
+  heroLineMobile: 'Tell me what you are trying to buy, refinance, or understand.',
+  onboardingGreetingMobile: 'Welcome. Tell me what you are trying to accomplish.',
+  chipBuyingShort: 'Buying',
+  chipRefiShort: 'Refinancing',
+  chipSelfEmployedShort: 'Self-employed',
+  chipInvestmentShort: 'Investment',
+  summaryOffer:
+    'Would you like to see your strategy summary with the estimated payment, cash needed to close, and possible loan paths?',
+  summaryViewCta: 'View my summary',
+  summaryContinueCta: 'Continue discussing',
+  summaryTitle: 'Your mortgage strategy summary',
+  summaryMonthlyPayment: 'Estimated monthly housing payment',
+  summaryPlanningNote:
+    'Planning estimate only. Current pricing and program availability require broker review. Not a Loan Estimate or an application.',
+  summaryEstDate: 'Estimate prepared',
+  adjustScenario: 'Adjust my scenario',
+  continueChat: 'Continue chat',
   completed: 'Known',
   stillNeeded: 'Critical missing',
   helpful: 'Helpful',
@@ -311,6 +345,24 @@ const ru: Dict = {
   complete: 'заполнено',
   viewFullProfile: 'Смотреть весь профиль',
   openProfile: 'Открыть профиль',
+  heroTitleMobile: 'ИИ-советник по ипотечной стратегии',
+  heroLineMobile: 'Расскажите, что вы хотите купить, рефинансировать или понять.',
+  onboardingGreetingMobile: 'Добро пожаловать. Расскажите, какую задачу вы хотите решить.',
+  chipBuyingShort: 'Покупка',
+  chipRefiShort: 'Рефинансирование',
+  chipSelfEmployedShort: 'Работаю на себя',
+  chipInvestmentShort: 'Инвестиции',
+  summaryOffer:
+    'Хотите посмотреть итог вашей стратегии с ориентировочным платежом, суммой для закрытия сделки и возможными вариантами кредита?',
+  summaryViewCta: 'Показать итог',
+  summaryContinueCta: 'Продолжить обсуждение',
+  summaryTitle: 'Итог вашей ипотечной стратегии',
+  summaryMonthlyPayment: 'Ориентировочный ежемесячный платёж',
+  summaryPlanningNote:
+    'Только плановая оценка. Текущие ставки и доступность программ требуют проверки брокером. Это не Loan Estimate и не заявка.',
+  summaryEstDate: 'Оценка подготовлена',
+  adjustScenario: 'Изменить сценарий',
+  continueChat: 'Продолжить чат',
   completed: 'Известно',
   stillNeeded: 'Не хватает',
   helpful: 'Полезно',
@@ -456,6 +508,24 @@ const es: Dict = {
   complete: 'completo',
   viewFullProfile: 'Ver perfil completo',
   openProfile: 'Abrir perfil',
+  heroTitleMobile: 'Asesor de Estrategia Hipotecaria con IA',
+  heroLineMobile: 'Cuénteme qué quiere comprar, refinanciar o entender.',
+  onboardingGreetingMobile: 'Bienvenido. Cuénteme qué quiere lograr.',
+  chipBuyingShort: 'Comprar',
+  chipRefiShort: 'Refinanciar',
+  chipSelfEmployedShort: 'Trabajo independiente',
+  chipInvestmentShort: 'Inversión',
+  summaryOffer:
+    '¿Quiere ver el resumen final de su estrategia con el pago estimado, el efectivo necesario para el cierre y las posibles opciones de préstamo?',
+  summaryViewCta: 'Ver mi resumen',
+  summaryContinueCta: 'Seguir conversando',
+  summaryTitle: 'Resumen de su estrategia hipotecaria',
+  summaryMonthlyPayment: 'Pago mensual estimado de la vivienda',
+  summaryPlanningNote:
+    'Solo estimación de planificación. Los precios y la disponibilidad de programas actuales requieren revisión del corredor. No es un Loan Estimate ni una solicitud.',
+  summaryEstDate: 'Estimación preparada',
+  adjustScenario: 'Ajustar mi escenario',
+  continueChat: 'Continuar el chat',
   completed: 'Conocido',
   stillNeeded: 'Falta crítico',
   helpful: 'Útil',
@@ -601,6 +671,22 @@ const zh: Dict = {
   complete: '完成',
   viewFullProfile: '查看完整档案',
   openProfile: '打开档案',
+  heroTitleMobile: 'AI 抵押贷款策略顾问',
+  heroLineMobile: '请告诉我您想购买、再融资或了解什么。',
+  onboardingGreetingMobile: '欢迎。请告诉我您希望解决什么问题。',
+  chipBuyingShort: '购房',
+  chipRefiShort: '再融资',
+  chipSelfEmployedShort: '自雇',
+  chipInvestmentShort: '投资',
+  summaryOffer: '您想查看最终策略摘要吗？其中包括预计月供、成交所需现金和可能的贷款方案。',
+  summaryViewCta: '查看摘要',
+  summaryContinueCta: '继续讨论',
+  summaryTitle: '您的抵押贷款策略摘要',
+  summaryMonthlyPayment: '预计每月住房支出',
+  summaryPlanningNote: '仅为规划估算。当前定价和方案可用性需经经纪人审阅。这不是贷款估算书，也不是贷款申请。',
+  summaryEstDate: '估算生成时间',
+  adjustScenario: '调整我的方案',
+  continueChat: '继续聊天',
   completed: '已知',
   stillNeeded: '关键缺失',
   helpful: '有帮助',

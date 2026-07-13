@@ -41,6 +41,7 @@ import {
   toSubmittedMetas,
   submitCrmLead,
   isLikelyPercent,
+  isStrategyReady,
   MIN_PLAUSIBLE_PRICE,
   MIN_PLAUSIBLE_DOWN,
   DOCUMENT_CATEGORIES,
@@ -63,8 +64,34 @@ const CHIPS: { label: 'chipBuying' | 'chipRefi' | 'chipSelfEmployed' | 'chipInve
   { label: 'chipCashToClose', starter: 'chipStarterCashToClose' },
 ];
 
-type Role = 'ai' | 'user' | 'system' | 'event';
+// Mobile: at most four compact starter actions with short labels.
+const MOBILE_CHIPS: { label: 'chipBuyingShort' | 'chipRefiShort' | 'chipSelfEmployedShort' | 'chipInvestmentShort'; starter: 'chipStarterBuying' | 'chipStarterRefi' | 'chipStarterSelfEmployed' | 'chipStarterInvestment' }[] = [
+  { label: 'chipBuyingShort', starter: 'chipStarterBuying' },
+  { label: 'chipRefiShort', starter: 'chipStarterRefi' },
+  { label: 'chipSelfEmployedShort', starter: 'chipStarterSelfEmployed' },
+  { label: 'chipInvestmentShort', starter: 'chipStarterInvestment' },
+];
+
+type Role = 'ai' | 'user' | 'system' | 'event' | 'offer';
 interface Msg { id: number; role: Role; lines: string[]; docEvent?: SubmittedDocMeta[] }
+
+/** True on phone-width viewports — drives the simplified mobile product view. */
+function useIsMobile(query = '(max-width: 767px)'): boolean {
+  const [matches, setMatches] = useState(() =>
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia(query).matches
+      : false,
+  );
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const mq = window.matchMedia(query);
+    const on = () => setMatches(mq.matches);
+    on();
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, [query]);
+  return matches;
+}
 
 /** Bridge a conversational profile into the deterministic engine. */
 const toInput = profileToEngineInput;
@@ -151,8 +178,12 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [docModalOpen, setDocModalOpen] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [composerFocused, setComposerFocused] = useState(false);
   const [contact, setContact] = useState({ name: '', phone: '', email: '', time: '', language: lang });
   const [result, setResult] = useState<{ ok: boolean } | null>(null);
+  const isMobile = useIsMobile();
+  const summaryOfferedRef = useRef(false);
   const firstMsgRef = useRef('');
   const parsedFirstRef = useRef<ScenarioProfile>({});
   const sessionIdRef = useRef(`s_${idRef.current}`);
@@ -197,6 +228,7 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
   const pushAi = (lines: string[]) => setMessages((m) => [...m, { id: nextId(), role: 'ai', lines }]);
   const pushUser = (line: string) => setMessages((m) => [...m, { id: nextId(), role: 'user', lines: [line] }]);
   const pushSystem = (line: string) => setMessages((m) => [...m, { id: nextId(), role: 'system', lines: [line] }]);
+  const dismissOffer = (id: number) => setMessages((m) => m.filter((x) => x.id !== id));
 
   function snapshotLines(p: ScenarioProfile, c: ReturnType<typeof calculateCashToClose>, isBoth: boolean): string[] {
     const lines = [`◈ ${tr('snapshotHeader')}`];
@@ -285,6 +317,13 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
     }
     setMode(advisorMode());
     pushAi(live && live.assistantMessage.length ? live.assistantMessage : localLines);
+
+    // Readiness-gated strategy-summary offer — shown ONCE, only after enough core
+    // information exists, and never auto-opened (the user confirms via a button).
+    if (isStrategyReady(next) && !summaryOfferedRef.current) {
+      summaryOfferedRef.current = true;
+      setMessages((m) => [...m, { id: nextId(), role: 'offer', lines: [tr('summaryOffer')] }]);
+    }
   }
 
   function handleText() {
@@ -313,7 +352,9 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
     setDrawerOpen(false);
     setReviewOpen(false);
     setDocModalOpen(false); // unmounts the modal → any unsent files are dropped
+    setSummaryOpen(false);
     setResult(null);
+    summaryOfferedRef.current = false;
     firstMsgRef.current = '';
     parsedFirstRef.current = {};
     idRef.current = 1;
@@ -452,8 +493,12 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
         <span className="sm-kicker">
           <i className="sm-dot" /> Wallet WCCM · {tr('productName')}
         </span>
-        <h1 className="sm-core">{tr('heroTitle')}</h1>
-        <p className="sm-sub">{tr('heroSubtitle')}</p>
+        <h1 className="sm-core">
+          <span className="sm-h1-desktop">{tr('heroTitle')}</span>
+          <span className="sm-h1-mobile">{tr('heroTitleMobile')}</span>
+        </h1>
+        <p className="sm-sub sm-sub-desktop">{tr('heroSubtitle')}</p>
+        <p className="sm-sub sm-sub-mobile">{tr('heroLineMobile')}</p>
         <div className="sm-cards">
           <div className="sm-card">
             <span className="k">{tr('downPayment')}</span>
@@ -505,11 +550,11 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
             {!conversationStarted && (
               <>
                 <div className="sm-msg sm-ai sm-onboard">
-                  <p>{tr('onboardingGreeting')}</p>
+                  <p>{tr(isMobile ? 'onboardingGreetingMobile' : 'onboardingGreeting')}</p>
                   <p className="sm-onboard-eg">{tr('onboardingExample')}</p>
                 </div>
                 <div className="sm-starters">
-                  {CHIPS.map((c) => (
+                  {(isMobile ? MOBILE_CHIPS : CHIPS).map((c) => (
                     <button key={c.label} type="button" className="sm-chip"
                       onClick={() => handleChipStarter(c.starter)}>{tr(c.label)}</button>
                   ))}
@@ -526,6 +571,18 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
                     ))}
                   </ul>
                   <div className="sm-docevent-status">✓ {tr('docSubmittedStatus')}</div>
+                </div>
+              ) : m.role === 'offer' ? (
+                <div key={m.id} className="sm-offer">
+                  <p>{m.lines[0]}</p>
+                  <div className="sm-offer-actions">
+                    <button type="button" className="sm-btn sm-btn-primary sm-btn-sm" onClick={() => setSummaryOpen(true)}>
+                      {tr('summaryViewCta')}
+                    </button>
+                    <button type="button" className="sm-btn sm-btn-ghost sm-btn-sm" onClick={() => dismissOffer(m.id)}>
+                      {tr('summaryContinueCta')}
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div key={m.id} className={`sm-msg sm-${m.role}`}>
@@ -575,6 +632,8 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
                 className="sm-input sm-input-ta"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
+                onFocus={() => setComposerFocused(true)}
+                onBlur={() => setComposerFocused(false)}
                 onKeyDown={(e) => {
                   // Enter sends; Shift+Enter inserts a newline (standard chat UX).
                   if (e.key === 'Enter' && !e.shiftKey) {
@@ -585,7 +644,10 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
                 rows={1}
                 placeholder={focus ? fieldQuestion(lang, focus.field, profile.loanPurpose) : tr('composerPlaceholder')}
               />
-              <button className="sm-btn sm-btn-primary" type="submit">{tr('send')}</button>
+              <button className="sm-btn sm-btn-primary sm-sendbtn" type="submit" aria-label={tr('send')}>
+                <span className="sm-send-label">{tr('send')}</span>
+                <span className="sm-send-icon" aria-hidden="true">➤</span>
+              </button>
             </form>
           </div>
           <p className="sm-trust">{tr('trustLine')}</p>
@@ -627,15 +689,17 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
         </aside>
       </div>
 
-      {/* mobile sticky compact bar → opens the same drawer as a bottom sheet */}
-      <button type="button" className="sm-mobilebar" onClick={() => setDrawerOpen(true)}>
+      {/* Mobile sticky compact bar (56–68px) → opens the profile bottom sheet.
+          Hidden while the composer is focused so it never covers the keyboard. */}
+      <button
+        type="button"
+        className={`sm-mobilebar ${composerFocused ? 'is-hidden' : ''}`}
+        onClick={() => setDrawerOpen(true)}
+        aria-hidden={composerFocused}
+        tabIndex={composerFocused ? -1 : 0}
+      >
         <span className="sm-mb-info">
-          <b>{tr('profileTitle')} {pct}% {tr('complete')}</b>
-          <small>
-            {both
-              ? `${formatMoney(profile.purchasePrice!)} · ${formatMoney(profile.downPayment!)} down · ${derived.ltv?.toFixed(0)}% LTV`
-              : compact.nextQuestion ?? tr('nothingYet')}
-          </small>
+          <b>{tr('profileTitle')}{pct > 0 ? ` · ${pct}%` : ''}</b>
         </span>
         <span className="sm-mb-btn">{tr('openProfile')}</span>
       </button>
@@ -803,6 +867,61 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
           onClose={() => setDocModalOpen(false)}
           onSubmit={handleDocSubmit}
         />
+      )}
+
+      {/* ---------- Strategy summary (mobile-first bottom sheet; reuses the
+           deterministic engine — no duplicate calculator) ---------- */}
+      {summaryOpen && (
+        <div className="sm-summary-overlay" onClick={() => setSummaryOpen(false)}>
+          <div className="sm-summary" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={tr('summaryTitle')}>
+            <div className="sm-summary-head">
+              <span>{tr('summaryTitle')}</span>
+              <button type="button" className="sm-x" onClick={() => setSummaryOpen(false)} aria-label={tr('close')}>×</button>
+            </div>
+            <div className="sm-summary-body">
+              <dl className="sm-sum-grid">
+                <div><dt>{tr('purchasePriceLabel')}</dt><dd>{profile.purchasePrice ? formatMoney(profile.purchasePrice) : '—'}</dd></div>
+                <div><dt>{tr('downPayment')}</dt><dd>{profile.downPayment != null ? formatMoney(profile.downPayment) : '—'}</dd></div>
+                <div><dt>{tr('loanAmountLabel')}</dt><dd>{derived.loanAmount != null ? formatMoney(derived.loanAmount) : '—'}</dd></div>
+                <div><dt>{tr('summaryMonthlyPayment')}</dt><dd>{both ? formatMoney(calc.monthlyHousingPayment) : '—'}</dd></div>
+                <div className="is-key"><dt>{tr('cashToClose')}</dt><dd>{both ? formatMoney(calc.totalCashToClose) : '—'}</dd></div>
+                <div><dt>{tr('extraNeeded')}</dt><dd>{both ? formatMoney(calc.additionalFundsNeeded) : '—'}</dd></div>
+              </dl>
+
+              <div className="sm-sum-sec">
+                <h4>{tr('possiblePaths')}</h4>
+                <ul className="sm-sum-paths">
+                  {programs.slice(0, 3).map((p) => (
+                    <li key={p.id}><b>{p.name}</b> — {p.fit}</li>
+                  ))}
+                </ul>
+              </div>
+
+              {stillNeeded.length > 0 && (
+                <div className="sm-sum-sec">
+                  <h4>{tr('stillNeeded')}</h4>
+                  <div className="sm-badgelist">
+                    {stillNeeded.map((k) => (<em key={k}>{fieldLabel(lang, k, profile.loanPurpose)}</em>))}
+                  </div>
+                </div>
+              )}
+
+              <p className="sm-sum-note">{tr('summaryPlanningNote')}</p>
+              <p className="sm-sum-date">{tr('summaryEstDate')}: {new Date().toLocaleDateString(lang)}</p>
+            </div>
+            <div className="sm-summary-actions">
+              <button type="button" className="sm-btn sm-btn-primary" onClick={() => { setSummaryOpen(false); openReview(); }}>
+                {tr('sendScenario')}
+              </button>
+              <button type="button" className="sm-btn sm-btn-soft" onClick={() => { setSummaryOpen(false); setDrawerOpen(true); }}>
+                {tr('adjustScenario')}
+              </button>
+              <button type="button" className="sm-btn sm-btn-ghost" onClick={() => setSummaryOpen(false)}>
+                {tr('continueChat')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
