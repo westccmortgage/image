@@ -56,6 +56,13 @@ const MAGNITUDE: Record<string, number> = {
   billion: 1_000_000_000,
 };
 
+// Income phrasing around a money amount. A figure described as a yearly/monthly
+// salary is the borrower's INCOME, never the purchase price or the down payment.
+// Without this guard, "I make $200k a year, buying an $800k place" lets the
+// $200k income land in the price slot and drops the real $800k.
+const INCOME_CTX =
+  /(per\s*year|a\s*year|\/\s*yr|\byr\b|annual|salary|income|\bearns?\b|\bearning\b|\bmakes?\b|\bmaking\b|per\s*month|a\s*month|\/\s*mo\b|monthly|\bgross\b|\bwages?\b|зарплат|доход|salario|ingres|年收入|月收入|工资|收入)/;
+
 // Plausibility floors. A home price of "$400" or a down payment of "$20" is
 // never real — those are almost always a percentage said aloud ("put 20 down"),
 // a stray number, or a spoken-number the parser could not fully assemble. We
@@ -119,6 +126,11 @@ function classifyMoney(hits: MoneyHit[], profile: ScenarioProfile, text: string)
     const after = lower.slice(h.end, h.end + 12);
     const before = lower.slice(Math.max(0, h.start - 18), h.start);
     const isDown = DOWN_AFTER.test(after) || DOWN_BEFORE.test(before);
+    // An amount described as salary / "per year" / "a month" is income — neither
+    // the price nor the down payment — unless it is explicitly a down-payment
+    // amount. Bound the check to the current clause so a neighbouring clause's
+    // "a year" can't tag an unrelated amount.
+    if (!isDown && INCOME_CTX.test(clauseCtx(lower, h.start, h.end))) continue;
     const nearPrice = PRICE_WORDS.test(before) || PRICE_WORDS.test(after);
     if (isDown) downHits.push(h);
     else if (nearPrice) priceHits.push(h);
@@ -316,21 +328,64 @@ export function parseScenario(text: string): ScenarioProfile {
   }
 
   // Bare-integer money in explicit price/down phrasing ("down payment 50000",
-  // "price 750000") — MONEY_RE only matches $/comma/suffix forms, so capture a
-  // 4–8 digit amount that is unambiguously tied to a price or down-payment word.
+  // "price 750000", "buy 650000 home with 130000 down") — MONEY_RE only matches
+  // $/comma/suffix forms, so capture a 4–8 digit amount unambiguously tied to a
+  // price or down-payment word on EITHER side, while refusing income amounts and
+  // keeping a down amount out of the price slot.
   if (profile.downPayment == null) {
-    const m = lower.match(/\b(?:down\s*payment|down|put|cash|saved?|deposit)\s*(?:of\s*|is\s*)?\$?(\d{4,8})\b(?!\s?%)/);
+    const m =
+      lower.match(/\b(?:down\s*payment|down|dp|put|cash|saved?|deposit)\s*(?:of\s*|is\s*)?\$?(\d{4,8})\b(?!\s?%)/) ||
+      lower.match(/\b\$?(\d{4,8})\s+(?:dollars?\s+)?(?:down(?:\s*payment)?|dp)\b/);
     if (m) {
       const v = parseInt(m[1], 10);
-      if (v >= MIN_PLAUSIBLE_DOWN) profile.downPayment = v;
+      if (v >= MIN_PLAUSIBLE_DOWN && !INCOME_CTX.test(matchCtx(lower, m))) profile.downPayment = v;
     }
   }
   if (profile.purchasePrice == null) {
-    const m = lower.match(/\b(?:price|home|house|value|worth|purchase|cost)\D{0,6}\$?(\d{4,8})\b(?!\s?%)/);
+    const m =
+      lower.match(/\b(?:price|home|house|value|worth|purchase|cost)\D{0,6}\$?(\d{4,8})\b(?!\s?%)(?!\s*(?:down|dp)\b)/) ||
+      lower.match(/\b\$?(\d{4,8})\s+(?:dollars?\s+)?(?:home|house|condo|property|place|purchase)\b/);
     if (m) {
       const v = parseInt(m[1], 10);
-      if (v >= MIN_PLAUSIBLE_PRICE) profile.purchasePrice = v;
+      if (v >= MIN_PLAUSIBLE_PRICE && v !== profile.downPayment && !INCOME_CTX.test(matchCtx(lower, m)))
+        profile.purchasePrice = v;
     }
+  }
+
+  // Multilingual magnitude price. The Latin MONEY_RE misses Chinese 万 (10k) /
+  // 亿 (100M) and Russian миллион / млн / тысяч, so capture those directly for
+  // the price (and a Chinese 首付 amount for the down) when a slot is still open.
+  if (profile.purchasePrice == null) {
+    for (const mm of text.matchAll(/(\d+(?:\.\d+)?)\s*(万|亿)/g)) {
+      const i = mm.index ?? 0;
+      if (/首付|首期|頭期|头期/.test(text.slice(Math.max(0, i - 8), i))) continue; // that is the down
+      if (INCOME_CTX.test(text.slice(Math.max(0, i - 12), i + mm[0].length + 6))) continue;
+      const v = Math.round(parseFloat(mm[1]) * (mm[2] === '亿' ? 1e8 : 1e4));
+      if (Number.isFinite(v) && v >= MIN_PLAUSIBLE_PRICE) {
+        profile.purchasePrice = v;
+        break;
+      }
+    }
+  }
+  if (profile.purchasePrice == null) {
+    const ru = lower.match(/(\d+(?:[.,]\d+)?)\s*(миллион\w*|млн\.?|тысяч\w*|тыс\.?)/);
+    if (ru && !INCOME_CTX.test(lower.slice(Math.max(0, (ru.index ?? 0) - 12), (ru.index ?? 0) + ru[0].length + 6))) {
+      const v = Math.round(parseFloat(ru[1].replace(',', '.')) * (/млн|миллион/.test(ru[2]) ? 1e6 : 1e3));
+      if (Number.isFinite(v) && v >= MIN_PLAUSIBLE_PRICE) profile.purchasePrice = v;
+    }
+  }
+  // Chinese down payment stated in 万 ("首付60万") when no percent was given.
+  if (profile.downPayment == null && profile.downPaymentPercent == null) {
+    const zhDown = text.match(/(?:首付|首期|頭期|头期)\D{0,4}(\d+(?:\.\d+)?)\s*万/);
+    if (zhDown) {
+      const v = Math.round(parseFloat(zhDown[1]) * 1e4);
+      if (Number.isFinite(v) && v >= MIN_PLAUSIBLE_DOWN) profile.downPayment = v;
+    }
+  }
+  // Re-derive the dollar down payment if a percent is now paired with a price
+  // that was only resolved by the multilingual pass above.
+  if (profile.downPaymentPercent != null && profile.purchasePrice && profile.downPayment == null) {
+    profile.downPayment = Math.round((profile.purchasePrice * profile.downPaymentPercent) / 100);
   }
 
   // --- ZIP / county (avoid money digits and amounts in a price/down context) ---
@@ -369,6 +424,20 @@ export function parseScenario(text: string): ScenarioProfile {
 /** Title-case a lowercased place name ("los angeles" → "Los Angeles"). */
 function titleCase(s: string): string {
   return s.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+}
+
+/** The text window around a regex match, for income-context checks. */
+function matchCtx(text: string, m: RegExpMatchArray): string {
+  const i = m.index ?? 0;
+  return clauseCtx(text, i, i + m[0].length);
+}
+
+/** The amount plus its neighbouring text, bounded to the current clause so a
+ *  separate clause (past a comma / period) can't leak context onto it. */
+function clauseCtx(text: string, start: number, end: number): string {
+  const before = text.slice(Math.max(0, start - 18), start).split(/[,.;!?，。；、\n]/).pop() ?? '';
+  const after = (text.slice(end, end + 18).split(/[,.;!?，。；、\n]/)[0]) ?? '';
+  return before + text.slice(start, end) + after;
 }
 
 function isPartOfMoney(text: string, index: number): boolean {
