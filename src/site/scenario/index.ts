@@ -137,3 +137,5 @@ export type {
   LeadResult,
   BuildLeadContext,
 } from './leadAdapter';
+export { runAdvisorTurn, topProgramSummaries } from './voiceTurn';
+export type { VoiceTurnInput, VoiceTurnResult } from './voiceTurn';

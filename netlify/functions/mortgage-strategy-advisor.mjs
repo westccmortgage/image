@@ -11,11 +11,15 @@
 // use cautious language (possible / estimated / subject to lender guidelines) —
 // never "approved", "qualified", or "guaranteed".
 //
-// If ANTHROPIC_API_KEY is not set the route returns 501 { error:
+// If the selected AI provider is not configured the route returns 501 { error:
 // 'not_configured' } and the client falls back to local advisor mode.
+//
+// The actual phrasing call is provider-agnostic (see _shared/aiProvider.mjs):
+// it goes to Anthropic directly OR through the Measured Decision V2 Cloudflare AI
+// Gateway (OpenAI / Anthropic / Google), selected by WWCCM_AI_PROVIDER. None of
+// the advisor logic or compliance rules below depend on which backend is used.
 
-const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
-const DEFAULT_MODEL = 'claude-haiku-4-5';
+import { phraseWithAI, isAiConfigured } from './_shared/aiProvider.mjs';
 
 const LANG_NAME = { en: 'English', ru: 'Russian', es: 'Spanish', zh: 'Simplified Chinese' };
 
@@ -28,6 +32,9 @@ RESPOND ENTIRELY IN ${langName.toUpperCase()}. Regardless of what language the c
 HARD RULES:
 - The numbers in the CONTEXT block come from a verified calculation engine. They are the ONLY numbers you may state. NEVER invent, estimate, recompute, or change any dollar amount, rate, LTV, or percentage. If a number is not present, ask for the missing input instead of guessing.
 - If "hasBoth" is false, the figures are an example scenario, NOT the user's. Do not present them as the user's numbers; ask for whatever is missing (usually the down payment or price).
+- INTAKE ORDER — establish the fundamentals first, in this order, before anything else: (1) purchase price, (2) down payment — accept a dollar amount OR a percent like "20%", (3) state or ZIP, (4) occupancy (primary / second home / investment), (5) how income is earned. Ask exactly ONE missing fundamental per turn — the "Next best question to ask" provided in CONTEXT — and do not skip the down payment.
+- Until BOTH the purchase price AND the down payment (a dollar amount or a percent) are known, do NOT discuss, estimate, itemize, or ask preferences about closing costs, cash to close, fees, or "what matters most". If the user asks about closing costs before giving their down payment, answer in one short sentence that you need their down payment first (a dollar amount or a percent), then ask for it.
+- A down payment may be given as a percent ("20%", "20 percent", "put 20 down"). Accept it and never claim you don't know it once it has been provided.
 - Use cautious language: "possible", "estimated", "may", "subject to lender guidelines", "requires broker review". NEVER say "approved", "qualified", "guaranteed", "you qualify", or promise a rate.
 - Never ask for SSN, date of birth, full bank/account numbers, or document uploads.
 - Cash-to-close is only one part of the strategy — you compare possible loan paths, identify missing info, explain risks, and hand off to a licensed broker.
@@ -65,6 +72,11 @@ function buildContext(payload) {
   if (Array.isArray(payload.nextQuestions) && payload.nextQuestions.length) {
     lines.push(`Next best question to ask (only if the user isn't asking their own): ${payload.nextQuestions[0]}`);
   }
+  if (!c.hasBoth) {
+    lines.push(
+      'INTAKE INCOMPLETE: the purchase price and/or down payment are not both known. Do NOT discuss, estimate, or itemize closing costs or cash to close as the borrower\'s own. This turn, capture the missing fundamental — ask the Next best question above (the down payment accepts a dollar amount OR a percent).',
+    );
+  }
   return `CONTEXT (engine-computed — the only numbers you may use):\n${lines.join('\n')}`;
 }
 
@@ -73,8 +85,7 @@ export default async (req) => {
     return json({ error: 'method_not_allowed' }, 405);
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
+  if (!isAiConfigured()) {
     return json({ error: 'not_configured' }, 501);
   }
 
@@ -97,30 +108,18 @@ export default async (req) => {
   ];
 
   try {
-    const resp = await fetch(ANTHROPIC_URL, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: process.env.WWCCM_MODEL || DEFAULT_MODEL,
-        max_tokens: 500,
+    let assistantMessage;
+    try {
+      assistantMessage = await phraseWithAI({
         system: systemPrompt(payload.language || 'en'),
         messages,
-      }),
-    });
-
-    if (!resp.ok) {
-      const detail = await resp.text().catch(() => '');
-      return json({ error: 'upstream_error', status: resp.status, detail: detail.slice(0, 500) }, 502);
+        maxTokens: 500,
+      });
+    } catch (e) {
+      const status = e && e.status === 501 ? 501 : 502;
+      if (status === 501) return json({ error: 'not_configured' }, 501);
+      return json({ error: 'upstream_error', detail: String(e && e.detail ? e.detail : e).slice(0, 500) }, 502);
     }
-
-    const data = await resp.json();
-    const assistantMessage = Array.isArray(data.content)
-      ? data.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim()
-      : '';
     if (!assistantMessage) return json({ error: 'empty_reply' }, 502);
 
     // Return the full structured contract: deterministic fields are echoed back

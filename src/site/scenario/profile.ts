@@ -52,23 +52,37 @@ function notApplicable(p: ScenarioProfile, key: FieldKey): boolean {
   return p.loanPurpose === 'refinance' && key === 'downPayment';
 }
 
+/**
+ * Whether a field counts as already answered for QUESTION purposes. A stated
+ * down-payment PERCENT ("20% down") satisfies the down-payment question even
+ * before a price is known — we must never re-ask "how much down?" as if the
+ * borrower never told us, and we must not skip it either. (Showing the real
+ * dollar cash-to-close still requires the dollar amount; see `hasFullNumbers`.)
+ */
+function fieldSatisfied(p: ScenarioProfile, key: FieldKey): boolean {
+  if (key === 'downPayment') {
+    return hasValue(p, 'downPayment') || hasValue(p, 'downPaymentPercent');
+  }
+  return hasValue(p, key);
+}
+
 /** Required non-contact fields still missing (in ask-priority order). */
 export function missingRequired(p: ScenarioProfile): FieldKey[] {
-  return REQUIRED.filter((f) => !hasValue(p, f.key) && !notApplicable(p, f.key))
+  return REQUIRED.filter((f) => !fieldSatisfied(p, f.key) && !notApplicable(p, f.key))
     .sort((a, b) => a.priority - b.priority)
     .map((f) => f.key);
 }
 
 /** Helpful (optional) fields still missing. */
 export function missingHelpful(p: ScenarioProfile): FieldKey[] {
-  return HELPFUL.filter((f) => !hasValue(p, f.key) && !notApplicable(p, f.key))
+  return HELPFUL.filter((f) => !fieldSatisfied(p, f.key) && !notApplicable(p, f.key))
     .sort((a, b) => a.priority - b.priority)
     .map((f) => f.key);
 }
 
 /** Blocking required fields still missing — gate the initial loan-path options. */
 export function missingBlocking(p: ScenarioProfile): FieldKey[] {
-  return NON_CONTACT.filter((f) => f.blocking && !hasValue(p, f.key) && !notApplicable(p, f.key))
+  return NON_CONTACT.filter((f) => f.blocking && !fieldSatisfied(p, f.key) && !notApplicable(p, f.key))
     .sort((a, b) => a.priority - b.priority)
     .map((f) => f.key);
 }
