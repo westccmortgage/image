@@ -13,6 +13,7 @@
 import { runAdvisorTurn } from '../../src/site/scenario/voiceTurn';
 import type { Language, ScenarioProfile, FieldKey } from '../../src/site/scenario/types';
 import { phraseWithAI, isAiConfigured } from './_shared/aiProvider.mjs';
+import { coreVoiceEnabled, runCoreVoiceTurn } from './_shared/coreVoiceV2.mjs';
 
 declare const process: { env: Record<string, string | undefined> };
 
@@ -96,6 +97,32 @@ export default async (req: Request): Promise<Response> => {
   const language = (['en', 'ru', 'es', 'zh'].includes(body.language) ? body.language : 'en') as Language;
   const profile = (body.profile || {}) as ScenarioProfile;
   const pendingField = (body.pendingField ?? null) as FieldKey | null;
+
+  // Dormant by default. Once the separately reviewed Core endpoint has a
+  // durable store, atomic budget door and credentials, this becomes the sole
+  // conversational path. Failure is fail-closed; it never falls back to the
+  // deterministic questionnaire while pretending conversation succeeded.
+  if (coreVoiceEnabled()) {
+    try {
+      const plan = await runCoreVoiceTurn(body);
+      if (!plan) return json({ error: 'core_voice_unavailable' }, 503);
+      return json({
+        reply: plan.reply,
+        source: 'core-v2-voice',
+        requestId: plan.requestId,
+        sessionId: plan.sessionId,
+        profile,
+        pendingField,
+        coreStateRevision: plan.stateRevision,
+        disposition: plan.disposition,
+        grounding: plan.grounding,
+        applicationTransition: plan.applicationTransition,
+        requiresHumanReview: plan.requiresHumanReview,
+      });
+    } catch {
+      return json({ error: 'core_voice_unavailable' }, 503);
+    }
+  }
 
   const result = runAdvisorTurn({
     text,

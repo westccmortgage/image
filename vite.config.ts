@@ -8,6 +8,11 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    include: [
+      'src/**/*.test.ts',
+      'src/**/*.test.tsx',
+      'netlify/functions/**/*.test.ts',
+      'netlify/functions/**/*.test.mjs',
+    ],
   },
 });
