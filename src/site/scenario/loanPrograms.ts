@@ -1,4 +1,4 @@
-import { calcMonthlyPI } from '../../module';
+import { calcMonthlyPI } from '../../module/calc/cashToCloseCalculations';
 import { deriveScenario } from './profile';
 import { programDataStatusFor, programEffectiveDate } from './programData';
 import type { FitLabel, LoanProgramMatch, ProgramCategory, ScenarioProfile } from './types';

@@ -6,14 +6,17 @@
 // itself. Each function is pure and testable.
 // ---------------------------------------------------------------------------
 
+// Import the deterministic engine from its CONCRETE modules — not the module
+// barrel — so server bundles (e.g. the voice-advisor-turn Netlify function that
+// reuses this file) never drag in the barrel's React components or their CSS.
 import {
   buildDownPaymentScenarios,
   calcLtv,
   calcMonthlyPI,
   calculateCashToClose as engineCashToClose,
-  defaultScenario,
-} from '../../module';
-import type { CashToCloseInput, CashToCloseResult, DownPaymentScenario } from '../../module';
+} from '../../module/calc/cashToCloseCalculations';
+import { defaultScenario } from '../../module/fixtures/defaultScenario';
+import type { CashToCloseInput, CashToCloseResult, DownPaymentScenario } from '../../module/types';
 import { parseScenario } from './parseScenario';
 import { nextQuestions } from './questionEngine';
 import { resolveLoanLimitArea } from './location';

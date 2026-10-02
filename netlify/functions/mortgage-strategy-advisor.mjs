@@ -11,11 +11,15 @@
 // use cautious language (possible / estimated / subject to lender guidelines) —
 // never "approved", "qualified", or "guaranteed".
 //
-// If ANTHROPIC_API_KEY is not set the route returns 501 { error:
+// If the selected AI provider is not configured the route returns 501 { error:
 // 'not_configured' } and the client falls back to local advisor mode.
+//
+// The actual phrasing call is provider-agnostic (see _shared/aiProvider.mjs):
+// it goes to Anthropic directly OR through the Measured Decision V2 Cloudflare AI
+// Gateway (OpenAI / Anthropic / Google), selected by WWCCM_AI_PROVIDER. None of
+// the advisor logic or compliance rules below depend on which backend is used.
 
-const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
-const DEFAULT_MODEL = 'claude-haiku-4-5';
+import { phraseWithAI, isAiConfigured } from './_shared/aiProvider.mjs';
 
 const LANG_NAME = { en: 'English', ru: 'Russian', es: 'Spanish', zh: 'Simplified Chinese' };
 
@@ -81,8 +85,7 @@ export default async (req) => {
     return json({ error: 'method_not_allowed' }, 405);
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
+  if (!isAiConfigured()) {
     return json({ error: 'not_configured' }, 501);
   }
 
@@ -105,30 +108,18 @@ export default async (req) => {
   ];
 
   try {
-    const resp = await fetch(ANTHROPIC_URL, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: process.env.WWCCM_MODEL || DEFAULT_MODEL,
-        max_tokens: 500,
+    let assistantMessage;
+    try {
+      assistantMessage = await phraseWithAI({
         system: systemPrompt(payload.language || 'en'),
         messages,
-      }),
-    });
-
-    if (!resp.ok) {
-      const detail = await resp.text().catch(() => '');
-      return json({ error: 'upstream_error', status: resp.status, detail: detail.slice(0, 500) }, 502);
+        maxTokens: 500,
+      });
+    } catch (e) {
+      const status = e && e.status === 501 ? 501 : 502;
+      if (status === 501) return json({ error: 'not_configured' }, 501);
+      return json({ error: 'upstream_error', detail: String(e && e.detail ? e.detail : e).slice(0, 500) }, 502);
     }
-
-    const data = await resp.json();
-    const assistantMessage = Array.isArray(data.content)
-      ? data.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim()
-      : '';
     if (!assistantMessage) return json({ error: 'empty_reply' }, 502);
 
     // Return the full structured contract: deterministic fields are echoed back
