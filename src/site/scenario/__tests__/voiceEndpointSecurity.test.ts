@@ -44,6 +44,24 @@ describe('voice advisor endpoint security', () => {
     fetchSpy.mockRestore();
   });
 
+  it('never falls back to the questionnaire when conversational Core is enabled but unconfigured', async () => {
+    vi.stubEnv('VOICE_SHARED_SECRET', 'correct-secret');
+    vi.stubEnv('CORE_V2_VOICE_ENABLED', 'true');
+    vi.stubEnv('CORE_V2_VOICE_URL', '');
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const response = await handler(request('correct-secret', {
+      text: 'Can you explain a HELOC?',
+      callIdentity: 'CA0123456789abcdef0123456789abcdef',
+      requestId: 'request:CA0123456789abcdef0123456789abcdef:1',
+      turnId: 'CA0123456789abcdef0123456789abcdef:1',
+      expectedStateRevision: 0,
+    }));
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: 'core_voice_unavailable' });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
   it('rejects invalid and oversized transcript input', async () => {
     vi.stubEnv('VOICE_SHARED_SECRET', 'correct-secret');
     expect((await handler(request('correct-secret', { text: '' }))).status).toBe(400);
