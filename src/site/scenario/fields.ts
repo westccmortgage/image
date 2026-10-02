@@ -19,7 +19,7 @@ export const FIELD_DEFS: FieldDef[] = [
     blocking: true,
     kind: 'money',
     priority: 2,
-    question: 'How much do you have for a down payment or available cash?',
+    question: 'How much are you putting down — a dollar amount or a percent (e.g. $150,000 or 20%)?',
   },
   {
     key: 'occupancy',
