@@ -85,6 +85,16 @@ class AiError extends Error {
   }
 }
 
+async function fetchWithTimeout(url, options, timeoutMs = 10_000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /**
  * Phrase an assistant message. Provider-neutral input:
  *   { system: string, messages: [{role:'user'|'assistant', content:string}], model?, maxTokens? }
@@ -143,7 +153,7 @@ async function anthropicMessages({ url, system, messages, model, maxTokens, viaG
   }
   if (viaGateway) Object.assign(headers, gatewayHeaders());
 
-  const resp = await fetch(url, {
+  const resp = await fetchWithTimeout(url, {
     method: 'POST',
     headers,
     body: JSON.stringify({ model, max_tokens: maxTokens, system, messages }),
@@ -173,7 +183,7 @@ async function openAiChat({ system, messages, model, maxTokens }) {
     { role: 'system', content: system },
     ...messages.map((m) => ({ role: m.role, content: m.content })),
   ];
-  const resp = await fetch(url, {
+  const resp = await fetchWithTimeout(url, {
     method: 'POST',
     headers,
     body: JSON.stringify({ model, max_tokens: maxTokens, messages: chatMessages }),
@@ -207,7 +217,7 @@ async function googleGenerate({ system, messages, model, maxTokens }) {
     contents,
     generationConfig: { maxOutputTokens: maxTokens },
   };
-  const resp = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+  const resp = await fetchWithTimeout(url, { method: 'POST', headers, body: JSON.stringify(body) });
   if (!resp.ok) {
     const detail = await resp.text().catch(() => '');
     throw new AiError('upstream_error', 502, `${resp.status} ${detail.slice(0, 400)}`);

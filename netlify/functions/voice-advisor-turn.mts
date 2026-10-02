@@ -14,6 +14,8 @@ import { runAdvisorTurn } from '../../src/site/scenario/voiceTurn';
 import type { Language, ScenarioProfile, FieldKey } from '../../src/site/scenario/types';
 import { phraseWithAI, isAiConfigured } from './_shared/aiProvider.mjs';
 
+declare const process: { env: Record<string, string | undefined> };
+
 const LANG_NAME: Record<string, string> = {
   en: 'English',
   ru: 'Russian',
@@ -70,26 +72,33 @@ function buildVoiceContext(result: ReturnType<typeof runAdvisorTurn>): string {
 export default async (req: Request): Promise<Response> => {
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
 
-  // Optional shared-secret gate so only our phone server can reach the brain.
+  // Required fail-closed gate. Never parse caller data or contact an AI provider
+  // unless the phone service has authenticated with the shared secret.
   const required = process.env.VOICE_SHARED_SECRET;
-  if (required) {
-    const got = req.headers.get('x-voice-secret');
-    if (got !== required) return json({ error: 'unauthorized' }, 401);
-  }
+  if (!required) return json({ error: 'service_not_configured' }, 503);
+  const got = req.headers.get('x-voice-secret');
+  if (!got || !(await secureEqual(got, required))) return json({ error: 'unauthorized' }, 401);
 
   let body: any;
   try {
-    body = await req.json();
+    const raw = await req.text();
+    if (raw.length > 32_000) return json({ error: 'payload_too_large' }, 413);
+    body = JSON.parse(raw);
   } catch {
     return json({ error: 'bad_request' }, 400);
   }
 
-  const language = (body.language || 'en') as Language;
+  const text = typeof body?.text === 'string' ? body.text.trim() : '';
+  if (!text || text.length > 2_000) return json({ error: 'invalid_text' }, 400);
+  if (body.profile != null && (!isPlainObject(body.profile) || JSON.stringify(body.profile).length > 16_000)) {
+    return json({ error: 'invalid_profile' }, 400);
+  }
+  const language = (['en', 'ru', 'es', 'zh'].includes(body.language) ? body.language : 'en') as Language;
   const profile = (body.profile || {}) as ScenarioProfile;
   const pendingField = (body.pendingField ?? null) as FieldKey | null;
 
   const result = runAdvisorTurn({
-    text: String(body.text || ''),
+    text,
     profile,
     language,
     pendingField,
@@ -99,7 +108,9 @@ export default async (req: Request): Promise<Response> => {
   // Phrase for speech when a provider is configured and the caller didn't opt out.
   let spoken = result.reply;
   let source: 'ai' | 'local' = 'local';
-  const wantPhrase = body.phrase !== false;
+  // Prompt instructions alone cannot guarantee that a model preserves every
+  // regulated number and claim, so AI phrasing is an explicit opt-in.
+  const wantPhrase = process.env.VOICE_ALLOW_AI_PHRASING === 'true' && body.phrase === true;
   if (wantPhrase && isAiConfigured()) {
     try {
       const history = Array.isArray(body.historySummary) ? body.historySummary.slice(-6) : [];
@@ -109,7 +120,7 @@ export default async (req: Request): Promise<Response> => {
           .map((m: any) => ({ role: m.role, content: String(m.text).slice(0, 1200) })),
         {
           role: 'user' as const,
-          content: `${buildVoiceContext(result)}\n\nCaller just said: ${String(body.text || '').slice(0, 1200)}`,
+          content: `${buildVoiceContext(result)}\n\nCaller just said: ${text.slice(0, 1200)}`,
         },
       ];
       const phrased = await phraseWithAI({
@@ -147,6 +158,23 @@ function json(obj: unknown, status = 200): Response {
     status,
     headers: { 'content-type': 'application/json' },
   });
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+async function secureEqual(left: string, right: string): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const [a, b] = await Promise.all([
+    crypto.subtle.digest('SHA-256', encoder.encode(left)),
+    crypto.subtle.digest('SHA-256', encoder.encode(right)),
+  ]);
+  const av = new Uint8Array(a);
+  const bv = new Uint8Array(b);
+  let difference = av.length ^ bv.length;
+  for (let i = 0; i < av.length; i += 1) difference |= av[i] ^ bv[i];
+  return difference === 0;
 }
 
 export const config = { path: '/api/voice-advisor-turn' };
