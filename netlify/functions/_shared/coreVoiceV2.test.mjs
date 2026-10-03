@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { runCoreVoiceTurn, sign } from './coreVoiceV2.mjs';
+import { claimCoreVoiceAdmissionStream, runCoreVoiceAdmission, runCoreVoiceTurn, sign } from './coreVoiceV2.mjs';
 
 const SECRET = 'local-fixture-secret-that-is-at-least-thirty-two-characters';
 const URL = 'https://example.test/functions/v1/core-v2-voice-turn';
@@ -117,5 +117,38 @@ describe('disabled Core voice adapter', () => {
     const oversized = vi.fn(async () => new Response('x'.repeat(65 * 1024)));
     await expect(runCoreVoiceTurn(body, { environment, fetchImpl: oversized }))
       .rejects.toThrow('core_voice_response_too_large');
+  });
+});
+
+describe('durable call admission adapter', () => {
+  const environment = { CORE_V2_VOICE_ENABLED: 'true', CORE_V2_VOICE_URL: URL,
+    CORE_V2_VOICE_KEY_ID: 'netlify-wallet-voice', CORE_V2_VOICE_HMAC_SECRET: SECRET };
+  const callIdentity = 'CA0123456789abcdef0123456789abcdef';
+  const ownerIdentityDigest = 'a'.repeat(64);
+
+  it('signs only the call identity and owner digest and validates the bounded lease', async () => {
+    const fetchImpl = vi.fn(async (_url, init) => {
+      expect(JSON.parse(init.body)).toEqual({ protocol: 'core-v2.voice-admission.1', callIdentity, ownerIdentityDigest });
+      return new Response(JSON.stringify({ protocol: 'core-v2.voice-admission.1', suiteId: 'owner-call-1',
+        callIdentityDigest: 'b'.repeat(64), answeredAtMs: 1800000000000, deadlineMs: 1800000120000,
+        maximumTurns: 6, maximumBrainRequests: 12, maximumTtsCharacters: 8000, repeated: false }));
+    });
+    const lease = await runCoreVoiceAdmission({ callIdentity, ownerIdentityDigest }, { environment, fetchImpl });
+    expect(lease.maximumTurns).toBe(6);
+    expect(fetchImpl).toHaveBeenCalledOnce();
+  });
+
+  it('uses a distinct one-shot stream protocol and rejects an invalid acknowledgement', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({
+      protocol: 'core-v2.voice-admission-stream.1', suiteId: 'owner-call-1',
+      callIdentityDigest: 'b'.repeat(64), claimed: true,
+    })));
+    await expect(claimCoreVoiceAdmissionStream({ callIdentity, suiteId: 'owner-call-1' }, { environment, fetchImpl }))
+      .resolves.toMatchObject({ claimed: true });
+    const invalid = vi.fn(async () => new Response(JSON.stringify({
+      protocol: 'core-v2.voice-admission-stream.1', suiteId: 'other', claimed: true,
+    })));
+    await expect(claimCoreVoiceAdmissionStream({ callIdentity, suiteId: 'owner-call-1' }, { environment, fetchImpl: invalid }))
+      .rejects.toThrow('core_voice_invalid_stream_claim');
   });
 });
