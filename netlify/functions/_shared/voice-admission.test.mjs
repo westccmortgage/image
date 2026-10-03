@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import voiceAdmission from './voice-admission.mts';
+import voiceAdmission from '../voice-admission.mts';
 
 const OWNER = '+14245550123';
 const CALL = 'CA0123456789abcdef0123456789abcdef';
