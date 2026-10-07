@@ -48,7 +48,9 @@ function buildContext(payload) {
       ? '$' + Math.round(v).toLocaleString('en-US')
       : 'unknown';
   const c = payload.cashToCloseEstimate || {};
+  const isRefinance = payload.profile?.loanPurpose === 'refinance';
   const lines = [
+    `Loan purpose: ${isRefinance ? 'refinance' : 'purchase or unknown'}`,
     `hasBoth (are these the user's real numbers?): ${c.hasBoth ? 'true' : 'false'}`,
     `Down payment: ${money(c.downPayment)}`,
     `Total cash to close: ${money(c.totalCashToClose)}`,
@@ -72,7 +74,11 @@ function buildContext(payload) {
   if (Array.isArray(payload.nextQuestions) && payload.nextQuestions.length) {
     lines.push(`Next best question to ask (only if the user isn't asking their own): ${payload.nextQuestions[0]}`);
   }
-  if (!c.hasBoth) {
+  if (isRefinance) {
+    lines.push(
+      'REFINANCE MODE: the current engine does not calculate refinance savings, cash-out terms, or refinance program comparisons. Never ask for a down payment, never reuse purchase cash-to-close figures, and never claim that refinancing makes sense. Explain that a licensed broker needs the current balance, current rate, remaining term, estimated home value, goal, and verified transaction costs.',
+    );
+  } else if (!c.hasBoth) {
     lines.push(
       'INTAKE INCOMPLETE: the purchase price and/or down payment are not both known. Do NOT discuss, estimate, or itemize closing costs or cash to close as the borrower\'s own. This turn, capture the missing fundamental — ask the Next best question above (the down payment accepts a dollar amount OR a percent).',
     );
@@ -108,6 +114,27 @@ export default async (req) => {
   ];
 
   try {
+    if (payload.profile?.loanPurpose === 'refinance') {
+      const safe = {
+        en: 'I can help prepare a refinance review, but this version does not calculate refinance savings or cash-out terms. A licensed broker needs your current loan balance, rate, remaining term, estimated home value, and goal before comparing options.',
+        ru: 'Я могу помочь подготовить данные для анализа рефинансирования, но эта версия не рассчитывает экономию или условия получения наличных. Для сравнения лицензированному брокеру нужны текущий остаток, ставка, оставшийся срок, стоимость дома и ваша цель.',
+        es: 'Puedo ayudar a preparar una revisión de refinanciamiento, pero esta versión no calcula ahorros ni términos de retiro de efectivo. Un corredor con licencia necesita el saldo, la tasa, el plazo restante, el valor estimado de la vivienda y su objetivo.',
+        zh: '我可以帮助准备再融资评估，但此版本不会计算再融资节省金额或套现条件。持牌经纪人需要当前贷款余额、利率、剩余期限、房屋估值和您的目标后才能比较方案。',
+      };
+      const lang = Object.prototype.hasOwnProperty.call(safe, payload.language) ? payload.language : 'en';
+      return json({
+        assistantMessage: safe[lang],
+        parsedScenario: payload.profile ?? {},
+        updatedProfile: payload.profile ?? {},
+        missingFields: payload.missingFields ?? [],
+        nextQuestions: payload.nextQuestions ?? [],
+        possibleLoanPaths: [],
+        cashToCloseEstimate: null,
+        warnings: ['Refinance calculations are not available in this version; licensed review required.'],
+        suggestedActions: ['talk_to_broker'],
+        requiresHumanReview: true,
+      });
+    }
     let assistantMessage;
     try {
       assistantMessage = await phraseWithAI({

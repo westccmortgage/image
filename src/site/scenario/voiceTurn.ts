@@ -157,6 +157,7 @@ export function runAdvisorTurn(inp: VoiceTurnInput): VoiceTurnResult {
     numbers,
     nextQuestion,
     isFirstMessage: !!inp.isFirst,
+    loanPurpose: next.loanPurpose,
   });
 
   return {
@@ -174,5 +175,6 @@ export function runAdvisorTurn(inp: VoiceTurnInput): VoiceTurnResult {
 
 /** Top programs for a profile — a compact list for a broker hand-off / summary. */
 export function topProgramSummaries(p: ScenarioProfile, max = 3): { name: string; fit: string }[] {
+  if (p.loanPurpose === 'refinance') return [];
   return matchLoanPrograms(p).slice(0, max).map((m) => ({ name: m.name, fit: m.fit }));
 }

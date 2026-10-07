@@ -41,7 +41,7 @@ export function mergeProfile(
 
 export function deriveScenario(p: ScenarioProfile): DerivedScenario {
   const d: DerivedScenario = {};
-  if (hasValidPurchaseNumbers(p)) {
+  if (p.loanPurpose !== 'refinance' && hasValidPurchaseNumbers(p)) {
     d.loanAmount = p.purchasePrice - p.downPayment;
     d.ltv = p.purchasePrice > 0 ? (d.loanAmount / p.purchasePrice) * 100 : undefined;
     d.downPaymentPercent = p.purchasePrice > 0 ? (p.downPayment / p.purchasePrice) * 100 : undefined;
@@ -109,6 +109,10 @@ export function completionPercent(p: ScenarioProfile): number {
 
 /** Has the borrower provided enough value for us to show initial options? */
 export function isReadyForOptions(p: ScenarioProfile): boolean {
+  // The current deterministic engine models purchases only. A refinance needs
+  // current balance, rate, remaining term and transaction costs before any
+  // comparison is responsible, so never expose purchase options as refi advice.
+  if (p.loanPurpose === 'refinance') return false;
   return missingBlocking(p).length === 0;
 }
 
@@ -124,6 +128,7 @@ export function hasProvidedValue(p: ScenarioProfile): boolean {
  * the user's result.
  */
 export function hasFullNumbers(p: ScenarioProfile): boolean {
+  if (p.loanPurpose === 'refinance') return false;
   return hasValidPurchaseNumbers(p);
 }
 
@@ -147,6 +152,7 @@ function hasValidPurchaseNumbers(
  * field is required (FICO, reserves, exact goal remain optional).
  */
 export function isStrategyReady(p: ScenarioProfile): boolean {
+  if (p.loanPurpose === 'refinance') return false;
   const hasNumbers = hasValidPurchaseNumbers(p);
   const hasLocation = hasValue(p, 'state') || hasValue(p, 'stateCode') || hasValue(p, 'zipOrCounty');
   const hasOccupancy = hasValue(p, 'occupancy');

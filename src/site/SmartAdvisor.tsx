@@ -273,6 +273,7 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
           },
           nextQuestion: nq,
           isFirstMessage: isFirst,
+          loanPurpose: next.loanPurpose,
         });
 
     const nextPrograms = matchLoanPrograms(next);
