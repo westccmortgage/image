@@ -84,6 +84,12 @@ describe('audit: zero-down and county formatting', () => {
 });
 
 describe('audit: ambiguous and impossible purchase amounts', () => {
+  it('does not guess the meaning or order of two unlabeled bare amounts', () => {
+    const p = parseScenario('800000 750000');
+    expect(p.purchasePrice).toBeUndefined();
+    expect(p.downPayment).toBeUndefined();
+  });
+
   it('does not turn a planning range into a price and down payment', () => {
     const p = parseScenario('I am looking between 900k and 1.1 million in California');
     expect(p.purchasePrice).toBeUndefined();
