@@ -82,3 +82,29 @@ describe('audit: zero-down and county formatting', () => {
     expect(p.zipOrCounty).toBe('Los Angeles County');
   });
 });
+
+describe('audit: ambiguous and impossible purchase amounts', () => {
+  it('does not turn a planning range into a price and down payment', () => {
+    const p = parseScenario('I am looking between 900k and 1.1 million in California');
+    expect(p.purchasePrice).toBeUndefined();
+    expect(p.downPayment).toBeUndefined();
+  });
+
+  it('keeps an explicit down payment outside an ambiguous price range', () => {
+    const p = parseScenario('My budget is between 900k and 1.1 million, with 200k down');
+    expect(p.purchasePrice).toBeUndefined();
+    expect(p.downPayment).toBe(200_000);
+  });
+
+  it('rejects a same-message down payment larger than the home price', () => {
+    const p = parseScenario('buying an 800k home with 900k down');
+    expect(p.purchasePrice).toBe(800_000);
+    expect(p.downPayment).toBeUndefined();
+  });
+
+  it('rejects an impossible down payment assembled across turns', () => {
+    const p = mergeProfile({ purchasePrice: 800_000 }, { downPayment: 900_000 });
+    expect(p.purchasePrice).toBe(800_000);
+    expect(p.downPayment).toBeUndefined();
+  });
+});

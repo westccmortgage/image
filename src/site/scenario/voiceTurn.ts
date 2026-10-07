@@ -8,7 +8,7 @@
 // re-phrase `reply` must ground it strictly in `numbers` (see the route).
 
 import { parseScenario, isLikelyPercent, MIN_PLAUSIBLE_PRICE, MIN_PLAUSIBLE_DOWN } from './parseScenario';
-import { mergeProfile, isReadyForOptions } from './profile';
+import { mergeProfile, isReadyForOptions, hasFullNumbers } from './profile';
 import { matchChoiceValue, humanCaptured, buildReply } from './converse';
 import type { ReplyNumbers } from './converse';
 import { nextBestQuestion } from './questionEngine';
@@ -129,7 +129,7 @@ export function runAdvisorTurn(inp: VoiceTurnInput): VoiceTurnResult {
   const captured = newlyCaptured(prev, next);
 
   // 3) Numbers — only real when BOTH price and down payment are known.
-  const isBoth = !!(next.purchasePrice && next.downPayment != null);
+  const isBoth = hasFullNumbers(next);
   const activeInput = isBoth ? profileToEngineInput(next) : defaultScenario;
   const c = calculateCashToClose(activeInput);
   const numbers: ReplyNumbers & { loanType: string } = {
