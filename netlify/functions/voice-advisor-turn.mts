@@ -49,7 +49,9 @@ function money(v: unknown): string {
 
 function buildVoiceContext(result: ReturnType<typeof runAdvisorTurn>): string {
   const n = result.numbers;
+  const isRefinance = result.profile.loanPurpose === 'refinance';
   const lines = [
+    `Loan purpose: ${isRefinance ? 'refinance' : 'purchase or unknown'}`,
     `hasBoth (are these the caller's real numbers?): ${n.hasBoth ? 'true' : 'false'}`,
     `Down payment: ${money(n.downPayment)}`,
     `Total cash to close: ${money(n.totalCashToClose)}`,
@@ -61,7 +63,11 @@ function buildVoiceContext(result: ReturnType<typeof runAdvisorTurn>): string {
   ];
   if (result.captured.length) lines.push(`Captured this turn: ${result.captured.join(', ')}`);
   if (result.nextQuestion) lines.push(`Next question to ask (only if the caller isn't asking their own): ${result.nextQuestion.prompt}`);
-  if (!n.hasBoth) {
+  if (isRefinance) {
+    lines.push(
+      'REFINANCE MODE: do not ask for a down payment and do not use purchase cash-to-close figures. The current engine does not calculate refinance savings or cash-out terms. Stay faithful to the safe DRAFT and require licensed review.',
+    );
+  } else if (!n.hasBoth) {
     lines.push(
       'INTAKE INCOMPLETE: purchase price and/or down payment not both known. Do NOT state closing costs or cash to close as the caller\'s own; ask the Next question (the down payment accepts a dollar amount OR a percent).',
     );

@@ -44,6 +44,7 @@ describe('B. demo numbers are hidden/labeled before user input', () => {
     expect(hasFullNumbers({})).toBe(false);
     expect(hasFullNumbers({ purchasePrice: 2_000_000 })).toBe(false);
     expect(hasFullNumbers({ purchasePrice: 2_000_000, downPayment: 400_000 })).toBe(true);
+    expect(hasFullNumbers({ purchasePrice: 800_000, downPayment: 900_000 })).toBe(false);
   });
   it('provides an explicit "example only" label', () => {
     expect(t('en', 'exampleOnly').toLowerCase()).toContain('example only');

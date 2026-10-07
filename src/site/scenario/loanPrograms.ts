@@ -40,6 +40,10 @@ interface Draft {
 }
 
 export function matchLoanPrograms(p: ScenarioProfile): LoanProgramMatch[] {
+  // These program comparisons and planning assumptions are purchase-specific.
+  // Returning no matches is safer than relabeling purchase paths as refinance
+  // guidance without current-loan inputs or verified refi pricing.
+  if (p.loanPurpose === 'refinance') return [];
   const { loanAmount, ltv } = deriveScenario(p);
   const belowTwenty = ltv != null && ltv > 80;
   const emp = p.employmentType;

@@ -1,10 +1,19 @@
 import { describe, it, expect } from 'vitest';
 import { parseScenario } from '../parseScenario';
-import { mergeProfile, missingRequired, missingBlocking } from '../profile';
+import {
+  mergeProfile,
+  missingRequired,
+  missingBlocking,
+  hasFullNumbers,
+  isReadyForOptions,
+  isStrategyReady,
+} from '../profile';
 import { nextBestQuestion } from '../questionEngine';
 import { fieldLabel, fieldQuestion } from '../fieldsI18n';
 import { buildCompactProfile } from '../selectors';
 import type { ScenarioProfile } from '../types';
+import { matchLoanPrograms } from '../loanPrograms';
+import { runAdvisorTurn } from '../voiceTurn';
 
 // A refinance has NO down payment. The advisor must not ask for one, must not
 // list it as missing, and must reframe "purchase price" as the home's value.
@@ -50,5 +59,36 @@ describe('refinance flow — never asks for a down payment', () => {
     const purchase = parseScenario('I want to buy a $2M home');
     expect(missingRequired(purchase)).toContain('downPayment');
     expect(fieldLabel('en', 'purchasePrice')).toBe('Purchase price / value');
+  });
+
+  it('never treats purchase-style fields as a complete refinance calculation', () => {
+    const unsafeShape: ScenarioProfile = {
+      loanPurpose: 'refinance',
+      purchasePrice: 900_000,
+      downPayment: 750_000,
+      occupancy: 'primary',
+      employmentType: 'w2',
+    };
+    expect(hasFullNumbers(unsafeShape)).toBe(false);
+    expect(isReadyForOptions(unsafeShape)).toBe(false);
+    expect(isStrategyReady(unsafeShape)).toBe(false);
+    expect(matchLoanPrograms(unsafeShape)).toEqual([]);
+  });
+
+  it('asks only for estimated home value, then stops for licensed review', () => {
+    const first = runAdvisorTurn({ text: 'I want to refinance', isFirst: true });
+    expect(first.pendingField).toBe('purchasePrice');
+    expect(first.reply).toMatch(/does not calculate refinance savings/i);
+    expect(first.reply).not.toMatch(/down payment/i);
+
+    const second = runAdvisorTurn({
+      text: 'home is worth $900,000',
+      profile: first.profile,
+      pendingField: first.pendingField,
+    });
+    expect(second.profile.purchasePrice).toBe(900_000);
+    expect(second.pendingField).toBeNull();
+    expect(second.readyForOptions).toBe(false);
+    expect(second.numbers.hasBoth).toBe(false);
   });
 });

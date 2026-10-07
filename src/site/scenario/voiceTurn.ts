@@ -8,7 +8,7 @@
 // re-phrase `reply` must ground it strictly in `numbers` (see the route).
 
 import { parseScenario, isLikelyPercent, MIN_PLAUSIBLE_PRICE, MIN_PLAUSIBLE_DOWN } from './parseScenario';
-import { mergeProfile, isReadyForOptions } from './profile';
+import { mergeProfile, isReadyForOptions, hasFullNumbers } from './profile';
 import { matchChoiceValue, humanCaptured, buildReply } from './converse';
 import type { ReplyNumbers } from './converse';
 import { nextBestQuestion } from './questionEngine';
@@ -129,7 +129,7 @@ export function runAdvisorTurn(inp: VoiceTurnInput): VoiceTurnResult {
   const captured = newlyCaptured(prev, next);
 
   // 3) Numbers — only real when BOTH price and down payment are known.
-  const isBoth = !!(next.purchasePrice && next.downPayment != null);
+  const isBoth = hasFullNumbers(next);
   const activeInput = isBoth ? profileToEngineInput(next) : defaultScenario;
   const c = calculateCashToClose(activeInput);
   const numbers: ReplyNumbers & { loanType: string } = {
@@ -157,6 +157,7 @@ export function runAdvisorTurn(inp: VoiceTurnInput): VoiceTurnResult {
     numbers,
     nextQuestion,
     isFirstMessage: !!inp.isFirst,
+    loanPurpose: next.loanPurpose,
   });
 
   return {
@@ -174,5 +175,6 @@ export function runAdvisorTurn(inp: VoiceTurnInput): VoiceTurnResult {
 
 /** Top programs for a profile — a compact list for a broker hand-off / summary. */
 export function topProgramSummaries(p: ScenarioProfile, max = 3): { name: string; fit: string }[] {
+  if (p.loanPurpose === 'refinance') return [];
   return matchLoanPrograms(p).slice(0, max).map((m) => ({ name: m.name, fit: m.fit }));
 }
