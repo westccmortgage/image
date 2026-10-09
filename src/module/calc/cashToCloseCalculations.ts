@@ -142,6 +142,8 @@ export function calculateCashToClose(input: CashToCloseInput): CashToCloseResult
     loanType,
     propertyTaxMonthly,
     hazardInsuranceMonthly,
+    hoaMonthly = 0,
+    pmiMonthly = 0,
     prepaidInterestDays,
     lenderFees,
     thirdPartyFees,
@@ -158,7 +160,7 @@ export function calculateCashToClose(input: CashToCloseInput): CashToCloseResult
   const monthlyPI = calcMonthlyPI(loanAmount, interestRate, termYears);
   const monthlyTaxes = propertyTaxMonthly;
   const monthlyInsurance = hazardInsuranceMonthly;
-  const monthlyHousingPayment = monthlyPI + monthlyTaxes + monthlyInsurance;
+  const monthlyHousingPayment = monthlyPI + monthlyTaxes + monthlyInsurance + hoaMonthly + pmiMonthly;
 
   const lenderFeesTotal = sum(lenderFees);
   const thirdPartyFeesTotal = sum(thirdPartyFees);
@@ -206,6 +208,8 @@ export function calculateCashToClose(input: CashToCloseInput): CashToCloseResult
     monthlyPI: roundCents(monthlyPI),
     monthlyTaxes: roundCents(monthlyTaxes),
     monthlyInsurance: roundCents(monthlyInsurance),
+    monthlyHoa: roundCents(hoaMonthly),
+    monthlyPmi: roundCents(pmiMonthly),
     monthlyHousingPayment: roundCents(monthlyHousingPayment),
 
     lenderFeesTotal: roundCents(lenderFeesTotal),
@@ -274,7 +278,8 @@ export function buildDownPaymentScenarios(
       input.termYears,
     );
     const estimatedMonthlyPayment =
-      monthlyPI + input.propertyTaxMonthly + input.hazardInsuranceMonthly;
+      monthlyPI + input.propertyTaxMonthly + input.hazardInsuranceMonthly +
+      (input.hoaMonthly ?? 0);
 
     const prepaidInterest = calcPrepaidInterest(
       loanAmount,

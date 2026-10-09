@@ -19,6 +19,7 @@ type Overrides = Partial<Record<FieldKey, FieldText>>;
 const ru: Overrides = {
   purchasePrice: { label: 'Цена покупки / стоимость', question: 'Какова цена покупки или оценочная стоимость?' },
   downPayment: { label: 'Первоначальный взнос / наличные', question: 'Сколько у вас есть на первоначальный взнос или доступные средства?' },
+  interestRate: { label: 'Процентная ставка', question: 'Какую годовую процентную ставку использовать? Я не буду предполагать текущую ставку кредитора.' },
   occupancy: {
     label: 'Тип проживания',
     question: 'Это будет основное жильё, второй дом или инвестиционная недвижимость?',
@@ -48,6 +49,7 @@ const ru: Overrides = {
 const es: Overrides = {
   purchasePrice: { label: 'Precio de compra / valor', question: '¿Cuál es el precio de compra o el valor estimado?' },
   downPayment: { label: 'Enganche / efectivo disponible', question: '¿Cuánto tiene para el enganche o efectivo disponible?' },
+  interestRate: { label: 'Tasa de interés', question: '¿Qué tasa de interés anual debo usar? No asumiré una tasa actual del prestamista.' },
   occupancy: {
     label: 'Ocupación',
     question: '¿Será una residencia principal, una segunda vivienda o una propiedad de inversión?',
@@ -77,6 +79,7 @@ const es: Overrides = {
 const zh: Overrides = {
   purchasePrice: { label: '购买价格 / 价值', question: '购买价格或估计价值是多少？' },
   downPayment: { label: '首付 / 可用现金', question: '您有多少可用于首付或可用现金？' },
+  interestRate: { label: '利率', question: '应使用多少年利率？我不会假设当前贷款机构利率。' },
   occupancy: {
     label: '房产用途',
     question: '这将是主要住所、第二套住房还是投资房产？',

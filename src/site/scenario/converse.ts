@@ -19,7 +19,9 @@ export type Intent =
   | 'statement'; // just providing info
 
 export interface ReplyNumbers {
-  hasBoth: boolean; // both price and down payment known → numbers are real
+  hasBoth: boolean; // both price and down payment are known
+  calculationReady?: boolean;
+  missingCalculationInputs?: string[];
   downPayment: number;
   totalCashToClose: number;
   additionalFundsNeeded: number;
@@ -54,19 +56,25 @@ export function classifyIntent(text: string): Intent {
 }
 
 function answerIntent(intent: Intent, n: ReplyNumbers): string | null {
+  const ready = n.calculationReady ?? n.hasBoth;
+  const missing = n.missingCalculationInputs?.join(', ') || 'the remaining calculation inputs';
   switch (intent) {
     case 'cash':
-      return n.hasBoth
+      return ready
         ? `You'd need about ${money(n.totalCashToClose)} to close — roughly ${money(n.additionalFundsNeeded)} more than your ${money(n.downPayment)} down payment. That's lender fees, title/escrow, prepaids, taxes and insurance on top of the down payment.`
-        : `To give you an exact cash-to-close I just need your down payment. On top of it you'll have lender fees, title/escrow, prepaids, taxes and insurance — that's usually the surprise.`;
+        : n.hasBoth
+          ? `I have your price and down payment. I still need ${missing} before I can calculate cash to close.`
+          : `To calculate cash to close I still need the purchase price and down payment.`;
     case 'down':
-      return n.hasBoth
+      return ready
         ? `Your down payment is ${money(n.downPayment)} (~${n.ltv.toFixed(0)}% loan-to-value). But total cash to close is about ${money(n.totalCashToClose)} — ${money(n.additionalFundsNeeded)} more than the down payment.`
         : null;
     case 'monthly':
-      return n.hasBoth
+      return ready
         ? `Estimated principal & interest is about ${money(n.monthlyPI)}/mo (${money(n.monthlyHousing)}/mo with taxes & insurance).`
-        : `Once I have your down payment I can estimate the monthly payment too.`;
+        : n.hasBoth
+          ? `I have your price and down payment. I still need ${missing} before I can estimate the monthly payment.`
+          : `Once I have the price and down payment, I can identify what else is needed for a monthly estimate.`;
     case 'ltv':
       return n.hasBoth
         ? `Your loan-to-value is about ${n.ltv.toFixed(1)}% — ${n.ltv > 80 ? 'below 20% down, so PMI/MI or pricing adjustments may apply' : 'at or under 80%, which helps your pricing'}.`
@@ -112,7 +120,7 @@ export function buildReply(inp: ReplyInput): string[] {
   // Proactively voice the live estimate when numbers are real and we didn't
   // already say them in the answer above.
   const saidNumber = intent === 'cash' || intent === 'down';
-  if (numbers.hasBoth && !saidNumber && capturedText.length > 0) {
+  if ((numbers.calculationReady ?? numbers.hasBoth) && !saidNumber && capturedText.length > 0) {
     lines.push(
       `Right now that's about ${money(numbers.totalCashToClose)} to close — ${money(numbers.additionalFundsNeeded)} above your down payment.`,
     );
@@ -197,6 +205,8 @@ export function humanCaptured(
       return `${money(Number(v))} down`;
     case 'reserves':
       return `${money(Number(v))} in reserves`;
+    case 'interestRate':
+      return `${Number(v)}% annual interest`;
     case 'fico':
       return `${v} FICO`;
     case 'state':

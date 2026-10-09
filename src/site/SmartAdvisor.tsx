@@ -46,6 +46,8 @@ import {
   MIN_PLAUSIBLE_DOWN,
   DOCUMENT_CATEGORIES,
   FIELD_BY_KEY,
+  resolveScenarioTurn,
+  evaluateScenario,
 } from './scenario';
 import type {
   FieldKey, Language, Question, ScenarioProfile, LoanProgramMatch,
@@ -103,7 +105,9 @@ const catLabelKey = (v: string): Parameters<typeof t>[1] => CAT_LABEL_KEY[v] ?? 
 
 function numberFromText(text: string): { value: number; hadDollarSign: boolean } | null {
   const hadDollarSign = text.includes('$');
-  const m = text.replace(/\$/g, '').match(/([\d,]+(?:\.\d+)?)\s*(k|mm|m|million|thousand)?/i);
+  const decimalComma = !hadDollarSign && /^\s*\d{1,2},\d{1,2}\s*%?\s*$/.test(text);
+  const normalized = decimalComma ? text.replace(',', '.') : text;
+  const m = normalized.replace(/\$/g, '').match(/([\d,]+(?:\.\d+)?)\s*(k|mm|m|million|thousand)?/i);
   if (!m) return null;
   const base = parseFloat(m[1].replace(/,/g, ''));
   if (!Number.isFinite(base)) return null;
@@ -144,7 +148,8 @@ function coerceAnswer(q: Question, text: string, profile: ScenarioProfile): Part
 function newlyCaptured(prev: ScenarioProfile, next: ScenarioProfile): FieldKey[] {
   const keys: FieldKey[] = [
     'purchasePrice', 'downPayment', 'state', 'zipOrCounty', 'county', 'occupancy',
-    'employmentType', 'incomeDocPath', 'fico', 'reserves', 'borrowerGoal', 'loanPurpose',
+    'interestRate', 'termYears', 'propertyTaxAnnual', 'hazardInsuranceAnnual', 'hoaMonthly', 'pmiMonthly',
+    'cashAvailable', 'closingCosts', 'protectedReserves', 'employmentType', 'incomeDocPath', 'fico', 'reserves', 'borrowerGoal', 'loanPurpose',
   ];
   return keys.filter((k) => {
     const a = prev[k];
@@ -156,13 +161,13 @@ function newlyCaptured(prev: ScenarioProfile, next: ScenarioProfile): FieldKey[]
 function valueDisplay(lang: Language, key: FieldKey, p: ScenarioProfile): string {
   const v = p[key];
   if (v == null || v === '') return '';
-  if (key === 'purchasePrice' || key === 'downPayment' || key === 'reserves') return formatMoney(Number(v));
+  if (key === 'purchasePrice' || key === 'downPayment' || key === 'reserves' || key === 'cashAvailable' || key === 'closingCosts' || key === 'protectedReserves') return formatMoney(Number(v));
+  if (key === 'interestRate') return `${Number(v)}%`;
   const def = FIELD_BY_KEY[key];
   if (def?.kind === 'choice') return fieldOptionLabel(lang, key, String(v));
   return String(v);
 }
 
-const hasBothOf = hasFullNumbers;
 const hasValueOf = (p: ScenarioProfile) => !!(p.purchasePrice || p.downPayment != null);
 
 export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangChange: (l: Language) => void }) {
@@ -206,10 +211,14 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
 
   const conversationStarted = messages.some((m) => m.role === 'user');
 
-  const both = hasBothOf(profile);
+  const evaluation = useMemo(() => evaluateScenario(profile), [profile]);
+  const both = evaluation.result != null;
   const hasValue = hasValueOf(profile);
   const input = useMemo(() => toInput(profile), [profile]);
-  const calc = useMemo(() => calculateCashToClose(both ? input : defaultScenario), [both, input]);
+  const calc = useMemo(
+    () => evaluation.result ?? calculateCashToClose(defaultScenario),
+    [evaluation],
+  );
   const scenarios = useMemo(() => compareDownPaymentOptions(input), [input]);
   const programs = useMemo(() => matchLoanPrograms(profile), [profile]);
   const derived = useMemo(() => deriveScenario(profile), [profile]);
@@ -237,7 +246,7 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
       );
     }
     for (const pr of matchLoanPrograms(p).slice(0, 3)) {
-      lines.push(`• ${pr.name} — ${pr.fit.toLowerCase()}. ${pr.why}`);
+      lines.push(`• ${pr.name} — ${pr.fit.toLowerCase()} · unverified, broker review required. ${pr.why}`);
     }
     lines.push(tr('snapshotReadyPrompt'));
     return lines;
@@ -246,9 +255,11 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
   async function respondTo(next: ScenarioProfile, prev: ScenarioProfile, userText: string, isFirst: boolean) {
     setProfile(next);
     const captured = newlyCaptured(prev, next);
-    const isBoth = hasBothOf(next);
-    const activeInput = isBoth ? toInput(next) : defaultScenario;
-    const c = calculateCashToClose(activeInput);
+    const evaluation = evaluateScenario(next);
+    const calculationReady = evaluation.result != null;
+    const hasBoth = hasFullNumbers(next);
+    const activeInput = calculationReady ? toInput(next) : defaultScenario;
+    const c = evaluation.result ?? calculateCashToClose(defaultScenario);
     const ready = isReadyForOptions(next);
     const rawNq = nextQuestions(next, { max: 1 })[0] ?? null;
     // Localize the question prompt so both the composer and the local-mode chat
@@ -257,13 +268,15 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
     setQuestions(nq ? [nq] : []);
 
     const capturedText = captured.map((k) => humanCaptured(k, next, labelForValue)).filter(Boolean);
-    const localLines = ready
-      ? snapshotLines(next, c, isBoth)
+    const localBase = ready
+      ? snapshotLines(next, c, calculationReady)
       : buildReply({
           userText,
           capturedText,
           numbers: {
-            hasBoth: isBoth,
+            hasBoth,
+            calculationReady,
+            missingCalculationInputs: [...evaluation.missing, ...evaluation.errors],
             downPayment: c.downPayment,
             totalCashToClose: c.totalCashToClose,
             additionalFundsNeeded: c.additionalFundsNeeded,
@@ -274,9 +287,25 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
           nextQuestion: nq,
           isFirstMessage: isFirst,
         });
+    const localLines = [
+      ...localBase,
+      ...evaluation.assumptions.map((a) => `Assumption: ${a}.`),
+      ...(evaluation.affordability && !evaluation.affordability.affordable
+        ? [`Available cash is short by ${formatMoney(Math.abs(evaluation.affordability.surplusOrShortfall))} after protecting reserves.`]
+        : []),
+      ...evaluation.errors.map((e) => `I can't calculate this scenario: ${e}.`),
+    ];
 
     const nextPrograms = matchLoanPrograms(next);
-    const warnings = isBoth ? c.risk.warnings.slice(0, 2) : [];
+    const warnings = calculationReady
+      ? [
+          ...c.risk.warnings.slice(0, 2),
+          ...evaluation.assumptions,
+          ...(evaluation.affordability && !evaluation.affordability.affordable
+            ? [`Available cash is short by ${formatMoney(Math.abs(evaluation.affordability.surplusOrShortfall))} after protecting reserves.`]
+            : []),
+        ]
+      : [];
     const history = messages
       .filter((m) => m.role !== 'system')
       .map((m) => ({
@@ -295,7 +324,8 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
         nextQuestions: nq ? [nq.prompt] : [],
         possibleLoanPaths: buildProgramSummaries(nextPrograms),
         cashToCloseEstimate: {
-          hasBoth: isBoth,
+          hasBoth,
+          calculationReady,
           downPayment: c.downPayment,
           totalCashToClose: c.totalCashToClose,
           additionalFundsNeeded: c.additionalFundsNeeded,
@@ -303,6 +333,13 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
           loanType: activeInput.loanType,
           monthlyPI: c.monthlyPI,
           monthlyHousing: c.monthlyHousingPayment,
+          totalClosingCosts: c.totalClosingCosts,
+          lenderFeesTotal: c.lenderFeesTotal,
+          thirdPartyFeesTotal: c.thirdPartyFeesTotal,
+          governmentFeesTotal: c.governmentFeesTotal,
+          prepaidsAndEscrowTotal: c.prepaidsAndEscrowTotal,
+          sellerCredit: c.sellerCredit,
+          lenderCredit: c.lenderCredit,
         },
         warnings,
         suggestedActions: ready ? ['prepare_strategy_summary', 'talk_to_broker'] : [],
@@ -332,9 +369,30 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
     pushUser(raw);
     const isFirst = !firstMsgRef.current;
     if (isFirst) { firstMsgRef.current = raw; parsedFirstRef.current = parseScenario(raw); }
-    let patch = parseScenario(raw);
-    if (focus) patch = { ...patch, ...coerceAnswer(focus, raw, profile) };
-    void respondTo(mergeProfile(profile, patch), profile, raw, isFirst);
+    const focused = focus ? coerceAnswer(focus, raw, profile) : {};
+    const resolved = resolveScenarioTurn(profile, raw, focused);
+    if (resolved.intent === 'hypothetical' && resolved.comparisonProfile) {
+      const baseEval = evaluateScenario(profile);
+      const altEval = evaluateScenario(resolved.comparisonProfile);
+      if (baseEval.result && altEval.result) {
+        const rate = resolved.comparisonProfile.interestRate ?? profile.interestRate;
+        const term = resolved.comparisonProfile.termYears ?? profile.termYears ?? 30;
+        const localized = {
+          en: `Hypothetical only — your saved scenario is unchanged. At ${rate}% for ${term} years, P&I would be ${formatMoney(altEval.result.monthlyPI)}/mo and total housing ${formatMoney(altEval.result.monthlyHousingPayment)}/mo, versus ${formatMoney(baseEval.result.monthlyPI)} and ${formatMoney(baseEval.result.monthlyHousingPayment)} in the base scenario.`,
+          ru: `Только гипотетический расчёт — сохранённый сценарий не изменён. При ${rate}% на ${term} лет основной долг и проценты составят ${formatMoney(altEval.result.monthlyPI)}/мес., а общий платёж за жильё — ${formatMoney(altEval.result.monthlyHousingPayment)}/мес.; в базовом сценарии — ${formatMoney(baseEval.result.monthlyPI)} и ${formatMoney(baseEval.result.monthlyHousingPayment)}.`,
+          es: `Solo es un cálculo hipotético; el escenario guardado no cambió. Al ${rate}% por ${term} años, capital e intereses serían ${formatMoney(altEval.result.monthlyPI)}/mes y el costo total de vivienda ${formatMoney(altEval.result.monthlyHousingPayment)}/mes, frente a ${formatMoney(baseEval.result.monthlyPI)} y ${formatMoney(baseEval.result.monthlyHousingPayment)} en el escenario base.`,
+          zh: `仅为假设计算，已保存的方案未更改。按 ${rate}%、${term} 年计算，本息约为 ${formatMoney(altEval.result.monthlyPI)}/月，住房总支出约为 ${formatMoney(altEval.result.monthlyHousingPayment)}/月；基础方案分别为 ${formatMoney(baseEval.result.monthlyPI)} 和 ${formatMoney(baseEval.result.monthlyHousingPayment)}。`,
+        }[lang];
+        pushAi([localized]);
+      } else {
+        const missing = [...altEval.missing, ...altEval.errors].join(', ');
+        pushAi([lang === 'ru'
+          ? `Сохранённый сценарий не изменён. Для гипотетического расчёта ещё нужно: ${missing}.`
+          : `I kept your saved scenario unchanged. To calculate that hypothetical, I still need ${missing}.`]);
+      }
+      return;
+    }
+    void respondTo(resolved.profile, profile, raw, isFirst);
   }
   function handleChip(field: FieldKey, value: string, label: string) {
     pushUser(label);
@@ -376,9 +434,10 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
       preferredContactTime: dc.preferredContactTime, preferredLanguage: dc.preferredLanguage,
     });
     setProfile(merged);
-    const isBoth = hasBothOf(merged);
+    const mergedEvaluation = evaluateScenario(merged);
+    const isBoth = mergedEvaluation.result != null;
     const mInput = isBoth ? toInput(merged) : defaultScenario;
-    const c = calculateCashToClose(mInput);
+    const c = mergedEvaluation.result ?? calculateCashToClose(defaultScenario);
     const payload = buildDocumentReviewPayload({
       contact: dc,
       originalMessage: firstMsgRef.current,

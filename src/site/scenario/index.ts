@@ -36,6 +36,8 @@ export {
   humanCaptured,
 } from './converse';
 export type { Intent, ReplyNumbers, ReplyInput } from './converse';
+export { classifyScenarioTurn, resolveScenarioTurn } from './turnIntent';
+export type { ScenarioTurnIntent, ScenarioTurnResolution } from './turnIntent';
 export { askAdvisor, advisorMode, buildProgramSummaries } from './advisor';
 export type { AdvisorRequest, AdvisorResponse } from './advisor';
 export { resolveLoanLimitArea } from './location';
@@ -56,9 +58,10 @@ export {
   calculateCashToClose,
   compareDownPaymentOptions,
   profileToEngineInput,
+  evaluateScenario,
   prepareBrokerReviewSummary,
 } from './tools';
-export type { BrokerReviewSummary } from './tools';
+export type { BrokerReviewSummary, ScenarioEvaluation, ScenarioAffordability } from './tools';
 export {
   matchLoanPaths,
   estimateCashToClose,

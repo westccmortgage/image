@@ -22,6 +22,15 @@ export const FIELD_DEFS: FieldDef[] = [
     question: 'How much are you putting down — a dollar amount or a percent (e.g. $150,000 or 20%)?',
   },
   {
+    key: 'interestRate',
+    label: 'Interest rate',
+    importance: 'required',
+    blocking: true,
+    kind: 'number',
+    priority: 8.5,
+    question: 'What annual interest rate should I use? I will not assume a current lender rate.',
+  },
+  {
     key: 'occupancy',
     label: 'Occupancy',
     importance: 'required',

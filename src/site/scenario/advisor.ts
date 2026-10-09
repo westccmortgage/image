@@ -17,9 +17,10 @@ export interface AdvisorRequest {
   profile: ScenarioProfile;
   missingFields: string[];
   nextQuestions: string[];
-  possibleLoanPaths: { name: string; fit: string }[];
+  possibleLoanPaths: { name: string; fit: string; dataStatus: string; effectiveDate: string | null }[];
   cashToCloseEstimate: {
     hasBoth: boolean;
+    calculationReady: boolean;
     downPayment: number;
     totalCashToClose: number;
     additionalFundsNeeded: number;
@@ -27,6 +28,13 @@ export interface AdvisorRequest {
     loanType: string;
     monthlyPI: number;
     monthlyHousing: number;
+    totalClosingCosts: number;
+    lenderFeesTotal: number;
+    thirdPartyFeesTotal: number;
+    governmentFeesTotal: number;
+    prepaidsAndEscrowTotal: number;
+    sellerCredit: number;
+    lenderCredit: number;
   };
   warnings: string[];
   suggestedActions: string[];
@@ -52,12 +60,28 @@ export function advisorMode(): Mode {
   return mode;
 }
 
-export function buildProgramSummaries(programs: LoanProgramMatch[]): { name: string; fit: string }[] {
-  return programs.map((p) => ({ name: p.name, fit: p.fit }));
+export function buildProgramSummaries(programs: LoanProgramMatch[]): { name: string; fit: string; dataStatus: string; effectiveDate: string | null }[] {
+  return programs.map((p) => ({ name: p.name, fit: p.fit, dataStatus: p.dataStatus, effectiveDate: p.effectiveDate }));
 }
 
 /** Ask the live advisor route. Returns null to signal a local fallback. */
 export async function askAdvisor(req: AdvisorRequest): Promise<AdvisorResponse | null> {
+  if (typeof window !== 'undefined' &&
+      (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') &&
+      new URLSearchParams(window.location.search).get('advisorMock') === '1') {
+    mode = 'live';
+    const c = req.cashToCloseEstimate;
+    const fmt = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return {
+      assistantMessage: c.calculationReady
+        ? [
+            `Mock provider response: principal and interest ${fmt(c.monthlyPI)} per month; total housing ${fmt(c.monthlyHousing)} per month. All figures came from the local deterministic calculation.`,
+            ...req.warnings.map((warning) => `Warning: ${warning}`),
+          ]
+        : [`Mock provider response: I still need ${req.missingFields[0] ?? 'the missing scenario details'} before calculating.`],
+      requiresHumanReview: true,
+    };
+  }
   if (mode === 'local' || typeof fetch === 'undefined') return null;
 
   const controller = new AbortController();

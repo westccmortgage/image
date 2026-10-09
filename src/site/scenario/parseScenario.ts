@@ -3,6 +3,8 @@ import type {
   BorrowerGoal,
   EmploymentType,
   IncomeDocPath,
+  NumericUnit,
+  ScenarioNumericField,
   ScenarioProfile,
 } from './types';
 
@@ -99,12 +101,16 @@ function toNumber(raw: string): number | null {
 function findMoney(text: string): MoneyHit[] {
   const hits: MoneyHit[] = [];
   for (const match of text.matchAll(MONEY_RE)) {
-    const value = toNumber(match[0]);
+    // `[,\d]+` can absorb a punctuation comma after an amount. Trim it so
+    // adjacency checks see `, down` as punctuation + a new clause, rather than
+    // treating the following "down" as attached to the price amount.
+    const raw = match[0].replace(/,+(\s*)$/, '$1');
+    const value = toNumber(raw);
     if (value == null || value <= 0) continue;
     const start = match.index ?? 0;
-    const end = start + match[0].length;
+    const end = start + raw.length;
     const context = text.slice(Math.max(0, start - 18), end + 18).toLowerCase();
-    hits.push({ value, start, end, context, hadDollarSign: match[0].includes('$') });
+    hits.push({ value, start, end, context, hadDollarSign: raw.includes('$') });
   }
   return hits;
 }
@@ -123,6 +129,10 @@ function classifyMoney(hits: MoneyHit[], profile: ScenarioProfile, text: string)
   const downHits: MoneyHit[] = [];
   const unknown: MoneyHit[] = [];
   for (const h of hits) {
+    // These amounts have their own typed fields and must never fall through to
+    // the old price/down magnitude heuristic.
+    if (/(available\s+cash|cash\s+available|closing\s+cost|protected\s+reserve|keep\w*.*reserve|резерв|расход\w*.*закрыт)/i.test(clauseCtx(text, h.start, h.end))) continue;
+    if (/\bloan(?:\s+amount)?\b/i.test(clauseCtx(text, h.start, h.end))) continue;
     const after = lower.slice(h.end, h.end + 12);
     const before = lower.slice(Math.max(0, h.start - 18), h.start);
     const isDown = DOWN_AFTER.test(after) || DOWN_BEFORE.test(before);
@@ -174,8 +184,104 @@ export function parseScenario(text: string): ScenarioProfile {
   if (!text || !text.trim()) return profile;
   const lower = ` ${text.toLowerCase()} `;
 
+  const mark = (field: ScenarioNumericField, unit: NumericUnit, source: string) => {
+    profile.numericFieldMeta = {
+      ...profile.numericFieldMeta,
+      [field]: { unit, provenance: 'user', source: source.trim() },
+    };
+  };
+
   // --- money (price / down) ---
+  // Resolve explicit labels first. This also prevents a punctuation comma in
+  // "Purchase $500,000, down $100,000" from reversing the two amounts.
+  const explicitPrice = text.match(/(?:purchase(?:\s+price)?|price|home\s+value|property\s+value)\s*(?:is|of|:)?\s*(\$?\s?[\d,]+(?:\.\d+)?\s?(?:k|m|million|thousand)?)/i);
+  const explicitDown = text.match(/(?:down(?:\s+payment)?|putting\s+down)\s*(?:is|of|:)?\s*(\$?\s?[\d,]+(?:\.\d+)?\s?(?:k|m|million|thousand)?)/i);
+  const explicitPriceValue = explicitPrice?.[1] ? toNumber(explicitPrice[1]) : null;
+  const explicitDownValue = explicitDown?.[1] ? toNumber(explicitDown[1]) : null;
+  if (explicitPriceValue != null && explicitPriceValue >= MIN_PLAUSIBLE_PRICE) profile.purchasePrice = explicitPriceValue;
+  if (explicitDownValue != null && explicitDownValue >= MIN_PLAUSIBLE_DOWN) profile.downPayment = explicitDownValue;
   classifyMoney(findMoney(text), profile, text);
+
+  // --- explicitly-unitized financial facts ---
+  const captureMoney = (
+    field: ScenarioNumericField,
+    re: RegExp,
+    unit: NumericUnit = 'usd',
+  ): boolean => {
+    const m = text.match(re);
+    const raw = m?.[1] ?? m?.[2];
+    const value = raw ? toNumber(raw) : null;
+    if (m && value != null && value >= 0) {
+      (profile as unknown as Record<string, unknown>)[field] = value;
+      mark(field, unit, m[0]);
+      return true;
+    }
+    return false;
+  };
+  // Prefer a value following its label. A single alternation would let an
+  // earlier amount from the previous comma-delimited clause win (for example,
+  // "available cash $120k, closing costs $15k" used to assign $120k to costs).
+  if (!captureMoney('cashAvailable', /(?:available\s+cash|cash\s+available|cash\s+on\s+hand|доступн\w*\s+(?:денег|средств))[^\d$,;]{0,12}(\$?\s?[\d,.]+\s?(?:k|m|million|thousand)?)/i)) {
+    captureMoney('cashAvailable', /(\$?\s?[\d,.]+\s?(?:k|m|million|thousand)?)[^\d$,;]{0,12}(?:available\s+cash|доступн\w*\s+(?:денег|средств))/i);
+  }
+  if (!captureMoney('closingCosts', /(?:closing\s+costs?|costs?\s+to\s+close|расход\w*\s+(?:на\s+)?закрыт\w*)[^\d$,;]{0,12}(\$?\s?[\d,.]+\s?(?:k|m|million|thousand)?)/i)) {
+    captureMoney('closingCosts', /(\$?\s?[\d,.]+\s?(?:k|m|million|thousand)?)[^\d$,;]{0,12}(?:closing\s+costs?|расход\w*\s+(?:на\s+)?закрыт\w*)/i);
+  }
+  if (!captureMoney('protectedReserves', /(?:protected\s+reserve|keep\w*\s+(?:as|in)?\s*reserve|protect\w*|untouched\s+reserve|неснижаем\w*\s+резерв|остав\w*\s+в\s+резерв)[^\d$,;]{0,12}(\$?\s?[\d,.]+\s?(?:k|m|million|thousand)?)/i)) {
+    captureMoney('protectedReserves', /(\$?\s?[\d,.]+\s?(?:k|m|million|thousand)?)[^\d$,;]{0,12}(?:protected\s+reserve|untouched\s+reserve|(?:as|in)\s+reserves?|неснижаем\w*\s+резерв)/i);
+  }
+  captureMoney('currentLoanBalance', /(?:current\s+(?:loan|mortgage)\s+balance|owe|balance)\D{0,12}(\$?\s?[\d,.]+\s?(?:k|m|million|thousand)?)/i);
+  captureMoney('cashOutAmount', /(?:cash[ -]?out)\D{0,12}(\$?\s?[\d,.]+\s?(?:k|m|million|thousand)?)/i);
+  captureMoney('currentMonthlyPayment', /(?:current\s+(?:monthly\s+)?payment|paying)\D{0,12}(\$?\s?[\d,.]+\s?(?:k|thousand)?)/i, 'usd_per_month');
+  captureMoney('monthlyRent', /(?:monthly\s+rent|\brent\b)\D{0,12}(\$?\s?[\d,.]+\s?(?:k|thousand)?)/i, 'usd_per_month');
+  if (!captureMoney('hoaMonthly', /(?:hoa|homeowners? association)\D{0,12}(\$?\s?[\d,.]+\s?(?:k|thousand)?)/i, 'usd_per_month')) {
+    captureMoney('hoaMonthly', /(?:\$?\s?([\d,.]+)\s*(?:\/\s*mo|monthly|per\s+month))\D{0,10}(?:hoa)/i, 'usd_per_month');
+  }
+  if (!captureMoney('pmiMonthly', /(?:pmi|mortgage\s+insurance)\D{0,12}(\$?\s?[\d,.]+\s?(?:k|thousand)?)/i, 'usd_per_month')) {
+    captureMoney('pmiMonthly', /(?:\$?\s?([\d,.]+)\s*(?:\/\s*mo|monthly|per\s+month))\D{0,10}(?:pmi)/i, 'usd_per_month');
+  }
+  if (/(?:no|without|zero)\s+pmi|без\s+pmi/i.test(text)) {
+    profile.pmiMonthly = 0;
+    mark('pmiMonthly', 'usd_per_month', text.match(/(?:no|without|zero)\s+pmi|без\s+pmi/i)?.[0] ?? 'no PMI');
+  }
+
+  const rate = text.match(/(?:rate|interest|ставк[а-яё]*)\D{0,10}(\d{1,2}(?:[.,]\d+)?)\s*%|(\d{1,2}(?:[.,]\d+)?)\s*%\s*(?:rate|interest|ставк[а-яё]*)|(?:\bat|под)\s+(\d{1,2}(?:[.,]\d+)?)\s*%/i);
+  if (rate) {
+    profile.interestRate = Number((rate[1] ?? rate[2] ?? rate[3]).replace(',', '.'));
+    mark('interestRate', 'percent_annual', rate[0]);
+  }
+  const currentRate = text.match(/current\s+(?:rate|interest)\D{0,10}(\d{1,2}(?:[.,]\d+)?)\s*%/i);
+  if (currentRate) {
+    profile.currentInterestRate = Number(currentRate[1].replace(',', '.'));
+    mark('currentInterestRate', 'percent_annual', currentRate[0]);
+  }
+  const proposedRefiRate = text.match(/(?:refinance|refi|new\s+loan)\D{0,12}?(?:at|rate(?:\s+of)?)\s*(\d{1,2}(?:[.,]\d+)?)\s*%/i);
+  if (proposedRefiRate) {
+    profile.interestRate = Number(proposedRefiRate[1].replace(',', '.'));
+    mark('interestRate', 'percent_annual', proposedRefiRate[0]);
+  }
+  const term = text.match(/(?:term|(?:на\s+)?срок)\D{0,8}(\d{1,2})\s*(?:years?|yrs?|лет|год(?:а|ов)?)|\b(\d{1,2})[ -]?(?:years?|yrs?)\b/i);
+  if (term) {
+    profile.termYears = Number(term[1] ?? term[2]);
+    mark('termYears', 'years', term[0]);
+  }
+
+  const annualOrMonthly = (
+    field: 'propertyTaxAnnual' | 'hazardInsuranceAnnual',
+    re: RegExp,
+  ) => {
+    const m = text.match(re);
+    if (!m) return;
+    const raw = m[1] ?? m[2];
+    const value = raw ? toNumber(raw) : null;
+    if (value == null) return;
+    const monthly = /(?:\/\s*mo|monthly|per\s+month|a\s+month|в\s+месяц)/i.test(m[0]);
+    profile[field] = monthly ? value * 12 : value;
+    mark(field, 'usd_per_year', `${m[0]}${monthly ? ' (converted from monthly)' : ''}`);
+  };
+  const statedPeriod = '(?:\\/\\s*(?:yr|year|mo)|per\\s+(?:year|month)|a\\s+(?:year|month)|annually|monthly|в\\s+(?:год|месяц))';
+  annualOrMonthly('propertyTaxAnnual', new RegExp(`(?:property\\s+tax(?:es)?|tax(?:es)?|налог(?:и|ов)?)\\s*(?:are|is|:)?\\s*(\\$?\\s?[\\d,.]+\\s?(?:k|thousand)?)\\s*${statedPeriod}`, 'i'));
+  annualOrMonthly('hazardInsuranceAnnual', new RegExp(`(?:homeowners?\\s+insurance|hazard\\s+insurance|insurance|страховк[а-яё]*)\\s*(?:are|is|:)?\\s*(\\$?\\s?[\\d,.]+\\s?(?:k|thousand)?)\\s*${statedPeriod}`, 'i'));
 
   // Spoken price with "million" dropped: "home around 1.4" → $1.4M. A bare small
   // DECIMAL in a price context almost always means millions (nobody buys a $1.40
@@ -191,23 +297,25 @@ export function parseScenario(text: string): ScenarioProfile {
   }
 
   // --- percent down --- accept "%", "percent", "pct", and common RU/ES/ZH words
-  const PCT = '(?:%|percent|pct|процент\\w*|por\\s?ciento|por\\s?cent|百分)';
+  const PCT = '(?:%|percent|pct|процент[а-яё]*|por\\s?ciento|por\\s?cent|百分)';
   // Down anchor incl. multilingual: enganche/inicial (ES), взнос/первоначальн (RU),
   // 首付/首期/頭期 (ZH).
-  const DP = '(?:down|dp|put|enganche|inicial|pie|взнос|первоначальн\\w*|首付|首期|頭期)';
+  const DP = '(?:down|dp|put|enganche|inicial|pie|взнос|первоначальн[а-яё]*|首付|首期|頭期)';
   const pct = lower.match(
     new RegExp(
-      `(\\d{1,2}(?:\\.\\d+)?)\\s?${PCT}[^.]{0,16}?${DP}|${DP}[^.]{0,16}?(\\d{1,2}(?:\\.\\d+)?)\\s?${PCT}`,
+      `(\\d{1,2}(?:[.,]\\d+)?)\\s?${PCT}[^.]{0,16}?${DP}|${DP}[^.]{0,16}?(\\d{1,2}(?:[.,]\\d+)?)\\s?${PCT}`,
     ),
   );
   if (pct) {
-    const num = parseFloat(pct[1] ?? pct[2]);
-    if (Number.isFinite(num) && num > 0 && num <= 100) profile.downPaymentPercent = num;
+    const num = parseFloat((pct[1] ?? pct[2]).replace(',', '.'));
+    const isRatePhrase = profile.interestRate === num && /(?:rate|interest|ставк|\bat\s)/i.test(pct[0]);
+    if (profile.downPayment == null && !isRatePhrase && Number.isFinite(num) && num > 0 && num <= 100) profile.downPaymentPercent = num;
   }
 
   // Explicit zero-down ("0 down", "zero down", "no money down") → $0 down / 100% LTV.
   if (profile.downPayment == null && profile.downPaymentPercent == null &&
-      /\b(?:0|zero|no)\s*(?:%|percent|money)?\s*down\b/.test(lower)) {
+      (/\b(?:0|zero|no)\s*(?:%|percent|money)?\s*down\b/.test(lower) ||
+       /\bdown(?:\s+payment)?\s*(?:to|is|of|:)\s*(?:\$\s*)?0\b/.test(lower))) {
     profile.downPayment = 0;
     profile.downPaymentPercent = 0;
   }
@@ -257,14 +365,14 @@ export function parseScenario(text: string): ScenarioProfile {
   if (cityMatch) profile.city = cityMatch[1].trim();
 
   // --- occupancy ---
-  if (/\b(primary|owner.occupied|live in|main home)\b/.test(lower)) profile.occupancy = 'primary';
+  if (/\b(primary|owner.occupied|live in|main home)\b|основн[а-яё]*\s+(?:жиль[а-яё]*|мест[а-яё]*)|буду\s+жить/i.test(lower)) profile.occupancy = 'primary';
   else if (/\b(second home|vacation|getaway)\b/.test(lower)) profile.occupancy = 'second';
   else if (/\b(investment|rental|rent it|rent out|dscr|cash.flow)\b/.test(lower))
     profile.occupancy = 'investment';
 
   // --- employment ---
   const emp: [RegExp, EmploymentType][] = [
-    [/\bself.?employed\b/, 'self-employed'],
+    [/\bself.?employed\b|самозанят[а-яё]*|работаю\s+на\s+себя/i, 'self-employed'],
     [/\bw.?2\b/, 'w2'],
     [/\b1099\b/, '1099'],
     [/\bbusiness owner\b/, 'business-owner'],
@@ -417,6 +525,26 @@ export function parseScenario(text: string): ScenarioProfile {
   if (email) profile.email = email[0];
   const phone = text.match(/(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/);
   if (phone && !isPartOfMoney(text, phone.index ?? 0)) profile.phone = phone[0].trim();
+
+  // Preserve the unit and provenance of legacy price/down fields too. Derived
+  // percent-to-dollar down payments are marked derived rather than user-stated.
+  if (profile.purchasePrice != null && !profile.numericFieldMeta?.purchasePrice) {
+    mark('purchasePrice', 'usd', 'parsed from user message');
+  }
+  if (profile.downPaymentPercent != null && !profile.numericFieldMeta?.downPaymentPercent) {
+    mark('downPaymentPercent', 'percent', 'parsed from user message');
+  }
+  if (profile.downPayment != null && !profile.numericFieldMeta?.downPayment) {
+    const derived = profile.downPaymentPercent != null && profile.purchasePrice != null;
+    profile.numericFieldMeta = {
+      ...profile.numericFieldMeta,
+      downPayment: {
+        unit: 'usd',
+        provenance: derived ? 'derived' : 'user',
+        source: derived ? 'purchase price × down-payment percent' : 'parsed from user message',
+      },
+    };
+  }
 
   return profile;
 }

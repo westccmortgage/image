@@ -44,6 +44,8 @@ export interface CashToCloseInput {
 
   propertyTaxMonthly: number;
   hazardInsuranceMonthly: number;
+  hoaMonthly?: number;
+  pmiMonthly?: number;
 
   /** Days of per-diem interest collected at closing (closing-date sensitivity). */
   prepaidInterestDays: number;
@@ -103,6 +105,8 @@ export interface CashToCloseResult {
   monthlyPI: number;
   monthlyTaxes: number;
   monthlyInsurance: number;
+  monthlyHoa: number;
+  monthlyPmi: number;
   monthlyHousingPayment: number;
 
   // Closing cost buckets

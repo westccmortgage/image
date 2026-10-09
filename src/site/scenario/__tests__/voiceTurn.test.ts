@@ -15,7 +15,7 @@ describe('runAdvisorTurn — shared voice/chat brain', () => {
   });
 
   it('a bare percent answers the pending down-payment question', () => {
-    const first = runAdvisorTurn({ text: 'buying a $900k place', isFirst: true });
+    const first = runAdvisorTurn({ text: 'buying a $900k place at a 6% rate', isFirst: true });
     const second = runAdvisorTurn({
       text: '20%',
       profile: first.profile,
@@ -34,14 +34,15 @@ describe('runAdvisorTurn — shared voice/chat brain', () => {
   });
 
   it('computes real cash-to-close once price + down are given together', () => {
-    const r = runAdvisorTurn({ text: 'price is $800,000 with $200,000 down', isFirst: true });
+    const r = runAdvisorTurn({ text: 'price is $800,000 with $200,000 down at 6%', isFirst: true });
+    expect(r.profile.downPayment).toBe(200_000);
     expect(r.numbers.hasBoth).toBe(true);
     expect(r.numbers.totalCashToClose).toBeGreaterThan(200_000);
     expect(r.numbers.ltv).toBeGreaterThan(0);
   });
 
   it('carries the profile forward across turns', () => {
-    const t1 = runAdvisorTurn({ text: '$750,000 home', isFirst: true });
+    const t1 = runAdvisorTurn({ text: '$750,000 home at a 6% rate', isFirst: true });
     const t2 = runAdvisorTurn({ text: '$150,000 down', profile: t1.profile, pendingField: t1.pendingField });
     expect(t2.profile.purchasePrice).toBe(750_000);
     expect(t2.profile.downPayment).toBe(150_000);
