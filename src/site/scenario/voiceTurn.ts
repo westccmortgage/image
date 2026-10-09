@@ -8,7 +8,7 @@
 // re-phrase `reply` must ground it strictly in `numbers` (see the route).
 
 import { parseScenario, isLikelyPercent, MIN_PLAUSIBLE_PRICE, MIN_PLAUSIBLE_DOWN } from './parseScenario';
-import { isReadyForOptions } from './profile';
+import { hasFullNumbers, isReadyForOptions } from './profile';
 import { matchChoiceValue, humanCaptured, buildReply } from './converse';
 import type { ReplyNumbers } from './converse';
 import { nextBestQuestion } from './questionEngine';
@@ -57,7 +57,9 @@ export interface VoiceTurnResult {
 // Local copies of SmartAdvisor's coercion helpers (not exported from the barrel).
 function numberFromText(text: string): { value: number; hadDollarSign: boolean } | null {
   const hadDollarSign = text.includes('$');
-  const m = text.replace(/\$/g, '').match(/([\d,]+(?:\.\d+)?)\s*(k|mm|m|million|thousand)?/i);
+  const decimalComma = !hadDollarSign && /^\s*\d{1,2},\d{1,2}\s*%?\s*$/.test(text);
+  const normalized = decimalComma ? text.replace(',', '.') : text;
+  const m = normalized.replace(/\$/g, '').match(/([\d,]+(?:\.\d+)?)\s*(k|mm|m|million|thousand)?/i);
   if (!m) return null;
   const base = parseFloat(m[1].replace(/,/g, ''));
   if (!Number.isFinite(base)) return null;
@@ -133,11 +135,14 @@ export function runAdvisorTurn(inp: VoiceTurnInput): VoiceTurnResult {
 
   // 3) Numbers — only real when BOTH price and down payment are known.
   const evaluation = evaluateScenario(next);
-  const isBoth = evaluation.result != null;
-  const activeInput = isBoth ? profileToEngineInput(next) : defaultScenario;
+  const calculationReady = evaluation.result != null;
+  const hasBoth = hasFullNumbers(next);
+  const activeInput = calculationReady ? profileToEngineInput(next) : defaultScenario;
   const c = evaluation.result ?? calculateCashToClose(activeInput);
   const numbers: ReplyNumbers & { loanType: string } = {
-    hasBoth: isBoth,
+    hasBoth,
+    calculationReady,
+    missingCalculationInputs: [...evaluation.missing, ...evaluation.errors],
     downPayment: c.downPayment,
     totalCashToClose: c.totalCashToClose,
     additionalFundsNeeded: c.additionalFundsNeeded,

@@ -50,6 +50,15 @@ describe('audited canonical calculation failures', () => {
     expect(p.numericFieldMeta?.hoaMonthly?.unit).toBe('usd_per_month');
   });
 
+  it('supports "a month" but leaves ambiguous tax/insurance units unset', () => {
+    const monthly = parseScenario('taxes $500 a month and insurance $150 a month');
+    expect(monthly.propertyTaxAnnual).toBe(6_000);
+    expect(monthly.hazardInsuranceAnnual).toBe(1_800);
+    const ambiguous = parseScenario('taxes $500 and insurance $150');
+    expect(ambiguous.propertyTaxAnnual).toBeUndefined();
+    expect(ambiguous.hazardInsuranceAnnual).toBeUndefined();
+  });
+
   it('protects reserves and reports the exact $5,000 shortfall', () => {
     const e = evaluateScenario({
       ...exactProfile,
@@ -77,10 +86,37 @@ describe('audited canonical calculation failures', () => {
     expect(evaluateScenario(p).affordability?.surplusOrShortfall).toBe(-5_000);
   });
 
+  it('keeps adjacent label-first cash buckets separate', () => {
+    const p = parseScenario('Purchase $500,000, down payment $100,000, available cash $120,000, closing costs $15,000, protect $10,000 as reserves, 30 years at 6%.');
+    expect(p.cashAvailable).toBe(120_000);
+    expect(p.closingCosts).toBe(15_000);
+    expect(p.protectedReserves).toBe(10_000);
+    expect(evaluateScenario(p).affordability?.surplusOrShortfall).toBe(-5_000);
+  });
+
   it('does not calculate a borrower payment without an explicit note rate', () => {
     const e = evaluateScenario({ purchasePrice: 500_000, downPayment: 100_000 });
     expect(e.result).toBeNull();
     expect(e.missing).toContain('interest rate');
+  });
+
+  it.each([
+    [{ ...exactProfile, downPayment: 600_000 }, 'down payment cannot exceed purchase price'],
+    [{ ...exactProfile, termYears: 0 }, 'term must be greater than zero'],
+    [{ ...exactProfile, interestRate: 40 }, 'interest rate must be greater than 0%'],
+  ])('rejects malformed numeric scenarios', (profile, error) => {
+    const e = evaluateScenario(profile as ScenarioProfile);
+    expect(e.result).toBeNull();
+    expect(e.errors.join(' ')).toContain(error);
+  });
+
+  it('rejects an underwater cash-out refinance instead of clamping the balance', () => {
+    const e = evaluateScenario({
+      loanPurpose: 'refinance', purchasePrice: 500_000, currentLoanBalance: 600_000,
+      interestRate: 6,
+    });
+    expect(e.result).toBeNull();
+    expect(e.errors).toContain('refinance balance plus cash out cannot exceed property value');
   });
 });
 
@@ -119,6 +155,40 @@ describe('intent-aware non-destructive state', () => {
     expect(p.occupancy).toBe('primary');
     expect(p.employmentType).toBe('self-employed');
     expect(p.interestRate).toBe(6);
+  });
+
+  it('parses Russian comma-decimal rates and percentages exactly', () => {
+    const p = parseScenario('Цена 1,2 млн, первоначальный взнос 20,5%, ставка 6,5%.');
+    expect(p.purchasePrice).toBe(1_200_000);
+    expect(p.downPaymentPercent).toBe(20.5);
+    expect(p.downPayment).toBe(246_000);
+    expect(p.interestRate).toBe(6.5);
+  });
+
+  it('preserves Russian term and annual tax/insurance units', () => {
+    const p = parseScenario('Срок 30 лет, налог $6,000 в год, страховка $1,800 в год.');
+    expect(p.termYears).toBe(30);
+    expect(p.propertyTaxAnnual).toBe(6_000);
+    expect(p.hazardInsuranceAnnual).toBe(1_800);
+  });
+
+  it('does not turn a rate into a down-payment percent when dollar down is stated', () => {
+    const p = parseScenario('Purchase $500,000, down $100,000 at 6%');
+    expect(p.downPayment).toBe(100_000);
+    expect(p.downPaymentPercent).toBeUndefined();
+  });
+
+  it('accepts a natural zero-down correction', () => {
+    const turn = resolveScenarioTurn(exactProfile, 'Change down payment to 0');
+    expect(turn.profile.downPayment).toBe(0);
+  });
+
+  it('separates current and proposed refinance rates without inventing rent', () => {
+    const p = parseScenario('Current rate 7%, refinance at 6%, current balance $500,000, current payment $4,000.');
+    expect(p.currentInterestRate).toBe(7);
+    expect(p.interestRate).toBe(6);
+    expect(p.monthlyRent).toBeUndefined();
+    expect(p.currentMonthlyPayment).toBe(4_000);
   });
 });
 
@@ -163,5 +233,20 @@ describe('purpose-specific comparisons without invented pricing', () => {
     expect(e.result?.loanAmount).toBe(600_000);
     expect(e.result?.downPayment).toBe(0);
     expect(e.result?.totalCashToClose).toBe(12_000);
+  });
+
+  it('produces genuine refinance savings/break-even and investment coverage comparisons', () => {
+    const refi = evaluateScenario({
+      loanPurpose: 'refinance', purchasePrice: 900_000, currentLoanBalance: 500_000,
+      currentMonthlyPayment: 4_500, interestRate: 6, closingCosts: 12_000,
+    });
+    expect(refi.comparison?.kind).toBe('refinance');
+    expect(refi.comparison?.monthlySavings).toBeGreaterThan(0);
+    expect(refi.comparison?.breakEvenMonths).toBeGreaterThan(0);
+    const investment = evaluateScenario({
+      ...exactProfile, occupancy: 'investment', monthlyRent: 4_000,
+    });
+    expect(investment.comparison?.kind).toBe('investment');
+    expect(investment.comparison?.rentCoverageRatio).toBeCloseTo(4_000 / 3_148.2, 3);
   });
 });

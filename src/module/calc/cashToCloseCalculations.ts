@@ -279,7 +279,7 @@ export function buildDownPaymentScenarios(
     );
     const estimatedMonthlyPayment =
       monthlyPI + input.propertyTaxMonthly + input.hazardInsuranceMonthly +
-      (input.hoaMonthly ?? 0) + (input.pmiMonthly ?? 0);
+      (input.hoaMonthly ?? 0);
 
     const prepaidInterest = calcPrepaidInterest(
       loanAmount,

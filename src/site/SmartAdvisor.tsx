@@ -19,6 +19,7 @@ import {
   fieldLabel,
   fieldQuestion,
   fieldOptionLabel,
+  hasFullNumbers,
   matchLoanPrograms,
   compareDownPaymentOptions,
   profileToEngineInput,
@@ -104,7 +105,9 @@ const catLabelKey = (v: string): Parameters<typeof t>[1] => CAT_LABEL_KEY[v] ?? 
 
 function numberFromText(text: string): { value: number; hadDollarSign: boolean } | null {
   const hadDollarSign = text.includes('$');
-  const m = text.replace(/\$/g, '').match(/([\d,]+(?:\.\d+)?)\s*(k|mm|m|million|thousand)?/i);
+  const decimalComma = !hadDollarSign && /^\s*\d{1,2},\d{1,2}\s*%?\s*$/.test(text);
+  const normalized = decimalComma ? text.replace(',', '.') : text;
+  const m = normalized.replace(/\$/g, '').match(/([\d,]+(?:\.\d+)?)\s*(k|mm|m|million|thousand)?/i);
   if (!m) return null;
   const base = parseFloat(m[1].replace(/,/g, ''));
   if (!Number.isFinite(base)) return null;
@@ -243,7 +246,7 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
       );
     }
     for (const pr of matchLoanPrograms(p).slice(0, 3)) {
-      lines.push(`• ${pr.name} — ${pr.fit.toLowerCase()}. ${pr.why}`);
+      lines.push(`• ${pr.name} — ${pr.fit.toLowerCase()} · unverified, broker review required. ${pr.why}`);
     }
     lines.push(tr('snapshotReadyPrompt'));
     return lines;
@@ -253,8 +256,9 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
     setProfile(next);
     const captured = newlyCaptured(prev, next);
     const evaluation = evaluateScenario(next);
-    const isBoth = evaluation.result != null;
-    const activeInput = isBoth ? toInput(next) : defaultScenario;
+    const calculationReady = evaluation.result != null;
+    const hasBoth = hasFullNumbers(next);
+    const activeInput = calculationReady ? toInput(next) : defaultScenario;
     const c = evaluation.result ?? calculateCashToClose(defaultScenario);
     const ready = isReadyForOptions(next);
     const rawNq = nextQuestions(next, { max: 1 })[0] ?? null;
@@ -264,13 +268,15 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
     setQuestions(nq ? [nq] : []);
 
     const capturedText = captured.map((k) => humanCaptured(k, next, labelForValue)).filter(Boolean);
-    const localLines = ready
-      ? snapshotLines(next, c, isBoth)
+    const localBase = ready
+      ? snapshotLines(next, c, calculationReady)
       : buildReply({
           userText,
           capturedText,
           numbers: {
-            hasBoth: isBoth,
+            hasBoth,
+            calculationReady,
+            missingCalculationInputs: [...evaluation.missing, ...evaluation.errors],
             downPayment: c.downPayment,
             totalCashToClose: c.totalCashToClose,
             additionalFundsNeeded: c.additionalFundsNeeded,
@@ -281,9 +287,17 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
           nextQuestion: nq,
           isFirstMessage: isFirst,
         });
+    const localLines = [
+      ...localBase,
+      ...evaluation.assumptions.map((a) => `Assumption: ${a}.`),
+      ...(evaluation.affordability && !evaluation.affordability.affordable
+        ? [`Available cash is short by ${formatMoney(Math.abs(evaluation.affordability.surplusOrShortfall))} after protecting reserves.`]
+        : []),
+      ...evaluation.errors.map((e) => `I can't calculate this scenario: ${e}.`),
+    ];
 
     const nextPrograms = matchLoanPrograms(next);
-    const warnings = isBoth
+    const warnings = calculationReady
       ? [
           ...c.risk.warnings.slice(0, 2),
           ...evaluation.assumptions,
@@ -310,7 +324,8 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
         nextQuestions: nq ? [nq.prompt] : [],
         possibleLoanPaths: buildProgramSummaries(nextPrograms),
         cashToCloseEstimate: {
-          hasBoth: isBoth,
+          hasBoth,
+          calculationReady,
           downPayment: c.downPayment,
           totalCashToClose: c.totalCashToClose,
           additionalFundsNeeded: c.additionalFundsNeeded,
@@ -318,6 +333,13 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
           loanType: activeInput.loanType,
           monthlyPI: c.monthlyPI,
           monthlyHousing: c.monthlyHousingPayment,
+          totalClosingCosts: c.totalClosingCosts,
+          lenderFeesTotal: c.lenderFeesTotal,
+          thirdPartyFeesTotal: c.thirdPartyFeesTotal,
+          governmentFeesTotal: c.governmentFeesTotal,
+          prepaidsAndEscrowTotal: c.prepaidsAndEscrowTotal,
+          sellerCredit: c.sellerCredit,
+          lenderCredit: c.lenderCredit,
         },
         warnings,
         suggestedActions: ready ? ['prepare_strategy_summary', 'talk_to_broker'] : [],
@@ -353,11 +375,20 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
       const baseEval = evaluateScenario(profile);
       const altEval = evaluateScenario(resolved.comparisonProfile);
       if (baseEval.result && altEval.result) {
-        pushAi([
-          `Hypothetical only — your saved scenario is unchanged. At ${resolved.comparisonProfile.interestRate ?? profile.interestRate}% for ${resolved.comparisonProfile.termYears ?? profile.termYears ?? 30} years, principal & interest would be ${formatMoney(altEval.result.monthlyPI)}/mo versus ${formatMoney(baseEval.result.monthlyPI)}/mo in the base scenario.`,
-        ]);
+        const rate = resolved.comparisonProfile.interestRate ?? profile.interestRate;
+        const term = resolved.comparisonProfile.termYears ?? profile.termYears ?? 30;
+        const localized = {
+          en: `Hypothetical only — your saved scenario is unchanged. At ${rate}% for ${term} years, P&I would be ${formatMoney(altEval.result.monthlyPI)}/mo and total housing ${formatMoney(altEval.result.monthlyHousingPayment)}/mo, versus ${formatMoney(baseEval.result.monthlyPI)} and ${formatMoney(baseEval.result.monthlyHousingPayment)} in the base scenario.`,
+          ru: `Только гипотетический расчёт — сохранённый сценарий не изменён. При ${rate}% на ${term} лет основной долг и проценты составят ${formatMoney(altEval.result.monthlyPI)}/мес., а общий платёж за жильё — ${formatMoney(altEval.result.monthlyHousingPayment)}/мес.; в базовом сценарии — ${formatMoney(baseEval.result.monthlyPI)} и ${formatMoney(baseEval.result.monthlyHousingPayment)}.`,
+          es: `Solo es un cálculo hipotético; el escenario guardado no cambió. Al ${rate}% por ${term} años, capital e intereses serían ${formatMoney(altEval.result.monthlyPI)}/mes y el costo total de vivienda ${formatMoney(altEval.result.monthlyHousingPayment)}/mes, frente a ${formatMoney(baseEval.result.monthlyPI)} y ${formatMoney(baseEval.result.monthlyHousingPayment)} en el escenario base.`,
+          zh: `仅为假设计算，已保存的方案未更改。按 ${rate}%、${term} 年计算，本息约为 ${formatMoney(altEval.result.monthlyPI)}/月，住房总支出约为 ${formatMoney(altEval.result.monthlyHousingPayment)}/月；基础方案分别为 ${formatMoney(baseEval.result.monthlyPI)} 和 ${formatMoney(baseEval.result.monthlyHousingPayment)}。`,
+        }[lang];
+        pushAi([localized]);
       } else {
-        pushAi([`I kept your saved scenario unchanged. To calculate that hypothetical, I still need ${altEval.missing.join(', ')}.`]);
+        const missing = [...altEval.missing, ...altEval.errors].join(', ');
+        pushAi([lang === 'ru'
+          ? `Сохранённый сценарий не изменён. Для гипотетического расчёта ещё нужно: ${missing}.`
+          : `I kept your saved scenario unchanged. To calculate that hypothetical, I still need ${missing}.`]);
       }
       return;
     }

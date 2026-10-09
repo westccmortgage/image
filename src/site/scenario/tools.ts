@@ -102,8 +102,18 @@ export interface ScenarioAffordability {
 export interface ScenarioEvaluation {
   result: CashToCloseResult | null;
   missing: string[];
+  errors: string[];
   assumptions: string[];
   affordability: ScenarioAffordability | null;
+  comparison: {
+    kind: 'refinance' | 'investment';
+    proposedMonthlyHousing: number;
+    currentMonthlyPayment?: number;
+    monthlySavings?: number;
+    breakEvenMonths?: number | null;
+    monthlyRent?: number;
+    rentCoverageRatio?: number;
+  } | null;
 }
 
 /** Bridge a conversational profile into the engine's input shape. */
@@ -123,7 +133,7 @@ export function profileToEngineInput(p: ScenarioProfile): CashToCloseInput {
   const doc = p.incomeDocPath;
   if (p.occupancy === 'investment' || doc === 'dscr') input.loanType = 'Non-QM';
   else if (doc === 'bank-statements' || doc === 'p-and-l' || doc === 'asset-depletion') input.loanType = 'Non-QM';
-  else if (doc === 'full-doc') input.loanType = (input.purchasePrice ?? 0) > 806_500 ? 'Jumbo' : 'Conventional';
+  else if (doc === 'full-doc') input.loanType = 'Conventional';
   if (p.occupancy === 'investment') input.occupancy = 'Investment Property';
   else if (p.occupancy === 'second') input.occupancy = 'Second Home';
   else input.occupancy = 'Primary Residence';
@@ -205,19 +215,50 @@ export function profileToEngineInput(p: ScenarioProfile): CashToCloseInput {
 /** Canonical validated scenario calculation for chat, cards and summaries. */
 export function evaluateScenario(p: ScenarioProfile): ScenarioEvaluation {
   const missing: string[] = [];
+  const errors: string[] = [];
   if (!(p.purchasePrice && p.purchasePrice > 0)) missing.push('purchase price / property value');
   if (p.loanPurpose !== 'refinance' && p.downPayment == null) missing.push('down payment');
-  if (!(p.interestRate != null && p.interestRate >= 0)) missing.push('interest rate');
+  if (p.interestRate == null) missing.push('interest rate');
   if (p.loanPurpose === 'refinance' && !(p.currentLoanBalance && p.currentLoanBalance > 0)) {
     missing.push('current loan balance');
   }
-  if (missing.length) return { result: null, missing, assumptions: [], affordability: null };
+  if (p.purchasePrice != null && (!Number.isFinite(p.purchasePrice) || p.purchasePrice <= 0)) errors.push('property value must be greater than zero');
+  if (p.downPayment != null && (!Number.isFinite(p.downPayment) || p.downPayment < 0)) errors.push('down payment cannot be negative');
+  if (p.purchasePrice != null && p.downPayment != null && p.downPayment > p.purchasePrice) errors.push('down payment cannot exceed purchase price');
+  if (p.downPaymentPercent != null && (p.downPaymentPercent < 0 || p.downPaymentPercent > 100)) errors.push('down-payment percent must be between 0% and 100%');
+  if (p.purchasePrice && p.downPayment != null && p.downPaymentPercent != null &&
+      Math.abs(p.downPayment / p.purchasePrice * 100 - p.downPaymentPercent) > 0.05) {
+    errors.push('down-payment dollars and percent conflict');
+  }
+  if (p.interestRate != null && (!Number.isFinite(p.interestRate) || p.interestRate <= 0 || p.interestRate > 25)) {
+    errors.push('interest rate must be greater than 0% and no more than 25%');
+  }
+  if (p.termYears != null && (!Number.isFinite(p.termYears) || p.termYears <= 0 || p.termYears > 50)) {
+    errors.push('term must be greater than zero and no more than 50 years');
+  }
+  for (const [label, value] of [
+    ['property tax', p.propertyTaxAnnual], ['insurance', p.hazardInsuranceAnnual],
+    ['HOA', p.hoaMonthly], ['PMI', p.pmiMonthly], ['closing costs', p.closingCosts],
+    ['available cash', p.cashAvailable], ['protected reserves', p.protectedReserves],
+    ['cash out', p.cashOutAmount], ['monthly rent', p.monthlyRent],
+  ] as const) {
+    if (value != null && (!Number.isFinite(value) || value < 0)) errors.push(`${label} cannot be negative`);
+  }
+  if (p.loanPurpose === 'refinance' && p.purchasePrice && p.currentLoanBalance) {
+    const proposedBalance = p.currentLoanBalance + (p.cashOutAmount ?? 0);
+    if (proposedBalance > p.purchasePrice) errors.push('refinance balance plus cash out cannot exceed property value');
+  }
+  if (missing.length || errors.length) {
+    return { result: null, missing, errors, assumptions: [], affordability: null, comparison: null };
+  }
 
   const assumptions: string[] = [];
   if (p.termYears == null) assumptions.push('30-year term planning assumption');
   if (p.propertyTaxAnnual == null) assumptions.push('property tax estimated at 1.25% of value per year');
   if (p.hazardInsuranceAnnual == null) assumptions.push('hazard insurance estimated at 0.25% of value per year');
-  if (p.pmiMonthly == null && (p.downPaymentPercent ?? 100) < 20) {
+  const actualDownPercent = p.downPaymentPercent ??
+    (p.purchasePrice && p.downPayment != null ? p.downPayment / p.purchasePrice * 100 : 100);
+  if (p.pmiMonthly == null && actualDownPercent < 20) {
     assumptions.push('PMI amount is unknown and excluded; lender verification required');
   }
 
@@ -251,7 +292,30 @@ export function evaluateScenario(p: ScenarioProfile): ScenarioEvaluation {
       affordable: surplusOrShortfall >= 0,
     };
   }
-  return { result, missing: [], assumptions, affordability };
+  let comparison: ScenarioEvaluation['comparison'] = null;
+  if (p.loanPurpose === 'refinance') {
+    const current = p.currentMonthlyPayment;
+    const monthlySavings = current != null ? roundCents(current - result.monthlyHousingPayment) : undefined;
+    comparison = {
+      kind: 'refinance',
+      proposedMonthlyHousing: result.monthlyHousingPayment,
+      currentMonthlyPayment: current,
+      monthlySavings,
+      breakEvenMonths: monthlySavings != null && monthlySavings > 0 && p.closingCosts != null
+        ? Math.ceil(p.closingCosts / monthlySavings)
+        : null,
+    };
+  } else if (p.occupancy === 'investment' && p.monthlyRent != null) {
+    comparison = {
+      kind: 'investment',
+      proposedMonthlyHousing: result.monthlyHousingPayment,
+      monthlyRent: p.monthlyRent,
+      rentCoverageRatio: result.monthlyHousingPayment > 0
+        ? Math.round(p.monthlyRent / result.monthlyHousingPayment * 1000) / 1000
+        : 0,
+    };
+  }
+  return { result, missing: [], errors: [], assumptions, affordability, comparison };
 }
 
 /** Round to cents (avoids floating-point dust in displayed line items). */
@@ -262,7 +326,7 @@ function roundCents(n: number): number {
 export interface BrokerReviewSummary {
   headline: string;
   scenario: Record<string, string>;
-  topPrograms: { name: string; fit: string }[];
+  topPrograms: { name: string; fit: string; dataStatus: string }[];
   missing: string[];
   estimatedCashToClose: number | null;
   requiresHumanReview: boolean;
@@ -296,7 +360,7 @@ export function prepareBrokerReviewSummary(
   return {
     headline: 'Loan Strategy Profile — prepared for broker review',
     scenario,
-    topPrograms: matched.slice(0, 3).map((m) => ({ name: m.name, fit: m.fit })),
+    topPrograms: matched.slice(0, 3).map((m) => ({ name: m.name, fit: m.fit, dataStatus: m.dataStatus })),
     missing: Array.from(new Set(matched.flatMap((m) => m.missing))).slice(0, 6),
     estimatedCashToClose,
     requiresHumanReview: true,

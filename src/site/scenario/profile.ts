@@ -148,7 +148,8 @@ export function isStrategyReady(p: ScenarioProfile): boolean {
   const hasLocation = hasValue(p, 'state') || hasValue(p, 'stateCode') || hasValue(p, 'zipOrCounty');
   const hasOccupancy = hasValue(p, 'occupancy');
   const hasIncome = hasValue(p, 'employmentType') || hasValue(p, 'incomeDocPath');
-  return hasNumbers && hasLocation && hasOccupancy && hasIncome;
+  const hasRate = hasValue(p, 'interestRate');
+  return hasNumbers && hasRate && hasLocation && hasOccupancy && hasIncome;
 }
 
 export const CONTACT_FIELDS: FieldKey[] = ['name', 'phone', 'email'];

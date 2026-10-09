@@ -14,10 +14,11 @@ describe('mobile: strategy-summary readiness', () => {
     // numbers only, missing location/occupancy/income
     expect(isStrategyReady({ purchasePrice: 800_000, downPayment: 160_000 })).toBe(false);
   });
-  it('is ready once price+down, location, occupancy, and income are known', () => {
+  it('is ready once price+down, rate, location, occupancy, and income are known', () => {
     const p: ScenarioProfile = {
       purchasePrice: 800_000,
       downPayment: 160_000,
+      interestRate: 6,
       state: 'California',
       occupancy: 'primary',
       employmentType: 'w2',
@@ -27,7 +28,7 @@ describe('mobile: strategy-summary readiness', () => {
   it('does not require every optional field (FICO/reserves/goal)', () => {
     const p: ScenarioProfile = {
       purchasePrice: 800_000, downPayment: 160_000, zipOrCounty: '90210',
-      occupancy: 'investment', incomeDocPath: 'dscr',
+      occupancy: 'investment', incomeDocPath: 'dscr', interestRate: 6,
     };
     expect(isStrategyReady(p)).toBe(true);
     expect(p.fico).toBeUndefined();

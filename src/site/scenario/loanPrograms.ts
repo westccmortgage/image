@@ -1,5 +1,5 @@
 import { deriveScenario } from './profile';
-import { programDataStatusFor, programEffectiveDate } from './programData';
+import { hasVerifiedProgramData, programDataStatusFor, programEffectiveDate } from './programData';
 import type { FitLabel, LoanProgramMatch, ProgramCategory, ScenarioProfile } from './types';
 
 // ---------------------------------------------------------------------------
@@ -223,7 +223,7 @@ export function matchLoanPrograms(p: ScenarioProfile): LoanProgramMatch[] {
   return drafts
     .map<LoanProgramMatch>((d) => ({
       ...d,
-      fit: fitFromScore(d.score),
+      fit: hasVerifiedProgramData() ? fitFromScore(d.score) : 'May fit — needs review',
       // No program-specific pricing source is connected. Repeating one assumed
       // rate/cost across every card is misleading, so numeric program quotes
       // remain unavailable until dated data exists.
