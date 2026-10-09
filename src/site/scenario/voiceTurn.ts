@@ -8,11 +8,13 @@
 // re-phrase `reply` must ground it strictly in `numbers` (see the route).
 
 import { parseScenario, isLikelyPercent, MIN_PLAUSIBLE_PRICE, MIN_PLAUSIBLE_DOWN } from './parseScenario';
-import { mergeProfile, isReadyForOptions } from './profile';
+import { isReadyForOptions } from './profile';
 import { matchChoiceValue, humanCaptured, buildReply } from './converse';
 import type { ReplyNumbers } from './converse';
 import { nextBestQuestion } from './questionEngine';
 import { profileToEngineInput, calculateCashToClose } from './tools';
+import { evaluateScenario } from './tools';
+import { resolveScenarioTurn } from './turnIntent';
 import { matchLoanPrograms } from './loanPrograms';
 import { fieldQuestion } from './fieldsI18n';
 import { labelForValue, FIELD_BY_KEY } from './fields';
@@ -125,13 +127,15 @@ export function runAdvisorTurn(inp: VoiceTurnInput): VoiceTurnResult {
     patch = { ...coerced, ...patch };
   }
 
-  const next = mergeProfile(prev, patch);
+  const resolved = resolveScenarioTurn(prev, text, patch);
+  const next = resolved.profile;
   const captured = newlyCaptured(prev, next);
 
   // 3) Numbers — only real when BOTH price and down payment are known.
-  const isBoth = !!(next.purchasePrice && next.downPayment != null);
+  const evaluation = evaluateScenario(next);
+  const isBoth = evaluation.result != null;
   const activeInput = isBoth ? profileToEngineInput(next) : defaultScenario;
-  const c = calculateCashToClose(activeInput);
+  const c = evaluation.result ?? calculateCashToClose(activeInput);
   const numbers: ReplyNumbers & { loanType: string } = {
     hasBoth: isBoth,
     downPayment: c.downPayment,

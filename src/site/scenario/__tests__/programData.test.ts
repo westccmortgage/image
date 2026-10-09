@@ -18,7 +18,7 @@ describe('program-data honesty', () => {
   });
 
   it('status is a planning assumption or broker-review, never verified', () => {
-    expect(programDataStatusFor(false)).toBe('configured_assumption');
+    expect(programDataStatusFor(false)).toBe('missing_pricing_data');
     expect(programDataStatusFor(true)).toBe('broker_review_required');
     expect(programDataStatusFor(false)).not.toBe('verified_current');
   });
@@ -34,7 +34,7 @@ describe('program-data honesty', () => {
     expect(matches.length).toBeGreaterThan(0);
     for (const m of matches) {
       expect(m.dataStatus).not.toBe('verified_current');
-      expect(['configured_assumption', 'broker_review_required']).toContain(m.dataStatus);
+      expect(['missing_pricing_data', 'broker_review_required']).toContain(m.dataStatus);
       expect(m.effectiveDate).toBeNull();
     }
   });

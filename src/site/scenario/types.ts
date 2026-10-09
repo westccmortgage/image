@@ -35,6 +35,24 @@ export type BorrowerGoal =
 
 export type LoanPurpose = 'purchase' | 'refinance';
 
+export type NumericUnit = 'usd' | 'usd_per_month' | 'usd_per_year' | 'percent' | 'percent_annual' | 'years';
+export type ValueProvenance = 'user' | 'derived' | 'planning_assumption' | 'verified_source';
+
+export interface NumericFieldMeta {
+  unit: NumericUnit;
+  provenance: ValueProvenance;
+  /** Original user phrase or a short, visible assumption label. */
+  source: string;
+}
+
+export type ScenarioNumericField =
+  | 'purchasePrice' | 'downPayment' | 'downPaymentPercent'
+  | 'interestRate' | 'termYears' | 'propertyTaxAnnual'
+  | 'hazardInsuranceAnnual' | 'hoaMonthly' | 'pmiMonthly'
+  | 'cashAvailable' | 'closingCosts' | 'protectedReserves'
+  | 'currentLoanBalance' | 'cashOutAmount' | 'currentInterestRate'
+  | 'currentMonthlyPayment' | 'monthlyRent';
+
 /** Supported advisor languages. */
 export type Language = 'en' | 'ru' | 'es' | 'zh';
 
@@ -54,6 +72,26 @@ export interface ScenarioProfile {
   downPayment?: number;
   /** Down payment expressed as a percent, when stated that way. */
   downPaymentPercent?: number;
+  /** Note rate in annual percentage points, e.g. 6 means 6% per year. */
+  interestRate?: number;
+  termYears?: number;
+  propertyTaxAnnual?: number;
+  hazardInsuranceAnnual?: number;
+  hoaMonthly?: number;
+  pmiMonthly?: number;
+  /** Total liquid cash available for closing, before the protected reserve. */
+  cashAvailable?: number;
+  /** User-provided total closing costs, when known; replaces planning cost assumptions. */
+  closingCosts?: number;
+  /** Cash that must remain untouched after closing. */
+  protectedReserves?: number;
+  /** Refinance-only inputs. */
+  currentLoanBalance?: number;
+  cashOutAmount?: number;
+  currentInterestRate?: number;
+  currentMonthlyPayment?: number;
+  /** Investment-only income input. */
+  monthlyRent?: number;
   loanPurpose?: LoanPurpose;
   zipOrCounty?: string;
   city?: string;
@@ -69,6 +107,8 @@ export interface ScenarioProfile {
   fico?: number;
   reserves?: number;
   borrowerGoal?: BorrowerGoal;
+  /** Units and provenance for every captured/derived numeric fact. */
+  numericFieldMeta?: Partial<Record<ScenarioNumericField, NumericFieldMeta>>;
 }
 
 /** Values derived from the profile (not asked). */
@@ -126,7 +166,9 @@ export type ProgramCategory =
   | 'DSCR Investment'
   | 'FHA'
   | 'VA'
-  | 'Bridge / Private';
+  | 'Bridge / Private'
+  | 'Rate-and-Term Refinance'
+  | 'Cash-Out Refinance';
 
 /** Cautious fit labels — never "approved" / "qualified" / "guaranteed". */
 export type FitLabel =

@@ -15,6 +15,28 @@ export function mergeProfile(
     if (v === undefined || v === null || v === '') continue;
     (next as Record<string, unknown>)[k] = v;
   }
+  next.numericFieldMeta = {
+    ...base.numericFieldMeta,
+    ...patch.numericFieldMeta,
+  };
+  // A newly stated dollar down payment supersedes an older percentage. A newly
+  // stated percentage supersedes/re-derives the dollar value.
+  if (patch.downPayment != null && patch.downPaymentPercent == null) {
+    delete next.downPaymentPercent;
+    if (next.numericFieldMeta) delete next.numericFieldMeta.downPaymentPercent;
+  }
+  if (patch.downPaymentPercent != null && next.purchasePrice) {
+    next.downPayment = Math.round((next.purchasePrice * patch.downPaymentPercent) / 100);
+    next.numericFieldMeta = {
+      ...next.numericFieldMeta,
+      downPayment: { unit: 'usd', provenance: 'derived', source: 'purchase price × down-payment percent' },
+    };
+  } else if (
+    patch.purchasePrice != null && next.downPaymentPercent != null &&
+    base.numericFieldMeta?.downPayment?.provenance === 'derived'
+  ) {
+    next.downPayment = Math.round((patch.purchasePrice * next.downPaymentPercent) / 100);
+  }
   // Keep down payment / percent consistent when we can.
   if (next.purchasePrice && next.downPaymentPercent && next.downPayment == null) {
     next.downPayment = Math.round((next.purchasePrice * next.downPaymentPercent) / 100);

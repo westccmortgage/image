@@ -1,4 +1,3 @@
-import { calcMonthlyPI } from '../../module/calc/cashToCloseCalculations';
 import { deriveScenario } from './profile';
 import { programDataStatusFor, programEffectiveDate } from './programData';
 import type { FitLabel, LoanProgramMatch, ProgramCategory, ScenarioProfile } from './types';
@@ -11,15 +10,9 @@ import type { FitLabel, LoanProgramMatch, ProgramCategory, ScenarioProfile } fro
 // guaranteed.
 // ---------------------------------------------------------------------------
 
-// 2025 conforming reference limits (one-unit). Used only to bucket loan size —
-// not to promise eligibility.
-const CONFORMING_BASELINE = 806_500;
-const HIGH_BALANCE_CEILING = 1_209_750;
-
-// A single, clearly-labeled planning rate so payment estimates are comparable.
-// This is an ASSUMPTION for illustration — not a quoted or invented lender rate.
+// This legacy export is retained for compatibility with callers, but it must
+// never be used as current pricing. Scenario calculations require a user rate.
 const ASSUMED_RATE = 7.25;
-const PLANNING_CLOSING_RATE = 0.03; // fees + prepaids as a share of loan (planning)
 
 function fitFromScore(score: number): FitLabel {
   if (score >= 4) return 'Possible strong fit';
@@ -40,17 +33,39 @@ interface Draft {
 }
 
 export function matchLoanPrograms(p: ScenarioProfile): LoanProgramMatch[] {
-  const { loanAmount, ltv } = deriveScenario(p);
+  const { ltv } = deriveScenario(p);
   const belowTwenty = ltv != null && ltv > 80;
   const emp = p.employmentType;
   const doc = p.incomeDocPath;
   const occ = p.occupancy;
   const selfEmployed = emp === 'self-employed' || emp === 'business-owner' || emp === '1099';
-  const sizeKnown = loanAmount != null;
   const countyUnconfirmed = p.countyConfidence !== 'confirmed';
 
   const drafts: Draft[] = [];
   const add = (d: Draft) => drafts.push(d);
+
+  if (p.loanPurpose === 'refinance') {
+    const commonMissing: string[] = [];
+    if (!p.currentLoanBalance) commonMissing.push('current loan balance');
+    if (p.currentInterestRate == null) commonMissing.push('current note rate');
+    commonMissing.push('dated lender pricing and refinance costs');
+    add({
+      id: 'rate-term-refi', name: 'Rate-and-Term Refinance', category: 'Rate-and-Term Refinance',
+      score: p.cashOutAmount ? 1 : 5,
+      why: 'Compares a replacement loan focused on rate, term, and verified break-even costs without treating home equity as a down payment.',
+      missing: [...commonMissing],
+      documentation: ['Current mortgage statement', 'Income and asset documentation'],
+      risks: ['Closing-cost break-even must be verified', 'No savings claim without a dated quote'],
+    });
+    add({
+      id: 'cash-out-refi', name: 'Cash-Out Refinance', category: 'Cash-Out Refinance',
+      score: p.cashOutAmount ? 5 : 1,
+      why: 'Separately evaluates requested cash out, the resulting loan amount, LTV, payment, and closing costs.',
+      missing: [...commonMissing, ...(p.cashOutAmount ? [] : ['requested cash-out amount'])],
+      documentation: ['Current mortgage statement', 'Use-of-funds and asset documentation'],
+      risks: ['Higher balance and payment may result', 'Cash-out limits and pricing require broker review'],
+    });
+  }
 
   // --- Conforming QM ---
   {
@@ -58,8 +73,8 @@ export function matchLoanPrograms(p: ScenarioProfile): LoanProgramMatch[] {
     const missing: string[] = [];
     if (occ === 'primary' || occ === 'second') score += 1;
     if (doc === 'full-doc' || emp === 'w2') score += 2;
-    if (sizeKnown && loanAmount! <= CONFORMING_BASELINE) score += 1;
-    if (sizeKnown && loanAmount! > CONFORMING_BASELINE) score -= 3;
+    if (p.borrowerGoal === 'lowest-payment' || p.borrowerGoal === 'best-long-term') score += 1;
+    missing.push('current dated conforming loan limit / program source');
     if (!doc && emp !== 'w2') missing.push('income documentation path');
     if (!occ) missing.push('occupancy');
     add({
@@ -76,10 +91,9 @@ export function matchLoanPrograms(p: ScenarioProfile): LoanProgramMatch[] {
   {
     let score = 0;
     const missing: string[] = [];
-    if (sizeKnown && loanAmount! > CONFORMING_BASELINE && loanAmount! <= HIGH_BALANCE_CEILING) score += 3;
-    else if (sizeKnown) score -= 2;
     if (doc === 'full-doc' || emp === 'w2') score += 1;
     if (countyUnconfirmed) missing.push('confirmed county (loan-limit area)');
+    missing.push('current dated high-balance limit / program source');
     add({
       id: 'high-balance-qm', name: 'High-Balance QM', category: 'High-Balance QM', score, missing,
       why: 'For high-cost counties where the loan sits above the baseline but under the high-balance ceiling. Availability depends on the confirmed county.',
@@ -92,9 +106,8 @@ export function matchLoanPrograms(p: ScenarioProfile): LoanProgramMatch[] {
   {
     let score = 0;
     const missing: string[] = [];
-    if (sizeKnown && loanAmount! > HIGH_BALANCE_CEILING) score += 3;
-    else if (sizeKnown) score -= 2;
     if (doc === 'full-doc' || emp === 'w2') score += 2;
+    missing.push('current dated jumbo threshold / program source');
     if (!p.fico) missing.push('estimated FICO');
     if (!p.reserves) missing.push('reserves after closing');
     add({
@@ -172,7 +185,7 @@ export function matchLoanPrograms(p: ScenarioProfile): LoanProgramMatch[] {
     const missing: string[] = [];
     if (occ === 'primary') score += 2;
     if (belowTwenty) score += 1;
-    if (sizeKnown && loanAmount! > HIGH_BALANCE_CEILING) score -= 3;
+    missing.push('current dated FHA loan limit / program source');
     if (!occ) missing.push('occupancy');
     add({
       id: 'fha', name: 'FHA', category: 'FHA', score, missing,
@@ -206,20 +219,16 @@ export function matchLoanPrograms(p: ScenarioProfile): LoanProgramMatch[] {
     });
   }
 
-  const paymentEstimate =
-    loanAmount != null ? Math.round(calcMonthlyPI(loanAmount, ASSUMED_RATE, 30)) : null;
-  const cashToCloseEstimate =
-    loanAmount != null && p.downPayment != null
-      ? Math.round(p.downPayment + loanAmount * PLANNING_CLOSING_RATE)
-      : null;
-
   const effectiveDate = programEffectiveDate();
   return drafts
     .map<LoanProgramMatch>((d) => ({
       ...d,
       fit: fitFromScore(d.score),
-      paymentEstimate,
-      cashToCloseEstimate,
+      // No program-specific pricing source is connected. Repeating one assumed
+      // rate/cost across every card is misleading, so numeric program quotes
+      // remain unavailable until dated data exists.
+      paymentEstimate: null,
+      cashToCloseEstimate: null,
       // Honesty: with no verified pricing source connected, a path with open
       // inputs needs broker review; otherwise it is a configured assumption.
       dataStatus: programDataStatusFor(d.missing.length > 0),

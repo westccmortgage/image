@@ -4,6 +4,13 @@ All financial figures come from the **deterministic engine** (`src/module`) via
 the tool surface in `src/site/scenario/tools.ts`. The AI layer may phrase these
 numbers but must never invent or recompute one.
 
+`evaluateScenario` is the canonical gate for chat, cards, voice, and summaries.
+It does not return borrower payment figures until price/value, loan/down amount,
+and an explicit user-supplied note rate are present. The 7.25% demo fixture is
+never substituted into a borrower profile. Annual taxes and insurance are
+normalized to monthly amounts; HOA and PMI remain monthly fields. Every parsed
+numeric fact carries a unit and provenance marker.
+
 ## Exact vs. estimated
 
 Exact figures may only come from: explicit borrower inputs, deterministic
@@ -65,3 +72,8 @@ Edit the `PLANNING` constants in `src/site/scenario/tools.ts`. Keep the
 dynamic-scaling and engine regression tests green. Material rate assumptions
 (property tax %, insurance %, impound months) are business decisions — confirm
 with the owner before changing.
+
+Available cash is tested only after subtracting the borrower's protected
+reserve. A user-provided total closing-cost figure replaces (rather than stacks
+on top of) planning cost assumptions. Refinance equity is never treated as cash
+to close.

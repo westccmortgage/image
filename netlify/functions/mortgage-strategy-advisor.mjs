@@ -23,6 +23,75 @@ import { phraseWithAI, isAiConfigured } from './_shared/aiProvider.mjs';
 
 const LANG_NAME = { en: 'English', ru: 'Russian', es: 'Spanish', zh: 'Simplified Chinese' };
 
+const cents = (n) => Math.round(n * 100) / 100;
+
+export function recomputeMonthlyFromProfile(profile = {}) {
+  const price = Number(profile.purchasePrice);
+  const down = Number(profile.downPayment);
+  const rate = Number(profile.interestRate);
+  const years = Number(profile.termYears ?? 30);
+  if (![price, down, rate, years].every(Number.isFinite) || price <= 0 || down < 0 || down > price || years <= 0) {
+    return null;
+  }
+  const loan = price - down;
+  const months = years * 12;
+  const r = rate / 100 / 12;
+  const monthlyPI = r === 0
+    ? loan / months
+    : loan * r * Math.pow(1 + r, months) / (Math.pow(1 + r, months) - 1);
+  const taxes = profile.propertyTaxAnnual != null
+    ? Number(profile.propertyTaxAnnual) / 12
+    : price * 0.0125 / 12;
+  const insurance = profile.hazardInsuranceAnnual != null
+    ? Number(profile.hazardInsuranceAnnual) / 12
+    : price * 0.0025 / 12;
+  const hoa = Number(profile.hoaMonthly ?? 0);
+  const pmi = Number(profile.pmiMonthly ?? 0);
+  if (![taxes, insurance, hoa, pmi].every(Number.isFinite)) return null;
+  return {
+    loanAmount: cents(loan),
+    ltv: price > 0 ? loan / price * 100 : 0,
+    monthlyPI: cents(monthlyPI),
+    monthlyHousing: cents(monthlyPI + taxes + insurance + hoa + pmi),
+    ...(profile.closingCosts != null && Number.isFinite(Number(profile.closingCosts))
+      ? {
+          totalCashToClose: cents(down + Number(profile.closingCosts)),
+          additionalFundsNeeded: cents(Number(profile.closingCosts)),
+        }
+      : {}),
+  };
+}
+
+export function validateEnginePayload(payload = {}) {
+  const client = payload.cashToCloseEstimate || {};
+  if (!client.hasBoth) return { ok: true, recomputed: null };
+  const recomputed = recomputeMonthlyFromProfile(payload.profile);
+  if (!recomputed) return { ok: false, error: 'missing_or_invalid_calculation_inputs' };
+  const close = (a, b) => Number.isFinite(Number(a)) && Math.abs(Number(a) - Number(b)) <= 0.02;
+  if (!close(client.monthlyPI, recomputed.monthlyPI) ||
+      !close(client.monthlyHousing, recomputed.monthlyHousing) ||
+      !close(client.ltv, recomputed.ltv) ||
+      (recomputed.totalCashToClose != null && !close(client.totalCashToClose, recomputed.totalCashToClose)) ||
+      (recomputed.additionalFundsNeeded != null && !close(client.additionalFundsNeeded, recomputed.additionalFundsNeeded))) {
+    return { ok: false, error: 'client_calculation_mismatch', recomputed };
+  }
+  return { ok: true, recomputed, cashVerified: recomputed.totalCashToClose != null };
+}
+
+export function responseUsesOnlyAllowedNumbers(message, payload) {
+  const tokens = String(message).match(/\$\s?[\d,]+(?:\.\d+)?|\b\d+(?:\.\d+)?%/g) || [];
+  if (!tokens.length) return true;
+  const c = payload.cashToCloseEstimate || {};
+  const allowed = [
+    c.downPayment, c.totalCashToClose, c.additionalFundsNeeded, c.ltv,
+    c.monthlyPI, c.monthlyHousing, payload.profile?.interestRate,
+  ].filter(Number.isFinite).map((n) => cents(Number(n)));
+  return tokens.every((token) => {
+    const n = Number(token.replace(/[$,%\s]/g, ''));
+    return allowed.some((v) => Math.abs(v - n) <= 0.02 || Math.abs(Math.round(v) - n) <= 0.02);
+  });
+}
+
 function systemPrompt(langCode) {
   const langName = LANG_NAME[langCode] || 'English';
   return `You are the voice of "Wallet WCCM — AI Mortgage Strategy Advisor". You guide borrowers and realtors like a sharp, warm mortgage strategy advisor.
@@ -96,6 +165,17 @@ export default async (req) => {
     return json({ error: 'bad_request' }, 400);
   }
 
+  const validation = validateEnginePayload(payload);
+  if (!validation.ok) {
+    return json({ error: validation.error, recomputed: validation.recomputed ?? null }, 422);
+  }
+  if (validation.recomputed) {
+    payload.cashToCloseEstimate = {
+      ...payload.cashToCloseEstimate,
+      ...validation.recomputed,
+    };
+  }
+
   const history = Array.isArray(payload.historySummary) ? payload.historySummary.slice(-8) : [];
   const messages = [
     ...history
@@ -113,7 +193,7 @@ export default async (req) => {
       assistantMessage = await phraseWithAI({
         system: systemPrompt(payload.language || 'en'),
         messages,
-        maxTokens: 500,
+        maxTokens: 800,
       });
     } catch (e) {
       const status = e && e.status === 501 ? 501 : 502;
@@ -121,6 +201,9 @@ export default async (req) => {
       return json({ error: 'upstream_error', detail: String(e && e.detail ? e.detail : e).slice(0, 500) }, 502);
     }
     if (!assistantMessage) return json({ error: 'empty_reply' }, 502);
+    if (!responseUsesOnlyAllowedNumbers(assistantMessage, payload)) {
+      return json({ error: 'ungrounded_numeric_reply' }, 502);
+    }
 
     // Return the full structured contract: deterministic fields are echoed back
     // (the engine remains authoritative) plus the model's phrased message.

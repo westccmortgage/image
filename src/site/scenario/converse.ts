@@ -197,6 +197,8 @@ export function humanCaptured(
       return `${money(Number(v))} down`;
     case 'reserves':
       return `${money(Number(v))} in reserves`;
+    case 'interestRate':
+      return `${Number(v)}% annual interest`;
     case 'fico':
       return `${v} FICO`;
     case 'state':

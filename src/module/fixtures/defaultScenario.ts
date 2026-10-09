@@ -35,6 +35,8 @@ export const defaultScenario: CashToCloseInput = {
 
   propertyTaxMonthly: 1_487.98,
   hazardInsuranceMonthly: 300,
+  hoaMonthly: 0,
+  pmiMonthly: 0,
 
   prepaidInterestDays: 26,
 

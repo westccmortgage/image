@@ -19,7 +19,6 @@ import {
   fieldLabel,
   fieldQuestion,
   fieldOptionLabel,
-  hasFullNumbers,
   matchLoanPrograms,
   compareDownPaymentOptions,
   profileToEngineInput,
@@ -46,6 +45,8 @@ import {
   MIN_PLAUSIBLE_DOWN,
   DOCUMENT_CATEGORIES,
   FIELD_BY_KEY,
+  resolveScenarioTurn,
+  evaluateScenario,
 } from './scenario';
 import type {
   FieldKey, Language, Question, ScenarioProfile, LoanProgramMatch,
@@ -144,7 +145,8 @@ function coerceAnswer(q: Question, text: string, profile: ScenarioProfile): Part
 function newlyCaptured(prev: ScenarioProfile, next: ScenarioProfile): FieldKey[] {
   const keys: FieldKey[] = [
     'purchasePrice', 'downPayment', 'state', 'zipOrCounty', 'county', 'occupancy',
-    'employmentType', 'incomeDocPath', 'fico', 'reserves', 'borrowerGoal', 'loanPurpose',
+    'interestRate', 'termYears', 'propertyTaxAnnual', 'hazardInsuranceAnnual', 'hoaMonthly', 'pmiMonthly',
+    'cashAvailable', 'closingCosts', 'protectedReserves', 'employmentType', 'incomeDocPath', 'fico', 'reserves', 'borrowerGoal', 'loanPurpose',
   ];
   return keys.filter((k) => {
     const a = prev[k];
@@ -156,13 +158,13 @@ function newlyCaptured(prev: ScenarioProfile, next: ScenarioProfile): FieldKey[]
 function valueDisplay(lang: Language, key: FieldKey, p: ScenarioProfile): string {
   const v = p[key];
   if (v == null || v === '') return '';
-  if (key === 'purchasePrice' || key === 'downPayment' || key === 'reserves') return formatMoney(Number(v));
+  if (key === 'purchasePrice' || key === 'downPayment' || key === 'reserves' || key === 'cashAvailable' || key === 'closingCosts' || key === 'protectedReserves') return formatMoney(Number(v));
+  if (key === 'interestRate') return `${Number(v)}%`;
   const def = FIELD_BY_KEY[key];
   if (def?.kind === 'choice') return fieldOptionLabel(lang, key, String(v));
   return String(v);
 }
 
-const hasBothOf = hasFullNumbers;
 const hasValueOf = (p: ScenarioProfile) => !!(p.purchasePrice || p.downPayment != null);
 
 export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangChange: (l: Language) => void }) {
@@ -206,10 +208,14 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
 
   const conversationStarted = messages.some((m) => m.role === 'user');
 
-  const both = hasBothOf(profile);
+  const evaluation = useMemo(() => evaluateScenario(profile), [profile]);
+  const both = evaluation.result != null;
   const hasValue = hasValueOf(profile);
   const input = useMemo(() => toInput(profile), [profile]);
-  const calc = useMemo(() => calculateCashToClose(both ? input : defaultScenario), [both, input]);
+  const calc = useMemo(
+    () => evaluation.result ?? calculateCashToClose(defaultScenario),
+    [evaluation],
+  );
   const scenarios = useMemo(() => compareDownPaymentOptions(input), [input]);
   const programs = useMemo(() => matchLoanPrograms(profile), [profile]);
   const derived = useMemo(() => deriveScenario(profile), [profile]);
@@ -246,9 +252,10 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
   async function respondTo(next: ScenarioProfile, prev: ScenarioProfile, userText: string, isFirst: boolean) {
     setProfile(next);
     const captured = newlyCaptured(prev, next);
-    const isBoth = hasBothOf(next);
+    const evaluation = evaluateScenario(next);
+    const isBoth = evaluation.result != null;
     const activeInput = isBoth ? toInput(next) : defaultScenario;
-    const c = calculateCashToClose(activeInput);
+    const c = evaluation.result ?? calculateCashToClose(defaultScenario);
     const ready = isReadyForOptions(next);
     const rawNq = nextQuestions(next, { max: 1 })[0] ?? null;
     // Localize the question prompt so both the composer and the local-mode chat
@@ -276,7 +283,15 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
         });
 
     const nextPrograms = matchLoanPrograms(next);
-    const warnings = isBoth ? c.risk.warnings.slice(0, 2) : [];
+    const warnings = isBoth
+      ? [
+          ...c.risk.warnings.slice(0, 2),
+          ...evaluation.assumptions,
+          ...(evaluation.affordability && !evaluation.affordability.affordable
+            ? [`Available cash is short by ${formatMoney(Math.abs(evaluation.affordability.surplusOrShortfall))} after protecting reserves.`]
+            : []),
+        ]
+      : [];
     const history = messages
       .filter((m) => m.role !== 'system')
       .map((m) => ({
@@ -332,9 +347,21 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
     pushUser(raw);
     const isFirst = !firstMsgRef.current;
     if (isFirst) { firstMsgRef.current = raw; parsedFirstRef.current = parseScenario(raw); }
-    let patch = parseScenario(raw);
-    if (focus) patch = { ...patch, ...coerceAnswer(focus, raw, profile) };
-    void respondTo(mergeProfile(profile, patch), profile, raw, isFirst);
+    const focused = focus ? coerceAnswer(focus, raw, profile) : {};
+    const resolved = resolveScenarioTurn(profile, raw, focused);
+    if (resolved.intent === 'hypothetical' && resolved.comparisonProfile) {
+      const baseEval = evaluateScenario(profile);
+      const altEval = evaluateScenario(resolved.comparisonProfile);
+      if (baseEval.result && altEval.result) {
+        pushAi([
+          `Hypothetical only — your saved scenario is unchanged. At ${resolved.comparisonProfile.interestRate ?? profile.interestRate}% for ${resolved.comparisonProfile.termYears ?? profile.termYears ?? 30} years, principal & interest would be ${formatMoney(altEval.result.monthlyPI)}/mo versus ${formatMoney(baseEval.result.monthlyPI)}/mo in the base scenario.`,
+        ]);
+      } else {
+        pushAi([`I kept your saved scenario unchanged. To calculate that hypothetical, I still need ${altEval.missing.join(', ')}.`]);
+      }
+      return;
+    }
+    void respondTo(resolved.profile, profile, raw, isFirst);
   }
   function handleChip(field: FieldKey, value: string, label: string) {
     pushUser(label);
@@ -376,9 +403,10 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
       preferredContactTime: dc.preferredContactTime, preferredLanguage: dc.preferredLanguage,
     });
     setProfile(merged);
-    const isBoth = hasBothOf(merged);
+    const mergedEvaluation = evaluateScenario(merged);
+    const isBoth = mergedEvaluation.result != null;
     const mInput = isBoth ? toInput(merged) : defaultScenario;
-    const c = calculateCashToClose(mInput);
+    const c = mergedEvaluation.result ?? calculateCashToClose(defaultScenario);
     const payload = buildDocumentReviewPayload({
       contact: dc,
       originalMessage: firstMsgRef.current,

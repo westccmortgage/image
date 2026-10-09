@@ -20,7 +20,7 @@ import type { CashToCloseInput, CashToCloseResult, DownPaymentScenario } from '.
 import { parseScenario } from './parseScenario';
 import { nextQuestions } from './questionEngine';
 import { resolveLoanLimitArea } from './location';
-import { matchLoanPrograms, PLANNING_RATE } from './loanPrograms';
+import { matchLoanPrograms } from './loanPrograms';
 import { deriveScenario } from './profile';
 import type { LoanProgramMatch, ScenarioProfile } from './types';
 
@@ -41,7 +41,7 @@ export function calculateLTV(purchasePrice: number, downPayment: number): number
  */
 export function calculateMonthlyPayment(
   loanAmount: number,
-  annualRatePercent: number = PLANNING_RATE,
+  annualRatePercent: number,
   termYears = 30,
 ): number {
   return calcMonthlyPI(loanAmount, annualRatePercent, termYears);
@@ -90,11 +90,34 @@ export const PLANNING = {
   insuranceReserveMonths: 2,
 } as const;
 
+export interface ScenarioAffordability {
+  cashAvailable: number;
+  protectedReserves: number;
+  usableForClosing: number;
+  requiredToClose: number;
+  surplusOrShortfall: number;
+  affordable: boolean;
+}
+
+export interface ScenarioEvaluation {
+  result: CashToCloseResult | null;
+  missing: string[];
+  assumptions: string[];
+  affordability: ScenarioAffordability | null;
+}
+
 /** Bridge a conversational profile into the engine's input shape. */
 export function profileToEngineInput(p: ScenarioProfile): CashToCloseInput {
   const input: CashToCloseInput = { ...defaultScenario };
   if (p.purchasePrice) input.purchasePrice = p.purchasePrice;
   if (p.downPayment != null) input.downPayment = p.downPayment;
+  // Zero is a sentinel for incomplete internal projections. `evaluateScenario`
+  // refuses to return borrower results until an explicit rate exists, so the
+  // demo scenario's 7.25% can never leak into a real profile.
+  input.interestRate = p.interestRate ?? 0;
+  input.termYears = p.termYears ?? 30;
+  input.hoaMonthly = p.hoaMonthly ?? 0;
+  input.pmiMonthly = p.pmiMonthly ?? 0;
   if (p.stateCode || p.state) input.state = p.stateCode ?? p.state!;
   if (p.zipOrCounty && /^\d{5}$/.test(p.zipOrCounty)) input.zip = p.zipOrCounty;
   const doc = p.incomeDocPath;
@@ -135,8 +158,16 @@ export function profileToEngineInput(p: ScenarioProfile): CashToCloseInput {
     ];
     input.governmentFees = PLANNING.governmentFlat.map((f) => ({ ...f }));
 
-    const taxMonthly = roundCents((price * PLANNING.annualTaxRateOfPrice) / 12);
-    const insMonthly = roundCents((price * PLANNING.annualInsuranceRateOfPrice) / 12);
+    const taxMonthly = roundCents(
+      p.propertyTaxAnnual != null
+        ? p.propertyTaxAnnual / 12
+        : (price * PLANNING.annualTaxRateOfPrice) / 12,
+    );
+    const insMonthly = roundCents(
+      p.hazardInsuranceAnnual != null
+        ? p.hazardInsuranceAnnual / 12
+        : (price * PLANNING.annualInsuranceRateOfPrice) / 12,
+    );
     input.propertyTaxMonthly = taxMonthly;
     input.hazardInsuranceMonthly = insMonthly;
     input.otherPrepaids = [
@@ -156,8 +187,71 @@ export function profileToEngineInput(p: ScenarioProfile): CashToCloseInput {
         note: 'Initial escrow deposit for insurance (estimated)',
       },
     ];
+    if (p.closingCosts != null) {
+      input.lenderFees = [{
+        label: 'User-stated total closing costs',
+        amount: roundCents(p.closingCosts),
+        note: 'User-provided total; allocation requires broker verification',
+      }];
+      input.thirdPartyFees = [];
+      input.governmentFees = [];
+      input.otherPrepaids = [];
+      input.prepaidInterestDays = 0;
+    }
   }
   return input;
+}
+
+/** Canonical validated scenario calculation for chat, cards and summaries. */
+export function evaluateScenario(p: ScenarioProfile): ScenarioEvaluation {
+  const missing: string[] = [];
+  if (!(p.purchasePrice && p.purchasePrice > 0)) missing.push('purchase price / property value');
+  if (p.loanPurpose !== 'refinance' && p.downPayment == null) missing.push('down payment');
+  if (!(p.interestRate != null && p.interestRate >= 0)) missing.push('interest rate');
+  if (p.loanPurpose === 'refinance' && !(p.currentLoanBalance && p.currentLoanBalance > 0)) {
+    missing.push('current loan balance');
+  }
+  if (missing.length) return { result: null, missing, assumptions: [], affordability: null };
+
+  const assumptions: string[] = [];
+  if (p.termYears == null) assumptions.push('30-year term planning assumption');
+  if (p.propertyTaxAnnual == null) assumptions.push('property tax estimated at 1.25% of value per year');
+  if (p.hazardInsuranceAnnual == null) assumptions.push('hazard insurance estimated at 0.25% of value per year');
+  if (p.pmiMonthly == null && (p.downPaymentPercent ?? 100) < 20) {
+    assumptions.push('PMI amount is unknown and excluded; lender verification required');
+  }
+
+  const normalized: ScenarioProfile = p.loanPurpose === 'refinance'
+    ? {
+        ...p,
+        downPayment: Math.max(0, p.purchasePrice! - (p.currentLoanBalance! + (p.cashOutAmount ?? 0))),
+      }
+    : p;
+  let result = calculateCashToClose(profileToEngineInput(normalized));
+  if (p.loanPurpose === 'refinance') {
+    result = {
+      ...result,
+      downPayment: 0,
+      totalCashToClose: result.totalClosingCosts,
+      additionalFundsNeeded: result.totalClosingCosts,
+    };
+  }
+
+  let affordability: ScenarioAffordability | null = null;
+  if (p.loanPurpose !== 'refinance' && p.cashAvailable != null) {
+    const protectedReserves = p.protectedReserves ?? 0;
+    const usableForClosing = Math.max(0, p.cashAvailable - protectedReserves);
+    const surplusOrShortfall = roundCents(usableForClosing - result.totalCashToClose);
+    affordability = {
+      cashAvailable: p.cashAvailable,
+      protectedReserves,
+      usableForClosing: roundCents(usableForClosing),
+      requiredToClose: result.totalCashToClose,
+      surplusOrShortfall,
+      affordable: surplusOrShortfall >= 0,
+    };
+  }
+  return { result, missing: [], assumptions, affordability };
 }
 
 /** Round to cents (avoids floating-point dust in displayed line items). */
@@ -196,10 +290,8 @@ export function prepareBrokerReviewSummary(
   if (p.city || p.state) scenario['Location'] = [p.city, p.state].filter(Boolean).join(', ');
   if (p.county) scenario['County'] = `${p.county}${p.countyConfidence === 'confirmed' ? '' : ' (needs confirmation)'}`;
 
-  let estimatedCashToClose: number | null = null;
-  if (p.purchasePrice && p.downPayment != null) {
-    estimatedCashToClose = calculateCashToClose(profileToEngineInput(p)).totalCashToClose;
-  }
+  const evaluation = evaluateScenario(p);
+  const estimatedCashToClose = evaluation.result?.totalCashToClose ?? null;
 
   return {
     headline: 'Loan Strategy Profile — prepared for broker review',

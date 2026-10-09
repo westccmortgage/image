@@ -54,7 +54,7 @@ export function hasVerifiedProgramData(): boolean {
  */
 export function programDataStatusFor(hasMissingInputs: boolean): ProgramDataStatus {
   if (hasVerifiedProgramData()) return 'verified_current';
-  return hasMissingInputs ? 'broker_review_required' : 'configured_assumption';
+  return hasMissingInputs ? 'broker_review_required' : 'missing_pricing_data';
 }
 
 /** The effective/last-verified date to display, or null when no verified source. */
