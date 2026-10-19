@@ -109,6 +109,31 @@ function findMoney(text: string): MoneyHit[] {
   return hits;
 }
 
+/**
+ * Remove the two endpoints of a stated range before assigning price/down slots.
+ * A range such as "between 900k and 1.1 million" is planning uncertainty, not
+ * a $900k price paired with a $1.1M down payment. The advisor will ask for one
+ * working price instead of silently inventing a scenario from the endpoints.
+ */
+function withoutRangeEndpoints(hits: MoneyHit[], text: string): MoneyHit[] {
+  if (hits.length < 2) return hits;
+  const lower = text.toLowerCase();
+  const excluded = new Set<number>();
+  for (let i = 0; i < hits.length - 1; i += 1) {
+    const a = hits[i];
+    const b = hits[i + 1];
+    const before = lower.slice(Math.max(0, a.start - 18), a.start);
+    const between = lower.slice(a.end, b.start);
+    const explicitRange = /\b(?:between|from)\s*$/.test(before) && /^\s*(?:and|to|[-–—])\s*$/.test(between);
+    const compactRange = /^\s*[-–—]\s*$/.test(between) && /\b(?:range|budget|price|home|house|buy|buying)\b/.test(before);
+    if (explicitRange || compactRange) {
+      excluded.add(i);
+      excluded.add(i + 1);
+    }
+  }
+  return hits.filter((_, i) => !excluded.has(i));
+}
+
 const PRICE_WORDS = /(price|home|house|buy|buying|purchase|purchasing|property|value|worth|condo|estate|place|listing|cost)/;
 // A down word must sit IMMEDIATELY next to the number — either right after
 // ("85k down", "300,000 down") or right before ("put 300k", "cash of 250k",
@@ -175,7 +200,7 @@ export function parseScenario(text: string): ScenarioProfile {
   const lower = ` ${text.toLowerCase()} `;
 
   // --- money (price / down) ---
-  classifyMoney(findMoney(text), profile, text);
+  classifyMoney(withoutRangeEndpoints(findMoney(text), text), profile, text);
 
   // Spoken price with "million" dropped: "home around 1.4" → $1.4M. A bare small
   // DECIMAL in a price context almost always means millions (nobody buys a $1.40
@@ -417,6 +442,18 @@ export function parseScenario(text: string): ScenarioProfile {
   if (email) profile.email = email[0];
   const phone = text.match(/(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/);
   if (phone && !isPartOfMoney(text, phone.index ?? 0)) profile.phone = phone[0].trim();
+
+  // Impossible purchase math is never allowed to reach the calculator. Keep
+  // the price, clear the invalid down payment, and let the question engine ask
+  // for a valid amount instead of presenting a fabricated zero-dollar loan.
+  if (
+    profile.purchasePrice != null &&
+    profile.downPayment != null &&
+    profile.downPayment > profile.purchasePrice
+  ) {
+    delete profile.downPayment;
+    delete profile.downPaymentPercent;
+  }
 
   return profile;
 }

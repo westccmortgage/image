@@ -19,6 +19,17 @@ export function mergeProfile(
   if (next.purchasePrice && next.downPaymentPercent && next.downPayment == null) {
     next.downPayment = Math.round((next.purchasePrice * next.downPaymentPercent) / 100);
   }
+  // Reject impossible purchase math at the shared merge boundary. This covers
+  // multi-turn chat/voice intake and direct UI patches, not only free-text
+  // parsing. Clearing the invalid amount makes the advisor ask again.
+  if (
+    next.purchasePrice != null &&
+    next.downPayment != null &&
+    next.downPayment > next.purchasePrice
+  ) {
+    delete next.downPayment;
+    delete next.downPaymentPercent;
+  }
   // An established refinance intent is not downgraded to "purchase" by a later
   // message that merely mentions a home/house (belt-and-suspenders with the
   // verb-only purchase detection in the parser).
@@ -30,8 +41,8 @@ export function mergeProfile(
 
 export function deriveScenario(p: ScenarioProfile): DerivedScenario {
   const d: DerivedScenario = {};
-  if (p.purchasePrice && p.downPayment != null) {
-    d.loanAmount = Math.max(0, p.purchasePrice - p.downPayment);
+  if (p.loanPurpose !== 'refinance' && hasValidPurchaseNumbers(p)) {
+    d.loanAmount = p.purchasePrice - p.downPayment;
     d.ltv = p.purchasePrice > 0 ? (d.loanAmount / p.purchasePrice) * 100 : undefined;
     d.downPaymentPercent = p.purchasePrice > 0 ? (p.downPayment / p.purchasePrice) * 100 : undefined;
   }
@@ -98,6 +109,10 @@ export function completionPercent(p: ScenarioProfile): number {
 
 /** Has the borrower provided enough value for us to show initial options? */
 export function isReadyForOptions(p: ScenarioProfile): boolean {
+  // The current deterministic engine models purchases only. A refinance needs
+  // current balance, rate, remaining term and transaction costs before any
+  // comparison is responsible, so never expose purchase options as refi advice.
+  if (p.loanPurpose === 'refinance') return false;
   return missingBlocking(p).length === 0;
 }
 
@@ -113,7 +128,22 @@ export function hasProvidedValue(p: ScenarioProfile): boolean {
  * the user's result.
  */
 export function hasFullNumbers(p: ScenarioProfile): boolean {
-  return hasValue(p, 'purchasePrice') && hasValue(p, 'downPayment');
+  if (p.loanPurpose === 'refinance') return false;
+  return hasValidPurchaseNumbers(p);
+}
+
+function hasValidPurchaseNumbers(
+  p: ScenarioProfile,
+): p is ScenarioProfile & { purchasePrice: number; downPayment: number } {
+  return (
+    typeof p.purchasePrice === 'number' &&
+    Number.isFinite(p.purchasePrice) &&
+    p.purchasePrice > 0 &&
+    typeof p.downPayment === 'number' &&
+    Number.isFinite(p.downPayment) &&
+    p.downPayment >= 0 &&
+    p.downPayment <= p.purchasePrice
+  );
 }
 
 /**
@@ -122,7 +152,8 @@ export function hasFullNumbers(p: ScenarioProfile): boolean {
  * field is required (FICO, reserves, exact goal remain optional).
  */
 export function isStrategyReady(p: ScenarioProfile): boolean {
-  const hasNumbers = hasValue(p, 'purchasePrice') && hasValue(p, 'downPayment');
+  if (p.loanPurpose === 'refinance') return false;
+  const hasNumbers = hasValidPurchaseNumbers(p);
   const hasLocation = hasValue(p, 'state') || hasValue(p, 'stateCode') || hasValue(p, 'zipOrCounty');
   const hasOccupancy = hasValue(p, 'occupancy');
   const hasIncome = hasValue(p, 'employmentType') || hasValue(p, 'incomeDocPath');

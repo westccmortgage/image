@@ -35,6 +35,8 @@ export interface ReplyInput {
   numbers: ReplyNumbers;
   nextQuestion: Question | null;
   isFirstMessage: boolean;
+  /** Purchase calculations are not reused for refinance scenarios. */
+  loanPurpose?: 'purchase' | 'refinance';
 }
 
 const money = (n: number): string => `$${Math.round(n).toLocaleString('en-US')}`;
@@ -98,12 +100,20 @@ function joinHuman(items: string[]): string {
  * single next question.
  */
 export function buildReply(inp: ReplyInput): string[] {
-  const { userText, capturedText, numbers, nextQuestion, isFirstMessage } = inp;
+  const { userText, capturedText, numbers, nextQuestion, isFirstMessage, loanPurpose } = inp;
   const intent = classifyIntent(userText);
   const lines: string[] = [];
 
   if (capturedText.length) {
     lines.push(`Got it — ${joinHuman(capturedText)}.`);
+  }
+
+  if (loanPurpose === 'refinance') {
+    lines.push(
+      'I can help prepare a refinance review, but this version does not calculate refinance savings or cash-out terms. A licensed broker needs your current loan balance, rate, remaining term, estimated home value, and goal before comparing options.',
+    );
+    if (nextQuestion?.field === 'purchasePrice') lines.push(nextQuestion.prompt);
+    return lines;
   }
 
   const answer = answerIntent(intent, numbers);

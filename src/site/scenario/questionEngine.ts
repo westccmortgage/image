@@ -33,6 +33,13 @@ export function nextQuestions(
     return missingContact(p).slice(0, max).map(toQuestion);
   }
 
+  // Refinance comparison is intentionally not implemented with purchase
+  // fields. We may capture the estimated home value for a licensed handoff,
+  // but must not continue through purchase occupancy/down-payment questions.
+  if (p.loanPurpose === 'refinance') {
+    return p.purchasePrice == null ? [toQuestion('purchasePrice')] : [];
+  }
+
   // Required first, then helpful — never contact.
   const ordered = [...missingRequired(p), ...missingHelpful(p)];
   return ordered.slice(0, max).map(toQuestion);
