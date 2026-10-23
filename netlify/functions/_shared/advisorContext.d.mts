@@ -1,0 +1,10 @@
+export const LANG_NAME: Record<string, string>;
+export function loanPurposeOf(profile: unknown): 'purchase' | 'refinance' | null;
+export function hasRealFigures(estimate: unknown): boolean;
+export function money(v: unknown): string;
+export function knownFactLines(profile: unknown): string[];
+export function figureLines(estimate: unknown): string[];
+export function intakeLine(purpose: 'purchase' | 'refinance' | null, estimate: unknown): string[];
+export function advisorSystemPrompt(langCode: string): string;
+export function buildAdvisorContext(payload: unknown): string;
+export function plainText(s: unknown): string;

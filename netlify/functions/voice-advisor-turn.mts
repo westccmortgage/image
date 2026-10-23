@@ -14,6 +14,7 @@ import { runAdvisorTurn } from '../../src/site/scenario/voiceTurn';
 import type { Language, ScenarioProfile, FieldKey } from '../../src/site/scenario/types';
 import { phraseWithAI, isAiConfigured } from './_shared/aiProvider.mjs';
 import { coreVoiceEnabled, runCoreVoiceTurn } from './_shared/coreVoiceV2.mjs';
+import { figureLines, intakeLine, knownFactLines, loanPurposeOf, plainText } from './_shared/advisorContext.mjs';
 
 declare const process: { env: Record<string, string | undefined> };
 
@@ -31,8 +32,8 @@ function voiceSystemPrompt(langCode: string): string {
 SPEAK ENTIRELY IN ${langName.toUpperCase()}.
 
 HARD RULES:
-- The numbers in CONTEXT come from a verified calculation engine. They are the ONLY numbers you may say. NEVER invent, estimate, recompute, or change any dollar amount, rate, LTV, or percentage.
-- If "hasBoth" is false, the figures are an example, NOT the caller's. Do not present them as the caller's own; ask for whatever is missing.
+- The only numbers you may say are figures under "Borrower figures: AVAILABLE" and facts under "Known from the borrower" in CONTEXT. NEVER invent, estimate, recompute, or change any dollar amount, rate, LTV, or percentage. If CONTEXT says "Borrower figures: NOT AVAILABLE YET", say no computed numbers and never mention an example scenario.
+- Follow the loan purpose in CONTEXT. A REFINANCE has no down payment: never ask for, mention, or assume one.
 - Keep it to 1–3 short spoken sentences. No lists, no markdown, no symbols, no emoji — this will be read aloud by text-to-speech, so write numbers and dollars the way they should be spoken.
 - Ask at most ONE question — the "Next question" in CONTEXT — and only if the caller is not asking their own.
 - Use cautious language: possible, estimated, may, subject to lender guidelines, requires broker review. NEVER say approved, qualified, guaranteed, or promise a rate.
@@ -41,33 +42,20 @@ HARD RULES:
 - Stay faithful to the deterministic DRAFT reply provided; you may make it sound more natural but must not add numbers or claims beyond CONTEXT.`;
 }
 
-function money(v: unknown): string {
-  return typeof v === 'number' && isFinite(v)
-    ? '$' + Math.round(v).toLocaleString('en-US')
-    : 'unknown';
-}
-
 function buildVoiceContext(result: ReturnType<typeof runAdvisorTurn>): string {
   const n = result.numbers;
+  const purpose = loanPurposeOf(result.profile);
   const lines = [
-    `hasBoth (are these the caller's real numbers?): ${n.hasBoth ? 'true' : 'false'}`,
-    `Down payment: ${money(n.downPayment)}`,
-    `Total cash to close: ${money(n.totalCashToClose)}`,
-    `Extra needed beyond down payment: ${money(n.additionalFundsNeeded)}`,
-    `LTV: ${typeof n.ltv === 'number' ? n.ltv.toFixed(1) + '%' : 'unknown'}`,
-    `Loan type: ${n.loanType || 'unknown'}`,
-    `Monthly principal & interest: ${money(n.monthlyPI)}`,
-    `Monthly housing (w/ taxes & insurance): ${money(n.monthlyHousing)}`,
+    `Loan purpose: ${purpose || 'not stated yet'}`,
+    ...knownFactLines(result.profile),
+    // Only the caller's own figures ever reach the model — never the demo scenario.
+    ...figureLines(n.hasBoth ? n : { hasBoth: false }),
   ];
   if (result.captured.length) lines.push(`Captured this turn: ${result.captured.join(', ')}`);
-  if (result.nextQuestion) lines.push(`Next question to ask (only if the caller isn't asking their own): ${result.nextQuestion.prompt}`);
-  if (!n.hasBoth) {
-    lines.push(
-      'INTAKE INCOMPLETE: purchase price and/or down payment not both known. Do NOT state closing costs or cash to close as the caller\'s own; ask the Next question (the down payment accepts a dollar amount OR a percent).',
-    );
-  }
+  if (result.nextQuestion) lines.push(`Next best question to ask (only if the caller isn't asking their own): ${result.nextQuestion.prompt}`);
+  lines.push(...intakeLine(purpose, n.hasBoth ? n : { hasBoth: false }));
   lines.push(`DRAFT reply to speak (stay faithful to this): ${result.reply}`);
-  return `CONTEXT (engine-computed — the only numbers you may use):\n${lines.join('\n')}`;
+  return `CONTEXT (engine-computed and caller-stated — the only numbers you may use):\n${lines.join('\n')}`;
 }
 
 export default async (req: Request): Promise<Response> => {
@@ -155,8 +143,8 @@ export default async (req: Request): Promise<Response> => {
         messages,
         maxTokens: 220,
       });
-      if (phrased && phrased.trim()) {
-        spoken = phrased.trim();
+      if (phrased && plainText(phrased)) {
+        spoken = plainText(phrased);
         source = 'ai';
       }
     } catch {
@@ -174,7 +162,8 @@ export default async (req: Request): Promise<Response> => {
     pendingField: result.pendingField,
     nextQuestion: result.nextQuestion,
     captured: result.captured,
-    numbers: result.numbers,
+    // Demo-scenario figures are never returned as if they were the caller's.
+    numbers: result.numbers.hasBoth ? result.numbers : { hasBoth: false },
     readyForOptions: result.readyForOptions,
     requiresHumanReview: true,
   });

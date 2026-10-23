@@ -294,16 +294,20 @@ export function SmartAdvisor({ lang, onLangChange }: { lang: Language; onLangCha
         missingFields: missingRequired(next).map((k) => fieldLabel(lang, k, next.loanPurpose)),
         nextQuestions: nq ? [nq.prompt] : [],
         possibleLoanPaths: buildProgramSummaries(nextPrograms),
-        cashToCloseEstimate: {
-          hasBoth: isBoth,
-          downPayment: c.downPayment,
-          totalCashToClose: c.totalCashToClose,
-          additionalFundsNeeded: c.additionalFundsNeeded,
-          ltv: c.ltv,
-          loanType: activeInput.loanType,
-          monthlyPI: c.monthlyPI,
-          monthlyHousing: c.monthlyHousingPayment,
-        },
+        // Only the borrower's own figures go to the AI. Until price AND down
+        // payment are known, `c` is the built-in demo scenario — never send it.
+        cashToCloseEstimate: isBoth
+          ? {
+              hasBoth: true,
+              downPayment: c.downPayment,
+              totalCashToClose: c.totalCashToClose,
+              additionalFundsNeeded: c.additionalFundsNeeded,
+              ltv: c.ltv,
+              loanType: activeInput.loanType,
+              monthlyPI: c.monthlyPI,
+              monthlyHousing: c.monthlyHousingPayment,
+            }
+          : { hasBoth: false },
         warnings,
         suggestedActions: ready ? ['prepare_strategy_summary', 'talk_to_broker'] : [],
         requiresHumanReview: true,

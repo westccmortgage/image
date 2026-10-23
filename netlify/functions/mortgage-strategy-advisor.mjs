@@ -20,65 +20,12 @@
 // the advisor logic or compliance rules below depend on which backend is used.
 
 import { phraseWithAI, isAiConfigured } from './_shared/aiProvider.mjs';
+import { advisorSystemPrompt, buildAdvisorContext, plainText } from './_shared/advisorContext.mjs';
 
-const LANG_NAME = { en: 'English', ru: 'Russian', es: 'Spanish', zh: 'Simplified Chinese' };
-
-function systemPrompt(langCode) {
-  const langName = LANG_NAME[langCode] || 'English';
-  return `You are the voice of "Wallet WCCM — AI Mortgage Strategy Advisor". You guide borrowers and realtors like a sharp, warm mortgage strategy advisor.
-
-RESPOND ENTIRELY IN ${langName.toUpperCase()}. Regardless of what language the context is written in, your reply must be in ${langName}.
-
-HARD RULES:
-- The numbers in the CONTEXT block come from a verified calculation engine. They are the ONLY numbers you may state. NEVER invent, estimate, recompute, or change any dollar amount, rate, LTV, or percentage. If a number is not present, ask for the missing input instead of guessing.
-- If "hasBoth" is false, the figures are an example scenario, NOT the user's. Do not present them as the user's numbers; ask for whatever is missing (usually the down payment or price).
-- INTAKE ORDER — establish the fundamentals first, in this order, before anything else: (1) purchase price, (2) down payment — accept a dollar amount OR a percent like "20%", (3) state or ZIP, (4) occupancy (primary / second home / investment), (5) how income is earned. Ask exactly ONE missing fundamental per turn — the "Next best question to ask" provided in CONTEXT — and do not skip the down payment.
-- Until BOTH the purchase price AND the down payment (a dollar amount or a percent) are known, do NOT discuss, estimate, itemize, or ask preferences about closing costs, cash to close, fees, or "what matters most". If the user asks about closing costs before giving their down payment, answer in one short sentence that you need their down payment first (a dollar amount or a percent), then ask for it.
-- A down payment may be given as a percent ("20%", "20 percent", "put 20 down"). Accept it and never claim you don't know it once it has been provided.
-- Use cautious language: "possible", "estimated", "may", "subject to lender guidelines", "requires broker review". NEVER say "approved", "qualified", "guaranteed", "you qualify", or promise a rate.
-- Never ask for SSN, date of birth, full bank/account numbers, or document uploads.
-- Cash-to-close is only one part of the strategy — you compare possible loan paths, identify missing info, explain risks, and hand off to a licensed broker.
-- Keep it to 1–5 short sentences. Plain conversational text — no markdown headers, no bullet dumps, no emoji.
-- Answer the user's question first with the real number(s), acknowledge any newly captured facts, then ask the single next best question if one is provided.`;
-}
-
-function buildContext(payload) {
-  const money = (v) =>
-    typeof v === 'number' && isFinite(v)
-      ? '$' + Math.round(v).toLocaleString('en-US')
-      : 'unknown';
-  const c = payload.cashToCloseEstimate || {};
-  const lines = [
-    `hasBoth (are these the user's real numbers?): ${c.hasBoth ? 'true' : 'false'}`,
-    `Down payment: ${money(c.downPayment)}`,
-    `Total cash to close: ${money(c.totalCashToClose)}`,
-    `Extra needed beyond down payment: ${money(c.additionalFundsNeeded)}`,
-    `LTV: ${typeof c.ltv === 'number' ? c.ltv.toFixed(1) + '%' : 'unknown'}`,
-    `Loan type: ${c.loanType || 'unknown'}`,
-    `Monthly principal & interest: ${money(c.monthlyPI)}`,
-    `Monthly housing (w/ taxes & insurance): ${money(c.monthlyHousing)}`,
-  ];
-  if (Array.isArray(payload.possibleLoanPaths) && payload.possibleLoanPaths.length) {
-    lines.push(
-      `Possible loan paths: ${payload.possibleLoanPaths.map((p) => `${p.name} (${p.fit})`).join('; ')}`,
-    );
-  }
-  if (Array.isArray(payload.missingFields) && payload.missingFields.length) {
-    lines.push(`Missing info: ${payload.missingFields.join(', ')}`);
-  }
-  if (Array.isArray(payload.warnings) && payload.warnings.length) {
-    lines.push(`Warnings: ${payload.warnings.join(' | ')}`);
-  }
-  if (Array.isArray(payload.nextQuestions) && payload.nextQuestions.length) {
-    lines.push(`Next best question to ask (only if the user isn't asking their own): ${payload.nextQuestions[0]}`);
-  }
-  if (!c.hasBoth) {
-    lines.push(
-      'INTAKE INCOMPLETE: the purchase price and/or down payment are not both known. Do NOT discuss, estimate, or itemize closing costs or cash to close as the borrower\'s own. This turn, capture the missing fundamental — ask the Next best question above (the down payment accepts a dollar amount OR a percent).',
-    );
-  }
-  return `CONTEXT (engine-computed — the only numbers you may use):\n${lines.join('\n')}`;
-}
+// The system prompt and CONTEXT block live in _shared/advisorContext.mjs so the
+// chat route and the voice route apply the same rules: the model only sees
+// figures that belong to this borrower (never the demo scenario), and intake
+// follows the loan purpose (a refinance has no down payment).
 
 export default async (req) => {
   if (req.method !== 'POST') {
@@ -103,7 +50,7 @@ export default async (req) => {
       .map((m) => ({ role: m.role, content: String(m.text).slice(0, 2000) })),
     {
       role: 'user',
-      content: `${buildContext(payload)}\n\nUser's latest message: ${String(payload.userMessage || '').slice(0, 2000)}`,
+      content: `${buildAdvisorContext(payload)}\n\nUser's latest message: ${String(payload.userMessage || '').slice(0, 2000)}`,
     },
   ];
 
@@ -111,7 +58,7 @@ export default async (req) => {
     let assistantMessage;
     try {
       assistantMessage = await phraseWithAI({
-        system: systemPrompt(payload.language || 'en'),
+        system: advisorSystemPrompt(payload.language || 'en'),
         messages,
         maxTokens: 500,
       });
@@ -120,6 +67,7 @@ export default async (req) => {
       if (status === 501) return json({ error: 'not_configured' }, 501);
       return json({ error: 'upstream_error', detail: String(e && e.detail ? e.detail : e).slice(0, 500) }, 502);
     }
+    assistantMessage = plainText(assistantMessage);
     if (!assistantMessage) return json({ error: 'empty_reply' }, 502);
 
     // Return the full structured contract: deterministic fields are echoed back
@@ -131,7 +79,7 @@ export default async (req) => {
       missingFields: payload.missingFields ?? [],
       nextQuestions: payload.nextQuestions ?? [],
       possibleLoanPaths: payload.possibleLoanPaths ?? [],
-      cashToCloseEstimate: payload.cashToCloseEstimate ?? null,
+      cashToCloseEstimate: payload.cashToCloseEstimate && payload.cashToCloseEstimate.hasBoth === true ? payload.cashToCloseEstimate : null,
       warnings: payload.warnings ?? [],
       suggestedActions: payload.suggestedActions ?? [],
       requiresHumanReview: payload.requiresHumanReview ?? true,
