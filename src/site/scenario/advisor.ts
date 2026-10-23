@@ -11,6 +11,29 @@ import type { Language, LoanProgramMatch, ScenarioProfile } from './types';
 // caller falls back to the local rule-based advisor ("Local advisor mode").
 // ---------------------------------------------------------------------------
 
+export type AdvisorEstimate =
+  | {
+      hasBoth: true;
+      downPayment: number;
+      totalCashToClose: number;
+      additionalFundsNeeded: number;
+      ltv: number;
+      loanType: string;
+      monthlyPI: number;
+      monthlyHousing: number;
+    }
+  | { hasBoth: false };
+
+/** Strip markdown emphasis/headings so the chat never shows literal **asterisks**. */
+export function toPlainLines(text: string): string[] {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/__(.+?)__/g, '$1')
+    .split('\n')
+    .map((l) => l.replace(/^#{1,6}\s+/, '').trim())
+    .filter(Boolean);
+}
+
 export interface AdvisorRequest {
   userMessage: string;
   language: Language;
@@ -18,16 +41,8 @@ export interface AdvisorRequest {
   missingFields: string[];
   nextQuestions: string[];
   possibleLoanPaths: { name: string; fit: string }[];
-  cashToCloseEstimate: {
-    hasBoth: boolean;
-    downPayment: number;
-    totalCashToClose: number;
-    additionalFundsNeeded: number;
-    ltv: number;
-    loanType: string;
-    monthlyPI: number;
-    monthlyHousing: number;
-  };
+  /** The borrower's own figures, or `{ hasBoth: false }` — never the demo scenario. */
+  cashToCloseEstimate: AdvisorEstimate;
   warnings: string[];
   suggestedActions: string[];
   requiresHumanReview: boolean;
@@ -78,10 +93,7 @@ export async function askAdvisor(req: AdvisorRequest): Promise<AdvisorResponse |
     if (!data.assistantMessage) return null;
     mode = 'live';
     return {
-      assistantMessage: data.assistantMessage
-        .split('\n')
-        .map((l) => l.trim())
-        .filter(Boolean),
+      assistantMessage: toPlainLines(data.assistantMessage),
       requiresHumanReview: !!data.requiresHumanReview,
     };
   } catch {
