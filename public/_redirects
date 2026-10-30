@@ -1,1 +1,3 @@
+/mcp            https://agpqetgxaibwzhuyanpk.supabase.co/functions/v1/wccm-mcp/mcp                    200!
+/.well-known/*   https://agpqetgxaibwzhuyanpk.supabase.co/functions/v1/wccm-mcp/.well-known/:splat     200!
 /*    /index.html   200
